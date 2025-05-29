@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Piggino.Api.Domain.Users.Entities;
 using Piggino.Api.Models;
 using System.Collections.Generic;
 using System.Reflection.Emit;

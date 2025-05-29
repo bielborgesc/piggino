@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Piggino.Api.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Transactions;
 
-namespace Piggino.Api.Models
+namespace Piggino.Api.Domain.Users.Entities
 {
     public class User
     {

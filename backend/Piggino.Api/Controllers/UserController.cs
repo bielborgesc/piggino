@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Piggino.Api.Data;
-using Piggino.Api.Models;
+using Piggino.Api.Domain.Users.Entities;
+using Piggino.Api.Domain.Users.Services;
 
 namespace Piggino.Api.Controllers
 {
@@ -9,59 +8,48 @@ namespace Piggino.Api.Controllers
     [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly PigginoDbContext _context;
+        private readonly IUserService _service;
 
-        public UserController(PigginoDbContext context)
+        public UserController(IUserService service)
         {
-            _context = context;
+            _service = service;
         }
 
-        // GET: api/user
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<User>>> Get()
         {
-            return await _context.Users.ToListAsync();
+            var users = await _service.GetAllAsync();
+            return Ok(users);
         }
 
-        // GET: api/user/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        public async Task<ActionResult<User>> Get(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
-
-            return user;
+            var user = await _service.GetByIdAsync(id);
+            if (user is null) return NotFound();
+            return Ok(user);
         }
 
-        // POST: api/user
         [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
+        public async Task<ActionResult<User>> Post(User user)
         {
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+            var created = await _service.CreateAsync(user);
+            return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
         }
 
-        // PUT: api/user/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user)
+        public async Task<IActionResult> Put(int id, User user)
         {
-            if (id != user.Id) return BadRequest();
-
-            _context.Entry(user).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            var success = await _service.UpdateAsync(id, user);
+            if (!success) return NotFound();
             return NoContent();
         }
 
-        // DELETE: api/user/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            var success = await _service.DeleteAsync(id);
+            if (!success) return NotFound();
             return NoContent();
         }
     }

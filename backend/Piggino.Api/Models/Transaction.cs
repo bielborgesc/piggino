@@ -1,4 +1,5 @@
-﻿using Piggino.Api.Enum;
+﻿using Piggino.Api.Domain.Users.Entities;
+using Piggino.Api.Enum;
 using System.ComponentModel.DataAnnotations;
 
 namespace Piggino.Api.Models

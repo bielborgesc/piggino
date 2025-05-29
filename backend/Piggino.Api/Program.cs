@@ -1,5 +1,8 @@
 using Piggino.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using Piggino.Api.Domain.Users.Interfaces;
+using Piggino.Api.Domain.Users.Services;
+using Piggino.Api.Infrastructure.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
 
@@ -14,6 +17,9 @@ builder.Services.AddDbContext<PigginoDbContext>(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
