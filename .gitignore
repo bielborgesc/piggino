@@ -1,0 +1,25 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build
+bin/
+obj/
+*.cache
+
+# Rider
+.idea/
+
+# Logs
+*.log
+
+# SQLite DB
+*.db
+
+# Migrations snapshot (opcional)
+Migrations/
+
+# Others
+*.DS_Store
+*.vscode/
