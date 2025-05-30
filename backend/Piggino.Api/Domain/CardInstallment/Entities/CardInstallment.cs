@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Piggino.Api.Domain.Transaction.Entities;
+using System.ComponentModel.DataAnnotations;
 
-namespace Piggino.Api.Models
+namespace Piggino.Api.Domain.CardInstallment.Entities
 {
     public class CardInstallment
     {

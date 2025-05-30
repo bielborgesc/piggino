@@ -29,7 +29,7 @@ namespace Piggino.Api.Domain.Users.Services
 
         public async Task<bool> UpdateAsync(int id, User user)
         {
-            var existingUser = await _repository.GetByIdAsync(id);
+            User? existingUser = await _repository.GetByIdAsync(id);
             if (existingUser is null) return false;
 
             existingUser.Name = user.Name;
@@ -42,7 +42,7 @@ namespace Piggino.Api.Domain.Users.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var user = await _repository.GetByIdAsync(id);
+            User? user = await _repository.GetByIdAsync(id);
             if (user is null) return false;
 
             await _repository.DeleteAsync(user);

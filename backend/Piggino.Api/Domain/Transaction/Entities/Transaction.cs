@@ -2,7 +2,7 @@
 using Piggino.Api.Enum;
 using System.ComponentModel.DataAnnotations;
 
-namespace Piggino.Api.Models
+namespace Piggino.Api.Domain.Transaction.Entities
 {
     public class Transaction
     {

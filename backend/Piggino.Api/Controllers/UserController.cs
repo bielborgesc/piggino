@@ -18,14 +18,14 @@ namespace Piggino.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> Get()
         {
-            var users = await _service.GetAllAsync();
+            List<User> users = [..(await _service.GetAllAsync())];
             return Ok(users);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> Get(int id)
         {
-            var user = await _service.GetByIdAsync(id);
+            User? user = await _service.GetByIdAsync(id);
             if (user is null) return NotFound();
             return Ok(user);
         }
@@ -33,14 +33,14 @@ namespace Piggino.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> Post(User user)
         {
-            var created = await _service.CreateAsync(user);
+            User created = await _service.CreateAsync(user);
             return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, User user)
         {
-            var success = await _service.UpdateAsync(id, user);
+            bool success = await _service.UpdateAsync(id, user);
             if (!success) return NotFound();
             return NoContent();
         }
@@ -48,7 +48,7 @@ namespace Piggino.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var success = await _service.DeleteAsync(id);
+            bool success = await _service.DeleteAsync(id);
             if (!success) return NotFound();
             return NoContent();
         }

@@ -1,11 +1,12 @@
-﻿using Piggino.Api.Domain.Users.Entities;
+﻿using Piggino.Api.Domain.Transaction.Entities;
+using Piggino.Api.Domain.Users.Entities;
 using Piggino.Api.Enum;
 using System.ComponentModel.DataAnnotations;
 using System.Transactions;
 
-namespace Piggino.Api.Models
+namespace Piggino.Api.Domain.FinancialSource.Entities
 {
-    public class Category
+    public class FinancialSource
     {
         public int Id { get; set; }
 
@@ -15,7 +16,10 @@ namespace Piggino.Api.Models
 
         [Required]
         [MaxLength(20)]
-        public CategoryType Type { get; set; }
+        public FinancialSourceType Type { get; set; }
+
+        public int? ClosingDay { get; set; }
+        public int? DueDay { get; set; }
 
         public int UserId { get; set; }
         public User User { get; set; }
