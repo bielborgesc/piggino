@@ -1,7 +1,7 @@
-﻿using Piggino.Api.Domain.Transaction.Entities;
+﻿using Piggino.Api.Domain.Transactions.Entities;
 using System.ComponentModel.DataAnnotations;
 
-namespace Piggino.Api.Domain.CardInstallment.Entities
+namespace Piggino.Api.Domain.CardInstallments.Entities
 {
     public class CardInstallment
     {
@@ -16,6 +16,6 @@ namespace Piggino.Api.Domain.CardInstallment.Entities
         public bool IsPaid { get; set; }
 
         public int TransactionId { get; set; }
-        public Transaction Transaction { get; set; }
+        public Transaction? Transaction { get; set; }
     }
 }

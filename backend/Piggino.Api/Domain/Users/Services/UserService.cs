@@ -1,4 +1,5 @@
-﻿using Piggino.Api.Domain.Users.Entities;
+﻿using Piggino.Api.Domain.Users.Dtos;
+using Piggino.Api.Domain.Users.Entities;
 using Piggino.Api.Domain.Users.Interfaces;
 
 namespace Piggino.Api.Domain.Users.Services
@@ -12,41 +13,87 @@ namespace Piggino.Api.Domain.Users.Services
             _repository = repository;
         }
 
-        public async Task<IEnumerable<User>> GetAllAsync()
+        public async Task<IEnumerable<UserReadDto>> GetAllAsync()
         {
-            return await _repository.GetAllAsync();
+            IEnumerable<User> users = await _repository.GetAllAsync();
+
+            return users.Select(user => new UserReadDto
+            {
+                Name = user.Name,
+                Email = user.Email,
+                CreatedAt = user.CreatedAt
+            });
         }
 
-        public async Task<User?> GetByIdAsync(int id)
+        public IUserRepository Get_repository()
         {
-            return await _repository.GetByIdAsync(id);
+            return _repository;
         }
 
-        public async Task<User> CreateAsync(User user)
+        public async Task<UserReadDto?> GetByIdAsync(int id)
         {
-            return await _repository.CreateAsync(user);
+            User? user = await _repository.GetByIdAsync(id);
+            if (user == null)
+                return null;
+
+            return new UserReadDto
+            {
+                Name = user.Name,
+                Email = user.Email,
+                CreatedAt = user.CreatedAt
+            };
         }
 
-        public async Task<bool> UpdateAsync(int id, User user)
+        public async Task<UserReadDto> CreateAsync(UserCreateDto dto)
         {
-            User? existingUser = await _repository.GetByIdAsync(id);
-            if (existingUser is null) return false;
+            User user = new User
+            {
+                Name = dto.Name,
+                Email = dto.Email,
+                PasswordHash = dto.PasswordHash,
+                CreatedAt = DateTime.UtcNow
+            };
 
-            existingUser.Name = user.Name;
-            existingUser.Email = user.Email;
-            existingUser.PasswordHash = user.PasswordHash;
+            await _repository.CreateAsync(user);
 
-            await _repository.UpdateAsync(existingUser);
-            return true;
+            return new UserReadDto
+            {
+                Name = user.Name,
+                Email = user.Email,
+                CreatedAt = user.CreatedAt
+            };
+        }
+
+        public async Task<bool> UpdateAsync(int id, UserUpdateDto dto)
+        {
+            User? user = await _repository.GetByIdAsync(id);
+            if (user == null)
+                return false;
+
+            user.Name = dto.Name;
+            user.Email = dto.Email;
+
+            return await _repository.UpdateAsync(user);
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
             User? user = await _repository.GetByIdAsync(id);
-            if (user is null) return false;
+            if (user == null)
+                return false;
 
-            await _repository.DeleteAsync(user);
-            return true;
+            return await _repository.DeleteAsync(user);
+        }
+
+        public async Task<bool> UpdatePasswordAsync(int id, UserPasswordUpdateDto dto)
+        {
+            return false;
+            //User? user = await _repository.GetByIdAsync(id);
+            //if (user == null || user.PasswordHash != Hash(dto.CurrentPassword))
+            //    return false;
+
+            //user.PasswordHash = Hash(dto.NewPassword);
+            //return await _repository.UpdateAsync(user);
         }
     }
 }

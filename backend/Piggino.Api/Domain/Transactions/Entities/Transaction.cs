@@ -1,8 +1,11 @@
-﻿using Piggino.Api.Domain.Users.Entities;
+﻿using Piggino.Api.Domain.CardInstallments.Entities;
+using Piggino.Api.Domain.Categories.Entities;
+using Piggino.Api.Domain.FinancialSources.Entities;
+using Piggino.Api.Domain.Users.Entities;
 using Piggino.Api.Enum;
 using System.ComponentModel.DataAnnotations;
 
-namespace Piggino.Api.Domain.Transaction.Entities
+namespace Piggino.Api.Domain.Transactions.Entities
 {
     public class Transaction
     {
@@ -10,7 +13,7 @@ namespace Piggino.Api.Domain.Transaction.Entities
 
         [Required]
         [MaxLength(150)]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [Required]
         public decimal TotalAmount { get; set; }
@@ -29,14 +32,14 @@ namespace Piggino.Api.Domain.Transaction.Entities
         public bool IsPaid { get; set; }
 
         public int CategoryId { get; set; }
-        public Category Category { get; set; }
+        public Category? Category { get; set; }
 
         public int FinancialSourceId { get; set; }
-        public FinancialSource FinancialSource { get; set; }
+        public FinancialSource? FinancialSource { get; set; }
 
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User? User { get; set; }
 
-        public ICollection<CardInstallment> CardInstallments { get; set; }
+        public ICollection<CardInstallment>? CardInstallments { get; set; }
     }
 }

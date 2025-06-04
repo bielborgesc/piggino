@@ -1,4 +1,5 @@
-﻿using Piggino.Api.Domain.Users.Entities;
+﻿using Piggino.Api.Domain.Users.Dtos;
+using Piggino.Api.Domain.Users.Entities;
 
 namespace Piggino.Api.Domain.Users.Interfaces
 {
@@ -7,7 +8,7 @@ namespace Piggino.Api.Domain.Users.Interfaces
         Task<IEnumerable<User>> GetAllAsync();
         Task<User?> GetByIdAsync(int id);
         Task<User> CreateAsync(User user);
-        Task UpdateAsync(User user);
-        Task DeleteAsync(User user);
+        Task<bool> UpdateAsync(User user);
+        Task<bool> DeleteAsync(User user);
     }
 }

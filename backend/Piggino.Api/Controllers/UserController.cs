@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Piggino.Api.Domain.Users.Entities;
+using Piggino.Api.Domain.Users.Dtos;
 using Piggino.Api.Domain.Users.Services;
 
 namespace Piggino.Api.Controllers
@@ -16,41 +16,48 @@ namespace Piggino.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> Get()
+        public async Task<ActionResult<IEnumerable<UserReadDto>>> Get()
         {
-            List<User> users = [..(await _service.GetAllAsync())];
+            IEnumerable<UserReadDto> users = await _service.GetAllAsync();
             return Ok(users);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> Get(int id)
+        public async Task<ActionResult<UserReadDto>> Get(int id)
         {
-            User? user = await _service.GetByIdAsync(id);
-            if (user is null) return NotFound();
+            UserReadDto? user = await _service.GetByIdAsync(id);
+            if (user == null)
+                return NotFound();
+
             return Ok(user);
         }
 
         [HttpPost]
-        public async Task<ActionResult<User>> Post(User user)
+        public async Task<ActionResult<UserReadDto>> Post(UserCreateDto dto)
         {
-            User created = await _service.CreateAsync(user);
-            return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
+            UserReadDto createdUser = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(Get), new { id = createdUser.Email }, createdUser);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, User user)
+        public async Task<IActionResult> Put(int id, UserUpdateDto dto)
         {
-            bool success = await _service.UpdateAsync(id, user);
-            if (!success) return NotFound();
-            return NoContent();
+            bool success = await _service.UpdateAsync(id, dto);
+            return success ? NoContent() : NotFound();
+        }
+
+        [HttpPut("{id}/password")]
+        public async Task<IActionResult> UpdatePassword(int id, UserPasswordUpdateDto dto)
+        {
+            bool success = await _service.UpdatePasswordAsync(id, dto);
+            return success ? NoContent() : BadRequest("Senha atual incorreta.");
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             bool success = await _service.DeleteAsync(id);
-            if (!success) return NotFound();
-            return NoContent();
+            return success ? NoContent() : NotFound();
         }
     }
 }

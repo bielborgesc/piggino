@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Piggino.Api.Domain.CardInstallment.Entities;
-using Piggino.Api.Domain.Category.Entities;
-using Piggino.Api.Domain.FinancialSource.Entities;
-using Piggino.Api.Domain.Transaction.Entities;
+using Piggino.Api.Domain.CardInstallments.Entities;
+using Piggino.Api.Domain.Categories.Entities;
+using Piggino.Api.Domain.FinancialSources.Entities;
+using Piggino.Api.Domain.Transactions.Entities;
 using Piggino.Api.Domain.Users.Entities;
 using System.Collections.Generic;
 using System.Reflection.Emit;

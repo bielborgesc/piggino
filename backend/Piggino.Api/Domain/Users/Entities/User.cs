@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Piggino.Api.Domain.Categories.Entities;
+using Piggino.Api.Domain.FinancialSources.Entities;
+using Piggino.Api.Domain.Transactions.Entities;
 
 namespace Piggino.Api.Domain.Users.Entities
 {

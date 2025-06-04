@@ -31,16 +31,16 @@ namespace Piggino.Api.Infrastructure.Repositories
             return user;
         }
 
-        public async Task UpdateAsync(User user)
+        public async Task<bool> UpdateAsync(User user)
         {
-            _context.Entry(user).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            _context.Users.Update(user);
+            return await _context.SaveChangesAsync() > 0;
         }
 
-        public async Task DeleteAsync(User user)
+        public async Task<bool> DeleteAsync(User user)
         {
             _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            return await _context.SaveChangesAsync() > 0;
         }
     }
 }
