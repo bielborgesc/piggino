@@ -50,7 +50,7 @@ namespace Piggino.Api.Controllers
         public async Task<IActionResult> UpdatePassword(int id, UserPasswordUpdateDto dto)
         {
             bool success = await _service.UpdatePasswordAsync(id, dto);
-            return success ? NoContent() : BadRequest("Senha atual incorreta.");
+            return success ? NoContent() : BadRequest("Senha atual incorreta ou usuário não encontrado.");
         }
 
         [HttpDelete("{id}")]

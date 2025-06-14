@@ -1,6 +1,7 @@
 ﻿using Piggino.Api.Domain.Users.Dtos;
 using Piggino.Api.Domain.Users.Entities;
 using Piggino.Api.Domain.Users.Interfaces;
+using Piggino.Api.Helpers;
 
 namespace Piggino.Api.Domain.Users.Services
 {
@@ -87,13 +88,16 @@ namespace Piggino.Api.Domain.Users.Services
 
         public async Task<bool> UpdatePasswordAsync(int id, UserPasswordUpdateDto dto)
         {
-            return false;
-            //User? user = await _repository.GetByIdAsync(id);
-            //if (user == null || user.PasswordHash != Hash(dto.CurrentPassword))
-            //    return false;
+            User? user = await _repository.GetByIdAsync(id);
+            if (user == null)
+                return false;
 
-            //user.PasswordHash = Hash(dto.NewPassword);
-            //return await _repository.UpdateAsync(user);
+            string currentHash = PasswordHelper.Hash(dto.CurrentPassword);
+            if (user.PasswordHash != currentHash)
+                return false;
+
+            user.PasswordHash = PasswordHelper.Hash(dto.NewPassword);
+            return await _repository.UpdateAsync(user);
         }
     }
 }
