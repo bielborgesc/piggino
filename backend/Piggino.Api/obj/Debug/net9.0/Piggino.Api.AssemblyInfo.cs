@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Piggino.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+85163ef0d85e41359483cc806a22cfc5783054d5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+728b6233a00758ae4b010920d0d413feef3ed554")]
 [assembly: System.Reflection.AssemblyProductAttribute("Piggino.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Piggino.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
