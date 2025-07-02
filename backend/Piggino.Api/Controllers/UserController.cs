@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Piggino.Api.Domain.Users.Dtos;
 using Piggino.Api.Domain.Users.Services;
+using Piggino.Api.Infrastructure.Localization;
 
 namespace Piggino.Api.Controllers
 {
@@ -50,7 +51,7 @@ namespace Piggino.Api.Controllers
         public async Task<IActionResult> UpdatePassword(int id, UserPasswordUpdateDto dto)
         {
             bool success = await _service.UpdatePasswordAsync(id, dto);
-            return success ? NoContent() : BadRequest("Senha atual incorreta ou usuário não encontrado.");
+            return success ? NoContent() : BadRequest(MessageProvider.Get("InvalidCredentialsOrUserNotFound"));
         }
 
         [HttpDelete("{id}")]

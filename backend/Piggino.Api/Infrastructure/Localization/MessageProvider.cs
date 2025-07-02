@@ -1,18 +1,16 @@
 ﻿using System.Globalization;
+using System.Reflection;
 using System.Resources;
 
 namespace Piggino.Api.Infrastructure.Localization
 {
     public static class MessageProvider
     {
-        private static readonly ResourceManager _resourceManager =
-            new ResourceManager("Resources.Messages", typeof(MessageProvider).Assembly);
+        private static readonly ResourceManager _resourceManager = new ResourceManager("Piggino.Api.Resources.Messages", Assembly.GetExecutingAssembly());
 
         public static string Get(string key)
         {
-            var culture = CultureInfo.CurrentUICulture;
-            var message = _resourceManager.GetString(key, culture);
-            return message ?? $"[[{key}]]"; // fallback visível para debug
+            return _resourceManager.GetString(key, CultureInfo.CurrentCulture) ?? $"!{key}!";
         }
     }
 }
