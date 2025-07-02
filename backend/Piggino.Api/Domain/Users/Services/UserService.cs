@@ -51,7 +51,7 @@ namespace Piggino.Api.Domain.Users.Services
             {
                 Name = dto.Name,
                 Email = dto.Email,
-                PasswordHash = dto.PasswordHash,
+                Password = dto.Password,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -93,10 +93,10 @@ namespace Piggino.Api.Domain.Users.Services
                 return false;
 
             string currentHash = PasswordHelper.Hash(dto.CurrentPassword);
-            if (user.PasswordHash != currentHash)
+            if (user.Password != currentHash)
                 return false;
 
-            user.PasswordHash = PasswordHelper.Hash(dto.NewPassword);
+            user.Password = PasswordHelper.Hash(dto.NewPassword);
             return await _repository.UpdateAsync(user);
         }
     }
