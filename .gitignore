@@ -1,25 +1,59 @@
-# Visual Studio
+# Visual Studio e .NET Core
 .vs/
 *.user
 *.suo
+*.sln.docstates
+*.vsp
+*.webinfo
+*.pubxml
+*.psess
+*.vssscc
+*.sqlite3-wal
+*.sqlite3-shm
 
-# Build
+# Build artifacts
 bin/
 obj/
 *.cache
+*.exe
+*.dll
+*.pdb # Arquivos de símbolo de depuração
+*.nupkg # Pacotes NuGet gerados
+*.tmp
+*.log # Arquivos de log
 
 # Rider
 .idea/
 
-# Logs
+# DotNet tools
+.config/dotnet-tools.json # Se você usa ferramentas locais dotnet, este arquivo pode conter hashes, mas geralmente é bom mantê-lo
+.tools/
+
+packages/
+
+TestResults/ # Resultados de testes
+.trx # Arquivos de resultado de teste
+
+*.userprefs # Arquivos de preferências do Rider/outras IDEs
+*.pid # Process ID files
+*.lock.json # Arquivos de bloqueio de dependência (geralmente gerados pelo restore)
+temp/
+out/
+publish/ # Pasta de publicação, se usada
+.tmp/
+
 *.log
 
-# SQLite DB
-*.db
+*.DS_Store # macOS
+Thumbs.db # Windows
+desktop.ini # Windows
 
-# Migrations snapshot (opcional)
-Migrations/
+*.db # Seu arquivo SQLite
+*.db-shm # Arquivos de shared-memory do SQLite
+*.db-wal # Arquivos de write-ahead log do SQLite
+# Migrations/
 
-# Others
-*.DS_Store
-*.vscode/
+appsettings.Development.json # Se você tiver dados sensíveis aqui que não devem ir para o repositório.
+
+.dotnet/user-secrets/
+.env
