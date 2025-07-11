@@ -5,12 +5,26 @@ namespace Piggino.Api.Helpers
 {
     public static class PasswordHelper
     {
-        public static string Hash(string password)
+        public static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
-            using SHA256 sHA256 = SHA256.Create();
-            byte[] bytes = Encoding.UTF8.GetBytes(password);
-            byte[] hash = sHA256.ComputeHash(bytes);
-            return Convert.ToBase64String(hash);
+            using (var hmac = new HMACSHA512())
+            {
+                passwordSalt = hmac.Key;
+                passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+            }
+        }
+
+        public static bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
+        {
+            using (var hmac = new HMACSHA512(storedSalt))
+            {
+                var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+                for (int i = 0; i < computedHash.Length; i++)
+                {
+                    if (computedHash[i] != storedHash[i]) return false;
+                }
+            }
+            return true;
         }
     }
 }

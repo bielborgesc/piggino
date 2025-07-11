@@ -5,10 +5,11 @@ namespace Piggino.Api.Domain.Users.Interfaces
 {
     public interface IUserRepository
     {
-        Task<IEnumerable<User>> GetAllAsync();
-        Task<User?> GetByIdAsync(int id);
-        Task<User> CreateAsync(User user);
-        Task<bool> UpdateAsync(User user);
-        Task<bool> DeleteAsync(User user);
+        Task AddUserAsync(User user);
+        Task<User?> GetUserByIdAsync(Guid id);
+        Task UpdateUserAsync(User user);
+        Task<bool> DeleteUserAsync(Guid id);
+        Task<User?> GetUserByEmailAsync(string email);
+        Task<IEnumerable<User>> GetAllUsersAsync();
     }
 }

@@ -2,6 +2,7 @@
 using Piggino.Api.Domain.Users.Entities;
 using Piggino.Api.Domain.Users.Interfaces;
 using Piggino.Api.Helpers;
+using System.Numerics;
 
 namespace Piggino.Api.Domain.Users.Services
 {
@@ -16,29 +17,26 @@ namespace Piggino.Api.Domain.Users.Services
 
         public async Task<IEnumerable<UserReadDto>> GetAllAsync()
         {
-            IEnumerable<User> users = await _repository.GetAllAsync();
+            IEnumerable<User> users = await _repository.GetAllUsersAsync();
 
             return users.Select(user => new UserReadDto
             {
+                Id = user.Id,
                 Name = user.Name,
                 Email = user.Email,
                 CreatedAt = user.CreatedAt
             });
         }
 
-        public IUserRepository Get_repository()
+        public async Task<UserReadDto?> GetByIdAsync(Guid id)
         {
-            return _repository;
-        }
-
-        public async Task<UserReadDto?> GetByIdAsync(int id)
-        {
-            User? user = await _repository.GetByIdAsync(id);
+            User? user = await _repository.GetUserByIdAsync(id);
             if (user == null)
                 return null;
 
             return new UserReadDto
             {
+                Id = user.Id,
                 Name = user.Name,
                 Email = user.Email,
                 CreatedAt = user.CreatedAt
@@ -47,57 +45,62 @@ namespace Piggino.Api.Domain.Users.Services
 
         public async Task<UserReadDto> CreateAsync(UserCreateDto dto)
         {
+            PasswordHelper.CreatePasswordHash(dto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+
             User user = new User
             {
+                Id = Guid.NewGuid(),
                 Name = dto.Name,
                 Email = dto.Email,
-                Password = dto.Password,
+                PasswordHash = passwordHash,
+                PasswordSalt = passwordSalt,
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _repository.CreateAsync(user);
+            await _repository.AddUserAsync(user);
 
             return new UserReadDto
             {
+                Id = user.Id,
                 Name = user.Name,
                 Email = user.Email,
                 CreatedAt = user.CreatedAt
             };
         }
 
-        public async Task<bool> UpdateAsync(int id, UserUpdateDto dto)
+        public async Task<bool> UpdateAsync(Guid id, UserUpdateDto dto)
         {
-            User? user = await _repository.GetByIdAsync(id);
+            User? user = await _repository.GetUserByIdAsync(id);
             if (user == null)
                 return false;
 
             user.Name = dto.Name;
             user.Email = dto.Email;
 
-            return await _repository.UpdateAsync(user);
+            await _repository.UpdateUserAsync(user);
+            return true;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(Guid id)
         {
-            User? user = await _repository.GetByIdAsync(id);
+            return await _repository.DeleteUserAsync(id);
+        }
+
+        public async Task<bool> UpdatePasswordAsync(Guid id, UserPasswordUpdateDto dto)
+        {
+            User? user = await _repository.GetUserByIdAsync(id);
             if (user == null)
                 return false;
 
-            return await _repository.DeleteAsync(user);
-        }
-
-        public async Task<bool> UpdatePasswordAsync(int id, UserPasswordUpdateDto dto)
-        {
-            User? user = await _repository.GetByIdAsync(id);
-            if (user == null)
+            if (!PasswordHelper.VerifyPasswordHash(dto.CurrentPassword, user.PasswordHash, user.PasswordSalt))
                 return false;
 
-            string currentHash = PasswordHelper.Hash(dto.CurrentPassword);
-            if (user.Password != currentHash)
-                return false;
+            PasswordHelper.CreatePasswordHash(dto.NewPassword, out byte[] newPasswordHash, out byte[] newPasswordSalt);
+            user.PasswordHash = newPasswordHash;
+            user.PasswordSalt = newPasswordSalt;
 
-            user.Password = PasswordHelper.Hash(dto.NewPassword);
-            return await _repository.UpdateAsync(user);
+            await _repository.UpdateUserAsync(user);
+            return true;
         }
     }
 }

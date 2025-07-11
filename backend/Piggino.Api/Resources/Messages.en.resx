@@ -117,7 +117,31 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="EmailAddress" xml:space="preserve">
+    <value>Invalid email format.</value>
+  </data>
+  <data name="EmailRequired" xml:space="preserve">
+    <value>The email is required.</value>
+  </data>
   <data name="InvalidCredentialsOrUserNotFound" xml:space="preserve">
     <value>Incorrect current password or user not found.</value>
+  </data>
+  <data name="NameLength" xml:space="preserve">
+    <value>The name must be between {2} and {1} characters long.</value>
+  </data>
+  <data name="NameRequired" xml:space="preserve">
+    <value>The name is required.</value>
+  </data>
+  <data name="PasswordLength" xml:space="preserve">
+    <value>The password must be between {2} and {1} characters long.</value>
+  </data>
+  <data name="PasswordRequired" xml:space="preserve">
+    <value>The password is required.</value>
+  </data>
+  <data name="Required" xml:space="preserve">
+    <value>{0} is required.</value>
+  </data>
+  <data name="StringLength" xml:space="preserve">
+    <value>{0} must be between {2} and {1} characters long.</value>
   </data>
 </root>

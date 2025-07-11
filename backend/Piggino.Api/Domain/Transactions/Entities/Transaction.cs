@@ -37,7 +37,7 @@ namespace Piggino.Api.Domain.Transactions.Entities
         public int FinancialSourceId { get; set; }
         public FinancialSource? FinancialSource { get; set; }
 
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         public User? User { get; set; }
 
         public ICollection<CardInstallment>? CardInstallments { get; set; }

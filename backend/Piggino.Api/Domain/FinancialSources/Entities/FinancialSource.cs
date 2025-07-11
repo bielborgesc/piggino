@@ -20,7 +20,7 @@ namespace Piggino.Api.Domain.FinancialSources.Entities
         public int? ClosingDay { get; set; }
         public int? DueDay { get; set; }
 
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         public User? User { get; set; }
 
         public ICollection<Transaction>? Transactions { get; set; }

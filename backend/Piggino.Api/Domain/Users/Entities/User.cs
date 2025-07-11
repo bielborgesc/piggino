@@ -9,7 +9,7 @@ namespace Piggino.Api.Domain.Users.Entities
 {
     public class User
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
         [MaxLength(100)]
@@ -21,7 +21,10 @@ namespace Piggino.Api.Domain.Users.Entities
         public required string Email { get; set; }
 
         [Required]
-        public required string Password { get; set; }
+        public required byte[] PasswordHash { get; set; }
+
+        [Required]
+        public required byte[] PasswordSalt { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
