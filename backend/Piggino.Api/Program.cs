@@ -7,6 +7,7 @@ using Piggino.Api.Data;
 using Piggino.Api.Domain.Users.Interfaces;
 using Piggino.Api.Domain.Users.Services;
 using Piggino.Api.Infrastructure.Repositories;
+using Piggino.Api.Resources;
 using System.Globalization;
 using System.Text;
 
@@ -36,15 +37,15 @@ builder.Services.AddControllers()
     .AddMvcLocalization(options =>
     {
         options.DataAnnotationLocalizerProvider = (type, factory) =>
-            factory.Create(typeof(Piggino.Api.Resources.Validation));
+            factory.Create(typeof(Messages));
     });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var jwtKey = builder.Configuration["Jwt:Key"];
-var jwtIssuer = builder.Configuration["Jwt:Issuer"];
-var jwtAudience = builder.Configuration["Jwt:Audience"];
+string? jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured.");
+string? jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("JWT Issuer not configured.");
+string? jwtAudience = builder.Configuration["Jwt:Audience"] ?? throw new InvalidOperationException("JWT Audience not configured.");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -107,3 +108,5 @@ app.UseCors();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

@@ -41,18 +41,18 @@ namespace Piggino.Api.Controllers
 
         private string GenerateJwtToken(string userId, string email)
         {
-            byte[] key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
+            byte[] key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing from configuration."));
             string? issuer = _configuration["Jwt:Issuer"];
             string? audience = _configuration["Jwt:Audience"];
 
-            var claims = new[]
+            Claim[] claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userId),
                 new Claim(JwtRegisteredClaimNames.Email, email),
                 new Claim(ClaimTypes.NameIdentifier, userId)
             };
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+            SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddHours(24),
