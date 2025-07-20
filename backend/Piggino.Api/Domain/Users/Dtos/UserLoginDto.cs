@@ -5,12 +5,12 @@ namespace Piggino.Api.Domain.Users.Dtos
 {
     public class UserLoginDto
     {
-        [Required(ErrorMessage = nameof(Messages.EmailRequired))]
-        [EmailAddress(ErrorMessage = nameof(Messages.EmailAddress))]
+        [Required(ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "EmailRequired")]
+        [EmailAddress(ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "EmailAddress")]
         public required string Email { get; set; }
 
-        [Required(ErrorMessage = nameof(Messages.PasswordRequired))]
-        [StringLength(100, MinimumLength = 6, ErrorMessage = nameof(Messages.PasswordLength))]
+        [Required(ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "PasswordRequired")]
+        [StringLength(100, MinimumLength = 6, ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "PasswordLength")]
         public required string Password { get; set; }
     }
 }

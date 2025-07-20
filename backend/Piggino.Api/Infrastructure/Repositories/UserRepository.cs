@@ -33,7 +33,7 @@ namespace Piggino.Api.Infrastructure.Repositories
 
         public async Task<bool> DeleteUserAsync(Guid id)
         {
-            var user = await _context.Users.FindAsync(id);
+            User? user = await _context.Users.FindAsync(id);
             if (user == null)
             {
                 return false;

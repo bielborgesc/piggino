@@ -11,25 +11,24 @@ using Piggino.Api.Resources;
 using System.Globalization;
 using System.Text;
 
-
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
         policy =>
         {
-            policy.AllowAnyOrigin() //Change after testing to restrict origins
+            policy.AllowAnyOrigin()
                   .AllowAnyMethod()
                   .AllowAnyHeader();
         });
 });
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-
-builder.Services.AddDbContext<PigginoDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+if(!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddDbContext<PigginoDbContext>(options =>
+        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
@@ -71,16 +70,16 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 
-var supportedCultures = new[]
+CultureInfo[] supportedCultures = new[]
 {
     new CultureInfo("pt-BR"),
     new CultureInfo("en"),
     new CultureInfo("es")
 };
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
-var localizationOptions = new RequestLocalizationOptions
+RequestLocalizationOptions localizationOptions = new RequestLocalizationOptions
 {
     DefaultRequestCulture = new RequestCulture("pt-BR"),
     SupportedCultures = supportedCultures,
@@ -94,16 +93,22 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-}
-
-if (app.Environment.IsDevelopment())
-{
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseRouting();
 
 app.UseCors();
+
+app.UseAuthentication();
+
+app.UseAuthorization();
 
 app.MapControllers();
 

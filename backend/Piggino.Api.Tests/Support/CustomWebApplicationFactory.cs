@@ -9,36 +9,29 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Piggino.Api.Tests
+namespace Piggino.Api.Tests.Support
 {
     public class CustomWebApplicationFactory<TProgram>
-        : WebApplicationFactory<TProgram> where TProgram : class
+       : WebApplicationFactory<TProgram> where TProgram : class
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            builder.UseEnvironment("Testing");
+
             builder.ConfigureServices(services =>
             {
-                var descriptor = services.SingleOrDefault(
-                    d => d.ServiceType == typeof(DbContextOptions<PigginoDbContext>));
-
-                if (descriptor != null)
-                    services.Remove(descriptor);
-
-                services.RemoveAll<PigginoDbContext>();
-
                 services.AddDbContext<PigginoDbContext>(options =>
                 {
                     options.UseInMemoryDatabase("InMemoryDbForTesting");
                 });
 
-                var sp = services.BuildServiceProvider();
+                ServiceProvider sp = services.BuildServiceProvider();
 
-                using (var scope = sp.CreateScope())
+                using (IServiceScope scope = sp.CreateScope())
                 {
-                    var scopedServices = scope.ServiceProvider;
-                    var db = scopedServices.GetRequiredService<PigginoDbContext>();
-                    var logger = scopedServices
-                        .GetRequiredService<ILogger<CustomWebApplicationFactory<TProgram>>>();
+                    IServiceProvider scopedServices = scope.ServiceProvider;
+                    PigginoDbContext db = scopedServices.GetRequiredService<PigginoDbContext>();
+                    ILogger<CustomWebApplicationFactory<TProgram>> logger = scopedServices.GetRequiredService<ILogger<CustomWebApplicationFactory<TProgram>>>();
 
                     try
                     {

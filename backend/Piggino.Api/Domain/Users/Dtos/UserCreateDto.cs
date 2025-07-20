@@ -1,19 +1,20 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Piggino.Api.Resources;
+using System.ComponentModel.DataAnnotations;
 
 namespace Piggino.Api.Domain.Users.Dtos
 {
     public class UserCreateDto
     {
-        [Required(ErrorMessage = "NameRequired")]
-        [StringLength(100, MinimumLength = 2, ErrorMessage = "NameLength")]
+        [Required(ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "NameRequired")]
+        [StringLength(100, MinimumLength = 2, ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "NameLength")]
         public required string Name { get; set; }
 
-        [Required(ErrorMessage = "EmailRequired")]
-        [EmailAddress(ErrorMessage = "EmailAddress")]
+        [Required(ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "EmailRequired")]
+        [EmailAddress(ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "EmailAddress")]
         public required string Email { get; set; }
 
-        [Required(ErrorMessage = "PasswordRequired")]
-        [StringLength(100, MinimumLength = 6, ErrorMessage = "PasswordLength")] 
+        [Required(ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "PasswordRequired")]
+        [StringLength(100, MinimumLength = 6, ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "PasswordLength")]
         public required string Password { get; set; }
     }
 }

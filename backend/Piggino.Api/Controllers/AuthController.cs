@@ -29,7 +29,12 @@ namespace Piggino.Api.Controllers
         {
             User? user = await _userRepository.GetUserByEmailAsync(loginDto.Email);
 
-            if (user == null || !PasswordHelper.VerifyPasswordHash(loginDto.Password, user.PasswordHash, user.PasswordSalt))
+            if (user == null)
+            {
+                return Unauthorized(new { message = MessageProvider.Get("InvalidCredentialsOrUserNotFound") });
+            }
+
+            if (!PasswordHelper.VerifyPasswordHash(loginDto.Password, user.PasswordHash, user.PasswordSalt))
             {
                 return Unauthorized(new { message = MessageProvider.Get("InvalidCredentialsOrUserNotFound") });
             }
@@ -61,8 +66,8 @@ namespace Piggino.Api.Controllers
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
+            JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+            SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
 
             return tokenHandler.WriteToken(token);
         }
