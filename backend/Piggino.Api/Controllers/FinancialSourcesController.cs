@@ -27,7 +27,7 @@ namespace Piggino.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<FinancialSourceReadDto>> GetFinancialSourceById(int id)
         {
-            FinancialSourceReadDto financialSource = await _service.GetByIdAsync(id);
+            FinancialSourceReadDto? financialSource = await _service.GetByIdAsync(id);
 
             if (financialSource == null)
             {
