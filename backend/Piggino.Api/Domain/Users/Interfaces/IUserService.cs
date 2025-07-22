@@ -1,8 +1,7 @@
 ﻿using Piggino.Api.Domain.Users.Dtos;
 using Piggino.Api.Domain.Users.Entities;
-using Piggino.Api.Domain.Users.Interfaces;
 
-namespace Piggino.Api.Domain.Users.Services
+namespace Piggino.Api.Domain.Users.Interfaces
 {
     public interface IUserService
     {

@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Piggino.Api.Data;
+using Piggino.Api.Domain.FinancialSources.Interfaces;
+using Piggino.Api.Domain.FinancialSources.Services;
 using Piggino.Api.Domain.Users.Interfaces;
 using Piggino.Api.Domain.Users.Services;
 using Piggino.Api.Infrastructure.Repositories;
@@ -69,6 +71,10 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFinancialSourceRepository, FinancialSourceRepository>();
+builder.Services.AddScoped<IFinancialSourceService, FinancialSourceService>();
+builder.Services.AddHttpContextAccessor();
+
 
 CultureInfo[] supportedCultures = new[]
 {

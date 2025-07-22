@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Piggino.Api.Domain.Users.Dtos;
-using Piggino.Api.Domain.Users.Services;
+using Piggino.Api.Domain.Users.Interfaces;
 using Piggino.Api.Infrastructure.Localization;
 
 namespace Piggino.Api.Controllers
