@@ -8,7 +8,6 @@ namespace Piggino.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _service;
@@ -19,6 +18,7 @@ namespace Piggino.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<UserReadDto>>> Get()
         {
             IEnumerable<UserReadDto> users = await _service.GetAllAsync();
@@ -26,6 +26,7 @@ namespace Piggino.Api.Controllers
         }
 
         [HttpGet("{id:guid}")]
+        [Authorize]
         public async Task<ActionResult<UserReadDto>> Get(Guid id)
         {
             UserReadDto? user = await _service.GetByIdAsync(id);
@@ -43,6 +44,7 @@ namespace Piggino.Api.Controllers
         }
 
         [HttpPut("{id:guid}")]
+        [Authorize]
         public async Task<IActionResult> Put(Guid id, UserUpdateDto dto)
         {
             bool success = await _service.UpdateAsync(id, dto);
@@ -50,6 +52,7 @@ namespace Piggino.Api.Controllers
         }
 
         [HttpPut("{id:guid}/password")]
+        [Authorize]
         public async Task<IActionResult> UpdatePassword(Guid id, UserPasswordUpdateDto dto)
         {
             bool success = await _service.UpdatePasswordAsync(id, dto);
@@ -57,6 +60,7 @@ namespace Piggino.Api.Controllers
         }
 
         [HttpDelete("{id:guid}")]
+        [Authorize]
         public async Task<IActionResult> Delete(Guid id)
         {
             bool success = await _service.DeleteAsync(id);

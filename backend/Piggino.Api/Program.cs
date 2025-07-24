@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Piggino.Api.Data;
+using Piggino.Api.Domain.Categories.Interfaces;
+using Piggino.Api.Domain.Categories.Services;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
 using Piggino.Api.Domain.FinancialSources.Services;
 using Piggino.Api.Domain.Users.Interfaces;
@@ -73,6 +75,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFinancialSourceRepository, FinancialSourceRepository>();
 builder.Services.AddScoped<IFinancialSourceService, FinancialSourceService>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddHttpContextAccessor();
 
 
