@@ -1,4 +1,5 @@
-﻿using Piggino.Api.Domain.Categories.Interfaces;
+﻿using Piggino.Api.Domain.CardInstallments.Entities;
+using Piggino.Api.Domain.Categories.Interfaces;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
 using Piggino.Api.Domain.Transactions.Dtos;
 using Piggino.Api.Domain.Transactions.Entities;
@@ -60,8 +61,28 @@ namespace Piggino.Api.Domain.Transactions.Services
                 IsPaid = createDto.IsPaid,
                 CategoryId = createDto.CategoryId,
                 FinancialSourceId = createDto.FinancialSourceId,
-                UserId = userId
+                UserId = userId,
+                CardInstallments = new List<CardInstallment>() // Inicializa a coleção de parcelas
             };
+
+            // --- NOVA LÓGICA DE PARCELAMENTO ---
+            if (newTransaction.IsInstallment && newTransaction.InstallmentCount.HasValue && newTransaction.InstallmentCount > 0)
+            {
+                // Calcula o valor de cada parcela (com arredondamento para 2 casas decimais)
+                decimal installmentAmount = Math.Round(newTransaction.TotalAmount / newTransaction.InstallmentCount.Value, 2);
+
+                // Cria cada registo de parcela individualmente
+                for (int i = 1; i <= newTransaction.InstallmentCount.Value; i++)
+                {
+                    newTransaction.CardInstallments.Add(new Piggino.Api.Domain.CardInstallments.Entities.CardInstallment
+                    {
+                        InstallmentNumber = i,
+                        Amount = installmentAmount,
+                        IsPaid = false // Por padrão, as parcelas não estão pagas
+                    });
+                }
+            }
+            // --- FIM DA NOVA LÓGICA ---
 
             await _transactionRepository.AddAsync(newTransaction);
             await _transactionRepository.SaveChangesAsync();
