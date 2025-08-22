@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 
-// 1. Defina os tipos das props que o componente vai receber
+// Passo 1: Atualize a interface de props para incluir onLoginSuccess
 interface LoginFormProps {
   onNavigateToRegister: () => void;
+  onLoginSuccess: () => void; // Adicione esta linha
 }
 
-export function LoginForm({ onNavigateToRegister }: LoginFormProps) {
+// Passo 2: Receba a nova prop na assinatura da função
+export function LoginForm({ onNavigateToRegister, onLoginSuccess }: LoginFormProps) {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -19,11 +21,14 @@ export function LoginForm({ onNavigateToRegister }: LoginFormProps) {
         
         alert(`(Simulação) Login bem-sucedido com o email: ${email}`);
         setIsLoading(false);
+        
+        // Passo 3: Chame a função após o login bem-sucedido
+        onLoginSuccess();
     };
 
     return (
         <div className="bg-slate-800 text-white p-8 rounded-xl shadow-2xl w-full max-w-sm border border-slate-700 transition-all duration-500">
-            {/* ... (cabeçalho e formulário permanecem os mesmos) ... */}
+            {/* O resto do seu componente permanece exatamente o mesmo */}
             <div className="flex flex-col items-center mb-8 text-center">
                 <img 
                     src="/piggino-logo.jpg" 
@@ -34,7 +39,6 @@ export function LoginForm({ onNavigateToRegister }: LoginFormProps) {
                 <p className="text-slate-400 mt-1">Controle as suas finanças com inteligência.</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-6">
-                {/* ... (campos de email e senha permanecem os mesmos) ... */}
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
                         Email
@@ -80,8 +84,6 @@ export function LoginForm({ onNavigateToRegister }: LoginFormProps) {
                     </button>
                 </div>
             </form>
-            
-            {/* 2. Altere o link para um botão com onClick */}
             <div className="text-center mt-6">
                 <button onClick={onNavigateToRegister} className="text-sm text-green-400 hover:text-green-300 bg-transparent border-none cursor-pointer">
                     Não tem uma conta? Crie uma aqui.
