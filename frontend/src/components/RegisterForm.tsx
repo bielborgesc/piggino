@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { registerUser } from '../services/api'; // 1. Importe a função da API
+import { UserRegistrationData } from '../types'; // Importe o tipo
 
-// 1. Defina os tipos das props
 interface RegisterFormProps {
   onNavigateToLogin: () => void;
 }
@@ -10,27 +11,54 @@ export function RegisterForm({ onNavigateToLogin }: RegisterFormProps) {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null); // Estado para mensagens de erro
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsLoading(true);
+        setError(null);
+
         if (password.length < 6) {
-            alert('A senha deve ter pelo menos 6 caracteres.');
+            setError('A senha deve ter pelo menos 6 caracteres.');
             setIsLoading(false);
             return;
         }
-        console.log('Tentativa de cadastro com:', { name, email, password });
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        alert(`(Simulação) Usuário ${name} criado com sucesso!`);
-        setIsLoading(false);
-        setName('');
-        setEmail('');
-        setPassword('');
+
+        const userData: UserRegistrationData = { name, email, password };
+
+        try {
+            // 2. Chame a função da API real
+            await registerUser(userData);
+            alert(`Usuário ${name} criado com sucesso! Agora pode fazer login.`);
+            
+            // Limpa o formulário e navega para a tela de login
+            setName('');
+            setEmail('');
+            setPassword('');
+            onNavigateToLogin();
+
+        } catch (apiError: any) {
+            // 3. Trate os erros vindos do backend
+            console.error('Erro no cadastro:', apiError);
+            if (apiError.response && apiError.response.data) {
+                // Tenta extrair mensagens de erro de validação do .NET
+                const errorData = apiError.response.data;
+                if (errorData.errors) {
+                    const messages = Object.values(errorData.errors).flat();
+                    setError(messages.join(' '));
+                } else {
+                    setError('Ocorreu um erro. Verifique os dados e tente novamente.');
+                }
+            } else {
+                setError('Não foi possível conectar ao servidor.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
         <div className="bg-slate-800 text-white p-8 rounded-xl shadow-2xl w-full max-w-sm border border-slate-700 transition-all duration-500">
-            {/* ... (cabeçalho e formulário permanecem os mesmos) ... */}
             <div className="flex flex-col items-center mb-8 text-center">
                 <img 
                     src="/piggino-logo.jpg" 
@@ -40,6 +68,7 @@ export function RegisterForm({ onNavigateToLogin }: RegisterFormProps) {
                 <h1 className="text-3xl font-bold text-slate-100">Crie a sua conta</h1>
                 <p className="text-slate-400 mt-1">Comece a organizar as suas finanças hoje mesmo.</p>
             </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* ... (campos do formulário permanecem os mesmos) ... */}
                 <div>
@@ -57,6 +86,7 @@ export function RegisterForm({ onNavigateToLogin }: RegisterFormProps) {
                         disabled={isLoading}
                     />
                 </div>
+
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
                         Email
@@ -72,6 +102,7 @@ export function RegisterForm({ onNavigateToLogin }: RegisterFormProps) {
                         disabled={isLoading}
                     />
                 </div>
+
                 <div>
                     <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
                         Senha
@@ -87,6 +118,10 @@ export function RegisterForm({ onNavigateToLogin }: RegisterFormProps) {
                         disabled={isLoading}
                     />
                 </div>
+
+                {/* 4. Exiba a mensagem de erro, se houver */}
+                {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+
                 <div>
                     <button
                         type="submit"
@@ -103,7 +138,6 @@ export function RegisterForm({ onNavigateToLogin }: RegisterFormProps) {
                 </div>
             </form>
             
-            {/* 2. Altere o link para um botão com onClick */}
             <div className="text-center mt-6">
                 <button onClick={onNavigateToLogin} className="text-sm text-green-400 hover:text-green-300 bg-transparent border-none cursor-pointer">
                     Já tem uma conta? Faça login aqui.

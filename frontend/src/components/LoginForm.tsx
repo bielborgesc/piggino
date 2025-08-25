@@ -1,34 +1,54 @@
 import React, { useState } from 'react';
+import { loginUser } from '../services/api';
+import { UserLoginData } from '../types';
+import toast from 'react-hot-toast'; // 1. Importe o toast
 
-// Passo 1: Atualize a interface de props para incluir onLoginSuccess
 interface LoginFormProps {
   onNavigateToRegister: () => void;
-  onLoginSuccess: () => void; // Adicione esta linha
+  onLoginSuccess: () => void;
 }
 
-// Passo 2: Receba a nova prop na assinatura da função
 export function LoginForm({ onNavigateToRegister, onLoginSuccess }: LoginFormProps) {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    // O estado de erro pode ser removido, pois o toast irá mostrar os erros
+    // const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsLoading(true);
-        console.log('Tentativa de login com:', { email, password });
-        
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        alert(`(Simulação) Login bem-sucedido com o email: ${email}`);
-        setIsLoading(false);
-        
-        // Passo 3: Chame a função após o login bem-sucedido
-        onLoginSuccess();
+        // setError(null); // Não é mais necessário
+
+        const userData: UserLoginData = { email, password };
+
+        try {
+            const response = await loginUser(userData);
+            
+            if (response && response.token) {
+                // 2. Use toast.success para feedback positivo
+                toast.success('Login bem-sucedido!');
+                localStorage.setItem('piggino_token', response.token);
+                onLoginSuccess();
+            } else {
+                // 3. Use toast.error para feedback de erro
+                toast.error('Resposta de login inválida do servidor.');
+            }
+
+        } catch (apiError: any) {
+            console.error('Erro no login:', apiError);
+            if (apiError.response && apiError.response.data && apiError.response.data.message) {
+                toast.error(apiError.response.data.message);
+            } else {
+                toast.error('Credenciais inválidas ou erro no servidor.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
         <div className="bg-slate-800 text-white p-8 rounded-xl shadow-2xl w-full max-w-sm border border-slate-700 transition-all duration-500">
-            {/* O resto do seu componente permanece exatamente o mesmo */}
             <div className="flex flex-col items-center mb-8 text-center">
                 <img 
                     src="/piggino-logo.jpg" 
@@ -69,6 +89,7 @@ export function LoginForm({ onNavigateToRegister, onLoginSuccess }: LoginFormPro
                         disabled={isLoading}
                     />
                 </div>
+                
                 <div>
                     <button
                         type="submit"

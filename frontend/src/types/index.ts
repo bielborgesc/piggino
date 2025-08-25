@@ -22,3 +22,14 @@ export interface TransactionData {
     isInstallment: boolean;
     purchaseDate: string;
 }
+
+export interface UserRegistrationData {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface UserLoginData {
+  email: string;
+  password: string;
+}
