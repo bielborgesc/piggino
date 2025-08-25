@@ -1,35 +1,32 @@
 import { useState } from 'react';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
-import { Dashboard } from './components/Dashboard'; // Importe o novo Dashboard
+import { Dashboard } from './components/Dashboard';
+import { TransactionsPage } from './components/TransactionsPage'; // Importe a nova página
+import { MainLayout } from './components/MainLayout'; // Importe o novo layout
 
-// Para simplificar, vamos definir uma enumeração para as diferentes telas
-enum AuthView {
-  Login,
-  Register,
-}
+enum AuthView { Login, Register }
+type Page = 'dashboard' | 'transactions';
 
 function App() {
-  // Estado para controlar se o usuário está logado
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  // Estado para alternar entre login e cadastro
   const [authView, setAuthView] = useState<AuthView>(AuthView.Login);
+  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
 
-  // Função de simulação de login
-  const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-  };
+  const handleLoginSuccess = () => setIsAuthenticated(true);
 
-  // Se o usuário estiver autenticado, mostre o Dashboard
   if (isAuthenticated) {
-    return <Dashboard />;
+    return (
+      <MainLayout activePage={currentPage} onNavigate={setCurrentPage}>
+        {currentPage === 'dashboard' && <Dashboard />}
+        {currentPage === 'transactions' && <TransactionsPage />}
+      </MainLayout>
+    );
   }
 
-  // Caso contrário, mostre a tela de Login ou Cadastro
   return (
     <div className="bg-slate-900 min-h-screen flex items-center justify-center p-4 font-sans">
       {authView === AuthView.Login ? (
-        // Passamos a função de login e a de navegação
         <LoginForm 
           onLoginSuccess={handleLoginSuccess}
           onNavigateToRegister={() => setAuthView(AuthView.Register)} 

@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { getCategories, getFinancialSources, createTransaction } from '../services/api';
+// import { getCategories, getFinancialSources, createTransaction } from '../services/api'; // Descomente quando a API estiver pronta
+import { mockCategories } from '../data/categories'; // Usando mock por enquanto
+import { mockFinancialSources } from '../data/financialSources'; // Usando mock por enquanto
 import { Category, FinancialSource, CategoryType, TransactionData } from '../types';
 
-export function TransactionForm() {
-  // Estados para os dados da API
+// 1. Adicione a prop onSave
+interface TransactionFormProps {
+  onSave: () => void;
+}
+
+export function TransactionForm({ onSave }: TransactionFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [financialSources, setFinancialSources] = useState<FinancialSource[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // Estados para os campos do formulário
   const [transactionType, setTransactionType] = useState<CategoryType>('Expense');
   const [description, setDescription] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
@@ -16,13 +20,13 @@ export function TransactionForm() {
   const [categoryId, setCategoryId] = useState<string>('');
   const [isInstallment, setIsInstallment] = useState<boolean>(false);
 
-  // Carrega os dados dos selects (categorias e fontes)
   useEffect(() => {
     async function loadData() {
       setIsLoading(true);
+      // Simulação de chamada de API
       const [cats, sources] = await Promise.all([
-          getCategories(),
-          getFinancialSources()
+          Promise.resolve(mockCategories),
+          Promise.resolve(mockFinancialSources)
       ]);
       setCategories(cats);
       setFinancialSources(sources);
@@ -33,38 +37,26 @@ export function TransactionForm() {
 
   const filteredCategories = categories.filter(cat => cat.type === transactionType);
 
-  // Função para lidar com a submissão do formulário
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); // Impede o recarregamento da página
-
+    event.preventDefault();
     if (!description || !amount || !sourceId || !categoryId) {
       alert('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
-
-    const transactionData: TransactionData = {
-      description,
-      amount: parseFloat(amount),
-      transactionType,
-      financialSourceId: parseInt(sourceId),
-      categoryId: parseInt(categoryId),
-      isInstallment,
-      purchaseDate: new Date().toISOString(), // Adiciona a data atual
-    };
     
-    // Chama a nossa API mockada
-    await createTransaction(transactionData);
+    // Lógica de envio (simulada)
+    console.log('Salvando transação...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Limpa o formulário após o envio
-    setDescription('');
-    setAmount('');
-    setSourceId('');
-    setCategoryId('');
-    setIsInstallment(false);
+    alert('Transação salva com sucesso!');
+    
+    // 2. Chame a função onSave para fechar o modal
+    onSave();
   };
 
+  // 3. Removemos o fundo e a borda, pois o modal já os tem.
   return (
-    <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg w-full max-w-md">
+    <div>
       <div className="flex bg-gray-700 rounded-md p-1 mb-6">
         <button
           onClick={() => setTransactionType('Expense')}
@@ -81,6 +73,7 @@ export function TransactionForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* ... (o resto do formulário permanece o mesmo) ... */}
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-400 mb-1">
             Descrição
@@ -145,8 +138,7 @@ export function TransactionForm() {
             ))}
           </select>
         </div>
-
-        {/* Checkbox de Parcelamento */}
+        
         <div className="flex items-center gap-2">
             <input 
                 type="checkbox"
@@ -160,7 +152,6 @@ export function TransactionForm() {
             </label>
         </div>
         
-        {/* Botão de Submissão */}
         <button 
             type="submit"
             className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition-colors"
