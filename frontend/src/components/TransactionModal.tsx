@@ -1,6 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import { TransactionForm } from './TransactionForm'; // Reutilizamos o formulário!
+import { TransactionForm } from './TransactionForm';
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -8,31 +8,31 @@ interface TransactionModalProps {
 }
 
 export function TransactionModal({ isOpen, onClose }: TransactionModalProps) {
-  // Se não estiver aberto, não renderiza nada
   if (!isOpen) {
     return null;
   }
 
   return (
-    // Fundo semi-transparente (backdrop)
+    // 1. Fundo agora é semi-transparente (backdrop) e tem padding
     <div 
-      className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50"
-      onClick={onClose} // Fecha o modal ao clicar no fundo
+      className="fixed inset-0 bg-black/75 flex justify-center items-center z-50 p-4"
+      onClick={onClose}
     >
-      {/* Contentor do Modal */}
       <div 
-        className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md border border-slate-700 p-8 relative"
-        onClick={(e) => e.stopPropagation()} // Impede que o clique dentro do modal o feche
+        className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md border border-slate-700 p-6 sm:p-8 relative"
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Botão de Fechar */}
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
-        >
-          <X size={24} />
-        </button>
+        {/* 2. Adicionado um cabeçalho para o título e o botão, resolvendo a sobreposição */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-white">Adicionar Transação</h2>
+          <button 
+            onClick={onClose}
+            className="text-slate-400 hover:text-white transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
 
-        {/* Conteúdo do Modal */}
         <TransactionForm onSave={onClose} />
       </div>
     </div>

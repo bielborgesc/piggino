@@ -20,11 +20,11 @@ function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: { current
     const year = currentDate.getFullYear();
 
     return (
-        <div className="flex items-center justify-center gap-4 bg-slate-700/50 p-2 rounded-lg">
+        <div className="flex items-center justify-center gap-2 sm:gap-4 bg-slate-700/50 p-2 rounded-lg">
             <button onClick={onPreviousMonth} className="p-2 rounded-md hover:bg-slate-600 transition-colors">
                 <ChevronLeft size={20} />
             </button>
-            <span className="text-lg font-semibold w-40 text-center capitalize">
+            <span className="text-base sm:text-lg font-semibold w-32 sm:w-40 text-center capitalize">
                 {monthName} de {year}
             </span>
             <button onClick={onNextMonth} className="p-2 rounded-md hover:bg-slate-600 transition-colors">
@@ -37,7 +37,6 @@ function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: { current
 export function TransactionsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date('2025-08-01T12:00:00Z'));
-  // 1. Estado para controlar o filtro de tipo (receita/despesa)
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
 
   const handlePreviousMonth = () => {
@@ -48,25 +47,23 @@ export function TransactionsPage() {
     setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
-  // 2. Atualiza o useMemo para incluir o novo filtro de tipo
   const filteredTransactions = useMemo(() => {
     return mockAllTransactions
-      .filter(t => { // Primeiro, filtra por mês
+      .filter(t => {
         const transactionDate = new Date(t.date);
         return transactionDate.getFullYear() === currentDate.getFullYear() &&
                transactionDate.getMonth() === currentDate.getMonth();
       })
-      .filter(t => { // Depois, filtra pelo tipo selecionado
-        if (filterType === 'all') {
-          return true; // Mostra tudo
-        }
-        return t.type === filterType; // Mostra apenas 'income' ou 'expense'
+      .filter(t => {
+        if (filterType === 'all') return true;
+        return t.type === filterType;
       });
-  }, [currentDate, filterType]); // Adiciona filterType como dependência
+  }, [currentDate, filterType]);
 
   return (
     <>
-      <div className="flex-1 p-6 overflow-y-auto">
+      {/* 1. Ajuste no padding para telas menores */}
+      <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
         {/* Cabeçalho e Ações */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
@@ -75,7 +72,7 @@ export function TransactionsPage() {
           </div>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-all duration-300"
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-all duration-300 self-start md:self-auto"
           >
             <PlusCircle size={20} />
             Adicionar Transação
@@ -83,33 +80,56 @@ export function TransactionsPage() {
         </div>
 
         {/* Filtros e Pesquisa */}
-        <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6 flex flex-col md:flex-row gap-4 items-center">
+        <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6 flex flex-col lg:flex-row gap-4 items-center">
             <MonthNavigator 
                 currentDate={currentDate}
                 onPreviousMonth={handlePreviousMonth}
                 onNextMonth={handleNextMonth}
             />
-            <div className="relative flex-1 w-full md:w-auto">
+            <div className="relative flex-1 w-full lg:w-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                <input type="text" placeholder="Pesquisar por descrição..." className="w-full bg-slate-700 border-slate-600 rounded-md p-2 pl-10 text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition" />
+                <input type="text" placeholder="Pesquisar..." className="w-full bg-slate-700 border-slate-600 rounded-md p-2 pl-10 text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition" />
             </div>
-            {/* 3. Botões de filtro agora atualizam o estado e têm estilo dinâmico */}
-            <div className="flex gap-2">
-                <button onClick={() => setFilterType('all')} className={`${filterType === 'all' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors`}>Tudo</button>
-                <button onClick={() => setFilterType('income')} className={`${filterType === 'income' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors`}>Receitas</button>
-                <button onClick={() => setFilterType('expense')} className={`${filterType === 'expense' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors`}>Despesas</button>
+            <div className="flex gap-2 w-full lg:w-auto">
+                <button onClick={() => setFilterType('all')} className={`flex-1 lg:flex-none ${filterType === 'all' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors`}>Tudo</button>
+                <button onClick={() => setFilterType('income')} className={`flex-1 lg:flex-none ${filterType === 'income' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors`}>Receitas</button>
+                <button onClick={() => setFilterType('expense')} className={`flex-1 lg:flex-none ${filterType === 'expense' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors`}>Despesas</button>
             </div>
         </div>
 
-        {/* Tabela de Transações */}
-        <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+        {/* 2. Lista de transações agora é responsiva */}
+        <div className="space-y-4 md:hidden">
+          {filteredTransactions.length > 0 ? (
+            filteredTransactions.map((t) => (
+              <div key={t.id} className="bg-slate-800 p-4 rounded-lg border border-slate-700 flex justify-between items-center">
+                <div className="flex-1">
+                  <p className="font-semibold text-white">{t.description}</p>
+                  <p className="text-sm text-slate-400">{t.category}</p>
+                  <p className="text-xs text-slate-500 mt-1">{new Date(t.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
+                </div>
+                <div className="text-right">
+                  <p className={`font-bold text-lg ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                    {t.amount < 0 ? `- R$ ${Math.abs(t.amount).toFixed(2)}` : `+ R$ ${t.amount.toFixed(2)}`}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">
+              Nenhuma transação encontrada para este mês.
+            </div>
+          )}
+        </div>
+
+        {/* Tabela de Transações (visível apenas em telas médias e maiores) */}
+        <div className="hidden md:block bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-slate-700/50">
               <tr>
                 <th className="p-4 font-semibold">Descrição</th>
                 <th className="p-4 font-semibold">Valor</th>
-                <th className="p-4 font-semibold hidden md:table-cell">Categoria</th>
-                <th className="p-4 font-semibold hidden md:table-cell">Data</th>
+                <th className="p-4 font-semibold">Categoria</th>
+                <th className="p-4 font-semibold">Data</th>
                 <th className="p-4 font-semibold text-right">Ações</th>
               </tr>
             </thead>
@@ -121,8 +141,8 @@ export function TransactionsPage() {
                     <td className={`p-4 font-bold ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
                         R$ {t.amount.toFixed(2)}
                     </td>
-                    <td className="p-4 text-slate-400 hidden md:table-cell">{t.category}</td>
-                    <td className="p-4 text-slate-400 hidden md:table-cell">
+                    <td className="p-4 text-slate-400">{t.category}</td>
+                    <td className="p-4 text-slate-400">
                         {new Date(t.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}
                     </td>
                     <td className="p-4 text-right">
