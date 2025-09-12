@@ -1,32 +1,55 @@
-import { useState } from 'react';
-import { Toaster } from 'react-hot-toast'; // 1. Importe o Toaster
+import { useState, useEffect } from 'react'; // 1. Importe o useEffect
+import { Toaster } from 'react-hot-toast';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
 import { Dashboard } from './components/Dashboard';
-import { MainLayout } from './components/MainLayout';
 import { TransactionsPage } from './components/TransactionsPage';
+import { MainLayout } from './components/MainLayout';
 
 enum AuthView { Login, Register }
 type Page = 'dashboard' | 'transactions';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // O estado inicial agora é determinado pela presença do token
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('piggino_token'));
   const [authView, setAuthView] = useState<AuthView>(AuthView.Login);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
 
-  const handleLoginSuccess = () => setIsAuthenticated(true);
+  // 2. useEffect para sincronizar o estado com o localStorage (opcional, mas bom para abas múltiplas)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsAuthenticated(!!localStorage.getItem('piggino_token'));
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  // 3. Crie a função de logout
+  const handleLogout = () => {
+    localStorage.removeItem('piggino_token');
+    setIsAuthenticated(false);
+    // Garante que a próxima tela seja a de login
+    setAuthView(AuthView.Login); 
+  };
 
   if (isAuthenticated) {
     return (
       <>
-        {/* 2. Adicione o Toaster aqui também para a área logada */}
         <Toaster position="top-right" toastOptions={{
-          style: {
-            background: '#334155', // slate-700
-            color: '#f1f5f9', // slate-100
-          },
+          style: { background: '#334155', color: '#f1f5f9' },
         }} />
-        <MainLayout activePage={currentPage} onNavigate={setCurrentPage}>
+        {/* 4. Passe a função de logout para o MainLayout */}
+        <MainLayout 
+          activePage={currentPage} 
+          onNavigate={setCurrentPage}
+          onLogout={handleLogout}
+        >
           {currentPage === 'dashboard' && <Dashboard />}
           {currentPage === 'transactions' && <TransactionsPage />}
         </MainLayout>
@@ -36,12 +59,8 @@ function App() {
 
   return (
     <div className="bg-slate-900 min-h-screen flex items-center justify-center p-4 font-sans">
-      {/* 2. Adicione o Toaster aqui para as telas de login/cadastro */}
       <Toaster position="top-right" toastOptions={{
-          style: {
-            background: '#334155', // slate-700
-            color: '#f1f5f9', // slate-100
-          },
+          style: { background: '#334155', color: '#f1f5f9' },
         }} />
       {authView === AuthView.Login ? (
         <LoginForm 

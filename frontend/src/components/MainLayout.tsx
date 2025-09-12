@@ -5,14 +5,14 @@ interface MainLayoutProps {
   children: React.ReactNode;
   activePage: 'dashboard' | 'transactions';
   onNavigate: (page: 'dashboard' | 'transactions') => void;
+  onLogout: () => void; // 1. Receba a função de logout
 }
 
-// Sidebar agora também recebe uma função para se fechar
+// Sidebar permanece o mesmo, mas agora fecha ao navegar
 function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNavigate: (page: 'dashboard' | 'transactions') => void; onClose: () => void; }) {
-  
   const handleNavigation = (page: 'dashboard' | 'transactions') => {
     onNavigate(page);
-    onClose(); // Fecha o menu após a navegação em mobile
+    onClose();
   };
 
   return (
@@ -22,7 +22,6 @@ function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNa
             <img src="/piggino-logo.jpg" alt="Piggino Logo" className="w-10 h-10 rounded-lg" />
             <span className="text-2xl font-bold text-white">Piggino</span>
         </div>
-        {/* Botão de fechar visível apenas em mobile */}
         <button onClick={onClose} className="md:hidden text-slate-400 hover:text-white">
             <X size={24} />
         </button>
@@ -47,12 +46,11 @@ function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNa
   );
 }
 
-// Header agora recebe uma função para abrir o menu
-function Header({ onOpenSidebar }: { onOpenSidebar: () => void; }) {
+// 2. Header agora recebe onLogout
+function Header({ onOpenSidebar, onLogout }: { onOpenSidebar: () => void; onLogout: () => void; }) {
     return (
         <header className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-700">
           <div className="flex items-center gap-4">
-            {/* Botão Hambúrguer - visível apenas em mobile */}
             <button onClick={onOpenSidebar} className="md:hidden text-slate-300 hover:text-white">
                 <Menu size={24} />
             </button>
@@ -62,7 +60,8 @@ function Header({ onOpenSidebar }: { onOpenSidebar: () => void; }) {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
+            {/* 3. Conecte a função ao onClick do botão */}
+            <button onClick={onLogout} className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
                 <LogOut className="h-5 w-5 hidden sm:block" />
                 <span>Sair</span>
             </button>
@@ -71,26 +70,22 @@ function Header({ onOpenSidebar }: { onOpenSidebar: () => void; }) {
       );
 }
 
-export function MainLayout({ children, activePage, onNavigate }: MainLayoutProps) {
+export function MainLayout({ children, activePage, onNavigate, onLogout }: MainLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <div className="flex h-screen w-full bg-slate-900 text-white">
-        {/* Fundo do menu agora é semi-transparente */}
         <div className={`fixed inset-0 z-30 transition-opacity duration-300 md:hidden ${isSidebarOpen ? 'bg-black/50' : 'bg-opacity-0 pointer-events-none'}`} onClick={() => setIsSidebarOpen(false)}></div>
-        
-        {/* Sidebar para Mobile (flutuante) */}
         <div className={`fixed inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out z-40 md:hidden`}>
             <Sidebar activePage={activePage} onNavigate={onNavigate} onClose={() => setIsSidebarOpen(false)} />
         </div>
-
-        {/* Sidebar para Desktop (fixa) */}
         <div className="hidden md:flex">
             <Sidebar activePage={activePage} onNavigate={onNavigate} onClose={() => {}} />
         </div>
       
       <main className="flex-1 flex flex-col">
-        <Header onOpenSidebar={() => setIsSidebarOpen(true)} />
+        {/* 4. Passe a função onLogout para o Header */}
+        <Header onOpenSidebar={() => setIsSidebarOpen(true)} onLogout={onLogout} />
         {children}
       </main>
     </div>

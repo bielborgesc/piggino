@@ -1,20 +1,11 @@
-import React, { useState, useMemo } from 'react';
-import { PlusCircle, Search, MoreVertical, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { PlusCircle, Search, MoreVertical, ChevronLeft, ChevronRight, LoaderCircle } from 'lucide-react';
 import { TransactionModal } from './TransactionModal';
+import { getTransactions } from '../services/api'; // Importe a função da API
+import { Transaction } from '../types'; // Importe o tipo de transação
+import toast from 'react-hot-toast';
 
-// Usaremos dados mockados mais extensos para esta tela
-const mockAllTransactions = [
-    { id: 1, description: 'Salário Mensal', amount: 5000.00, type: 'income', category: 'Salário', date: '2025-08-01' },
-    { id: 2, description: 'Aluguel', amount: -1500.00, type: 'expense', category: 'Moradia', date: '2025-08-05' },
-    { id: 3, description: 'Supermercado', amount: -450.75, type: 'expense', category: 'Alimentação', date: '2025-08-10' },
-    { id: 4, description: 'Venda de item usado', amount: 200.00, type: 'income', category: 'Renda Extra', date: '2025-08-12' },
-    { id: 5, description: 'Conta de Luz', amount: -120.50, type: 'expense', category: 'Moradia', date: '2025-08-15' },
-    { id: 6, description: 'Jantar com amigos', amount: -85.00, type: 'expense', category: 'Lazer', date: '2025-08-18' },
-    { id: 7, description: 'Reembolso Imposto', amount: 350.00, type: 'income', category: 'Outros', date: '2025-07-20' },
-    { id: 8, description: 'Gasolina', amount: -150.00, type: 'expense', category: 'Transporte', date: '2025-07-22' },
-];
-
-// Componente para a navegação de mês
+// Componente para a navegação de mês (permanece o mesmo)
 function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: { currentDate: Date; onPreviousMonth: () => void; onNextMonth: () => void; }) {
     const monthName = currentDate.toLocaleString('pt-BR', { month: 'long', timeZone: 'UTC' });
     const year = currentDate.getFullYear();
@@ -34,10 +25,33 @@ function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: { current
     );
 }
 
+
 export function TransactionsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date('2025-08-01T12:00:00Z'));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
+  
+  // 1. Novos estados para os dados reais e controlo de carregamento
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 2. useEffect para buscar os dados quando o componente é montado
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getTransactions();
+        setAllTransactions(data);
+      } catch (error) {
+        console.error("Falha ao buscar transações:", error);
+        toast.error("Não foi possível carregar as transações.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []); // O array vazio [] significa que este efeito só roda uma vez
 
   const handlePreviousMonth = () => {
     setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -47,24 +61,24 @@ export function TransactionsPage() {
     setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
+  // 3. O filtro agora opera sobre os dados do estado `allTransactions`
   const filteredTransactions = useMemo(() => {
-    return mockAllTransactions
+    return allTransactions
       .filter(t => {
-        const transactionDate = new Date(t.date);
+        const transactionDate = new Date(t.purchaseDate);
         return transactionDate.getFullYear() === currentDate.getFullYear() &&
                transactionDate.getMonth() === currentDate.getMonth();
       })
       .filter(t => {
         if (filterType === 'all') return true;
-        return t.type === filterType;
+        return t.transactionType.toLowerCase() === filterType;
       });
-  }, [currentDate, filterType]);
+  }, [currentDate, filterType, allTransactions]);
 
   return (
     <>
-      {/* 1. Ajuste no padding para telas menores */}
       <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
-        {/* Cabeçalho e Ações */}
+        {/* Cabeçalho e Filtros (sem alterações) */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white">Minhas Transações</h2>
@@ -78,8 +92,6 @@ export function TransactionsPage() {
             Adicionar Transação
           </button>
         </div>
-
-        {/* Filtros e Pesquisa */}
         <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6 flex flex-col lg:flex-row gap-4 items-center">
             <MonthNavigator 
                 currentDate={currentDate}
@@ -97,73 +109,82 @@ export function TransactionsPage() {
             </div>
         </div>
 
-        {/* 2. Lista de transações agora é responsiva */}
-        <div className="space-y-4 md:hidden">
-          {filteredTransactions.length > 0 ? (
-            filteredTransactions.map((t) => (
-              <div key={t.id} className="bg-slate-800 p-4 rounded-lg border border-slate-700 flex justify-between items-center">
-                <div className="flex-1">
-                  <p className="font-semibold text-white">{t.description}</p>
-                  <p className="text-sm text-slate-400">{t.category}</p>
-                  <p className="text-xs text-slate-500 mt-1">{new Date(t.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
-                </div>
-                <div className="text-right">
-                  <p className={`font-bold text-lg ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                    {t.amount < 0 ? `- R$ ${Math.abs(t.amount).toFixed(2)}` : `+ R$ ${t.amount.toFixed(2)}`}
-                  </p>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">
-              Nenhuma transação encontrada para este mês.
-            </div>
-          )}
-        </div>
-
-        {/* Tabela de Transações (visível apenas em telas médias e maiores) */}
-        <div className="hidden md:block bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-slate-700/50">
-              <tr>
-                <th className="p-4 font-semibold">Descrição</th>
-                <th className="p-4 font-semibold">Valor</th>
-                <th className="p-4 font-semibold">Categoria</th>
-                <th className="p-4 font-semibold">Data</th>
-                <th className="p-4 font-semibold text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
+        {/* 4. Lógica para exibir um spinner enquanto os dados carregam */}
+        {isLoading ? (
+          <div className="flex justify-center items-center p-10">
+            <LoaderCircle className="animate-spin text-green-500" size={40} />
+          </div>
+        ) : (
+          <>
+            {/* Lista de cartões para mobile */}
+            <div className="space-y-4 md:hidden">
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((t) => (
-                    <tr key={t.id} className="border-b border-slate-700 last:border-b-0 hover:bg-slate-700/30">
-                    <td className="p-4">{t.description}</td>
-                    <td className={`p-4 font-bold ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                        R$ {t.amount.toFixed(2)}
-                    </td>
-                    <td className="p-4 text-slate-400">{t.category}</td>
-                    <td className="p-4 text-slate-400">
-                        {new Date(t.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}
-                    </td>
-                    <td className="p-4 text-right">
-                        <button className="text-slate-400 hover:text-white p-2">
-                            <MoreVertical size={20} />
-                        </button>
-                    </td>
-                    </tr>
+                  <div key={t.id} className="bg-slate-800 p-4 rounded-lg border border-slate-700 flex justify-between items-center">
+                    <div className="flex-1">
+                      <p className="font-semibold text-white">{t.description}</p>
+                      <p className="text-sm text-slate-400">Categoria ID: {t.categoryId}</p> {/* Placeholder */}
+                      <p className="text-xs text-slate-500 mt-1">{new Date(t.purchaseDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-bold text-lg ${t.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                        {t.totalAmount < 0 ? `- R$ ${Math.abs(t.totalAmount).toFixed(2)}` : `+ R$ ${t.totalAmount.toFixed(2)}`}
+                      </p>
+                    </div>
+                  </div>
                 ))
               ) : (
-                <tr>
-                    <td colSpan={5} className="text-center p-8 text-slate-400">
-                        Nenhuma transação encontrada para este mês.
-                    </td>
-                </tr>
+                <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">
+                  Nenhuma transação encontrada para este mês.
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
+            </div>
+
+            {/* Tabela para desktop */}
+            <div className="hidden md:block bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-slate-700/50">
+                  <tr>
+                    <th className="p-4 font-semibold">Descrição</th>
+                    <th className="p-4 font-semibold">Valor</th>
+                    <th className="p-4 font-semibold">Categoria</th>
+                    <th className="p-4 font-semibold">Data</th>
+                    <th className="p-4 font-semibold text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTransactions.length > 0 ? (
+                    filteredTransactions.map((t) => (
+                        <tr key={t.id} className="border-b border-slate-700 last:border-b-0 hover:bg-slate-700/30">
+                        <td className="p-4">{t.description}</td>
+                        <td className={`p-4 font-bold ${t.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                            R$ {t.totalAmount.toFixed(2)}
+                        </td>
+                        <td className="p-4 text-slate-400">Categoria ID: {t.categoryId}</td> {/* Placeholder */}
+                        <td className="p-4 text-slate-400">
+                            {new Date(t.purchaseDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}
+                        </td>
+                        <td className="p-4 text-right">
+                            <button className="text-slate-400 hover:text-white p-2">
+                                <MoreVertical size={20} />
+                            </button>
+                        </td>
+                        </tr>
+                    ))
+                  ) : (
+                    <tr>
+                        <td colSpan={5} className="text-center p-8 text-slate-400">
+                            Nenhuma transação encontrada para este mês.
+                        </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
-      <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <TransactionModal isOpen={isModalOpen} onClose={() => { /* TODO: Atualizar a lista após salvar */ }} />
     </>
   );
 }
