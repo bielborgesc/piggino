@@ -26,7 +26,7 @@ namespace Piggino.Api.Infrastructure.Repositories
             // Retorna todas as transações que pertencem ao utilizador especificado,
             // ordenadas da mais recente para a mais antiga.
             return await _context.Transactions
-                .Where(t => t.UserId == userId)
+                //.Where(t => t.UserId == userId)
                 .OrderByDescending(t => t.PurchaseDate)
                 .ToListAsync();
         }

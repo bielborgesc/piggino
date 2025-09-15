@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Piggino.Api.Data;
@@ -14,10 +15,14 @@ using Piggino.Api.Domain.Users.Interfaces;
 using Piggino.Api.Domain.Users.Services;
 using Piggino.Api.Infrastructure.Repositories;
 using Piggino.Api.Resources;
+using Piggino.Api.Settings;
 using System.Globalization;
 using System.Text;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+// Configure JwtSettings using the options pattern
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 
 builder.Services.AddCors(options =>
 {
@@ -51,10 +56,10 @@ builder.Services.AddSwaggerGen(options =>
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
-        Description = "Por favor, insira 'Bearer' seguido de um espaço e o seu token JWT",
+        Description = "Por favor, insira 'Bearer' seguido de um espao e o seu token JWT",
         Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer"
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -73,30 +78,33 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-string? jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured.");
-string? jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("JWT Issuer not configured.");
-string? jwtAudience = builder.Configuration["Jwt:Audience"] ?? throw new InvalidOperationException("JWT Audience not configured.");
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+// Update AddAuthentication to get settings from DI
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtIssuer,
-        ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-    };
-});
+        // This is a temporary service provider to get the JwtSettings.
+        // This is not ideal, but it's a common way to solve this problem.
+        var serviceProvider = builder.Services.BuildServiceProvider();
+        var jwtSettings = serviceProvider.GetRequiredService<IOptions<JwtSettings>>().Value;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Convert.FromBase64String(jwtSettings.Key)
+            )
+        };
+    });
 
 builder.Services.AddAuthorization();
+
+// Register ITokenService
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -141,11 +149,11 @@ if (!app.Environment.IsEnvironment("Testing"))
     app.UseHttpsRedirection();
 }
 
+app.UseRouting();
+
 app.UseCors();
 
 app.UseAuthentication();
-
-app.UseRouting();
 
 app.UseAuthorization();
 
