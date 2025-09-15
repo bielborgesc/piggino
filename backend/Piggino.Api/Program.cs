@@ -78,15 +78,35 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Update AddAuthentication to get settings from DI
+// --- CÓDIGO CORRIGIDO ---
+
+// 1. Lê a secção de configuração
+var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
+var jwtKey = jwtSettingsSection["Key"];
+
+// Validação para garantir que a chave não é nula ou vazia
+if (string.IsNullOrEmpty(jwtKey))
+{
+    throw new InvalidOperationException("A chave JWT (JwtSettings:Key) não está configurada no appsettings.json");
+}
+
+// 2. Vincula a configuração a um objeto fortemente tipado
+var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
+
+// 3. Adiciona uma validação CRÍTICA para garantir que a chave foi carregada
+if (string.IsNullOrEmpty(jwtSettings?.Key))
+{
+    throw new InvalidOperationException("A chave JWT (JwtSettings:Key) não está configurada ou não pôde ser lida do appsettings.json.");
+}
+
+// 4. Configura o IOptions para que o TokenService receba estas mesmas configurações
+builder.Services.Configure<JwtSettings>(jwtSettingsSection);
+
+// 5. Configura a autenticação USANDO O MESMO OBJETO que foi validado
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        // This is a temporary service provider to get the JwtSettings.
-        // This is not ideal, but it's a common way to solve this problem.
-        var serviceProvider = builder.Services.BuildServiceProvider();
-        var jwtSettings = serviceProvider.GetRequiredService<IOptions<JwtSettings>>().Value;
-
+        // ... (a sua configuração de TokenValidationParameters continua a mesma)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -95,10 +115,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSettings.Issuer,
             ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Convert.FromBase64String(jwtSettings.Key)
-            )
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
         };
+
+        // --- ADICIONE ESTE BLOCO PARA DEBUGAR ---
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                // Este ponto será atingido sempre que um token falhar na validação.
+                Console.WriteLine("--- FALHA NA AUTENTICAÇÃO ---");
+                Console.WriteLine("Exceção: " + context.Exception.ToString());
+                Console.WriteLine("-----------------------------");
+                return Task.CompletedTask;
+            }
+        };
+        // --- FIM DO BLOCO DE DEBUG ---
     });
 
 builder.Services.AddAuthorization();
@@ -140,7 +172,6 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.MapOpenApi();
 }
 
 
