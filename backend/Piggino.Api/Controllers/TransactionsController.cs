@@ -7,7 +7,7 @@ namespace Piggino.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    //[Authorize]
+    [Authorize]
     public class TransactionsController : ControllerBase
     {
         private readonly ITransactionService _service;
