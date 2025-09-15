@@ -29,7 +29,6 @@ namespace Piggino.Api.Domain.Transactions.Services
 
         private Guid GetCurrentUserId()
         {
-            return new Guid();
             string? userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
