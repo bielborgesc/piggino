@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Piggino.Api.Data;
+using Piggino.Api.Domain.CardInstallments.Entities;
 using Piggino.Api.Domain.Transactions.Entities;
 using Piggino.Api.Domain.Transactions.Interfaces;
 
@@ -23,10 +24,10 @@ namespace Piggino.Api.Infrastructure.Repositories
 
         public async Task<IEnumerable<Transaction>> GetAllAsync(Guid userId)
         {
-            // Retorna todas as transações que pertencem ao utilizador especificado,
-            // ordenadas da mais recente para a mais antiga.
             return await _context.Transactions
-                .Include(t => t.CardInstallments) // ✅ ADICIONE ESTA LINHA PARA INCLUIR AS PARCELAS
+                .Include(t => t.CardInstallments)
+                .Include(t => t.Category) // ✅ Adicionar
+                .Include(t => t.FinancialSource) // ✅ Adicionar
                 .Where(t => t.UserId == userId)
                 .OrderByDescending(t => t.PurchaseDate)
                 .ToListAsync();
@@ -61,6 +62,11 @@ namespace Piggino.Api.Infrastructure.Repositories
         {
             // Persiste todas as alterações pendentes na base de dados.
             return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<CardInstallment?> GetCardInstallmentByIdAsync(int installmentId)
+        {
+            return await _context.CardInstallments.FindAsync(installmentId);
         }
     }
 }

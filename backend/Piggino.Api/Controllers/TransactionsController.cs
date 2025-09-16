@@ -84,5 +84,27 @@ namespace Piggino.Api.Controllers
 
             return NoContent();
         }
+
+        [HttpPatch("installments/{installmentId}/toggle-paid")]
+        public async Task<IActionResult> ToggleInstallmentPaidStatus(int installmentId)
+        {
+            var success = await _service.ToggleInstallmentPaidStatusAsync(installmentId);
+            if (!success)
+            {
+                return NotFound();
+            }
+            return NoContent();
+        }
+
+        [HttpPatch("{transactionId}/toggle-paid")]
+        public async Task<IActionResult> ToggleTransactionPaidStatus(int transactionId)
+        {
+            var success = await _service.ToggleTransactionPaidStatusAsync(transactionId);
+            if (!success)
+            {
+                return NotFound();
+            }
+            return NoContent();
+        }
     }
 }

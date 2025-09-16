@@ -41,8 +41,6 @@ namespace Piggino.Api.Domain.Transactions.Services
         public async Task<TransactionReadDto> CreateAsync(TransactionCreateDto createDto)
         {
             Guid userId = GetCurrentUserId();
-
-            // Validação de segurança: Verifica se a categoria e a fonte financeira pertencem ao utilizador
             var category = await _categoryRepository.GetByIdAsync(createDto.CategoryId, userId);
             var financialSource = await _financialSourceRepository.GetByIdAsync(createDto.FinancialSourceId, userId);
 
@@ -63,31 +61,12 @@ namespace Piggino.Api.Domain.Transactions.Services
                 CategoryId = createDto.CategoryId,
                 FinancialSourceId = createDto.FinancialSourceId,
                 UserId = userId,
-                CardInstallments = new List<CardInstallment>() // Inicializa a coleção de parcelas
+                CardInstallments = new List<CardInstallment>()
             };
 
-            // --- NOVA LÓGICA DE PARCELAMENTO ---
-            if (newTransaction.IsInstallment && newTransaction.InstallmentCount.HasValue && newTransaction.InstallmentCount > 0)
-            {
-                // Calcula o valor de cada parcela (com arredondamento para 2 casas decimais)
-                decimal installmentAmount = Math.Round(newTransaction.TotalAmount / newTransaction.InstallmentCount.Value, 2);
-
-                // Cria cada registo de parcela individualmente
-                for (int i = 1; i <= newTransaction.InstallmentCount.Value; i++)
-                {
-                    newTransaction.CardInstallments.Add(new Piggino.Api.Domain.CardInstallments.Entities.CardInstallment
-                    {
-                        InstallmentNumber = i,
-                        Amount = installmentAmount,
-                        IsPaid = false // Por padrão, as parcelas não estão pagas
-                    });
-                }
-            }
-            // --- FIM DA NOVA LÓGICA ---
-
+            GenerateInstallments(newTransaction);
             await _transactionRepository.AddAsync(newTransaction);
             await _transactionRepository.SaveChangesAsync();
-
             return MapToReadDto(newTransaction);
         }
 
@@ -95,11 +74,7 @@ namespace Piggino.Api.Domain.Transactions.Services
         {
             Guid userId = GetCurrentUserId();
             Transaction? transaction = await _transactionRepository.GetByIdAsync(id, userId);
-
-            if (transaction == null)
-            {
-                return false;
-            }
+            if (transaction == null) return false;
 
             _transactionRepository.Delete(transaction);
             return await _transactionRepository.SaveChangesAsync();
@@ -116,20 +91,15 @@ namespace Piggino.Api.Domain.Transactions.Services
         {
             Guid userId = GetCurrentUserId();
             Transaction? transaction = await _transactionRepository.GetByIdAsync(id, userId);
-
             return transaction == null ? null : MapToReadDto(transaction);
         }
 
         public async Task<bool> UpdateAsync(int id, TransactionUpdateDto updateDto)
         {
             Guid userId = GetCurrentUserId();
-            // Precisamos carregar a transação E suas parcelas existentes
             Transaction? transaction = await _transactionRepository.GetByIdWithInstallmentsAsync(id, userId);
 
-            if (transaction == null)
-            {
-                return false;
-            }
+            if (transaction == null) return false;
 
             var category = await _categoryRepository.GetByIdAsync(updateDto.CategoryId, userId);
             var financialSource = await _financialSourceRepository.GetByIdAsync(updateDto.FinancialSourceId, userId);
@@ -139,27 +109,28 @@ namespace Piggino.Api.Domain.Transactions.Services
                 throw new InvalidOperationException("Category or Financial Source not found or does not belong to the user.");
             }
 
-            // Atualiza as propriedades principais
+            // Atualiza as propriedades principais da transação
             transaction.Description = updateDto.Description;
             transaction.TotalAmount = updateDto.TotalAmount;
             transaction.TransactionType = updateDto.TransactionType;
             transaction.PurchaseDate = updateDto.PurchaseDate;
-            transaction.IsPaid = updateDto.IsPaid;
+            transaction.IsPaid = updateDto.IsPaid; // Geralmente se aplica a transações não parceladas
             transaction.CategoryId = updateDto.CategoryId;
             transaction.FinancialSourceId = updateDto.FinancialSourceId;
 
-            // Lógica para lidar com a mudança no parcelamento
-            bool installmentChanged = transaction.IsInstallment != updateDto.IsInstallment ||
-                                      transaction.InstallmentCount != updateDto.InstallmentCount;
+            // Lógica crucial para recalcular parcelas
+            bool needsRecalculation = transaction.IsInstallment != updateDto.IsInstallment ||
+                                      transaction.InstallmentCount != updateDto.InstallmentCount ||
+                                      (updateDto.IsInstallment && transaction.TotalAmount != updateDto.TotalAmount);
 
             transaction.IsInstallment = updateDto.IsInstallment;
             transaction.InstallmentCount = updateDto.InstallmentCount;
 
-            // Se o parcelamento mudou ou o valor total mudou, recalcula as parcelas
-            if (installmentChanged || transaction.TotalAmount != updateDto.TotalAmount)
+            if (needsRecalculation)
             {
-                // Limpa as parcelas antigas e gera novas
+                // Remove as parcelas antigas. O EF Core rastreia isso para deletar do banco.
                 transaction.CardInstallments?.Clear();
+                // Gera as novas parcelas com base nos dados atualizados
                 GenerateInstallments(transaction);
             }
 
@@ -167,7 +138,6 @@ namespace Piggino.Api.Domain.Transactions.Services
             return await _transactionRepository.SaveChangesAsync();
         }
 
-        // ✅ NOVA FUNÇÃO PRIVADA PARA GERAR PARCELAS
         private void GenerateInstallments(Transaction transaction)
         {
             if (transaction.IsInstallment && transaction.InstallmentCount.HasValue && transaction.InstallmentCount > 0)
@@ -176,7 +146,7 @@ namespace Piggino.Api.Domain.Transactions.Services
                 {
                     transaction.CardInstallments = new List<CardInstallment>();
                 }
-
+                
                 decimal installmentAmount = Math.Round(transaction.TotalAmount / transaction.InstallmentCount.Value, 2);
 
                 for (int i = 1; i <= transaction.InstallmentCount.Value; i++)
@@ -191,7 +161,6 @@ namespace Piggino.Api.Domain.Transactions.Services
             }
         }
 
-        // Método de mapeamento privado para evitar repetição de código
         private TransactionReadDto MapToReadDto(Transaction transaction)
         {
             return new TransactionReadDto
@@ -205,7 +174,9 @@ namespace Piggino.Api.Domain.Transactions.Services
                 InstallmentCount = transaction.InstallmentCount,
                 IsPaid = transaction.IsPaid,
                 CategoryId = transaction.CategoryId,
+                CategoryName = transaction.Category?.Name, // ✅ Adicionar
                 FinancialSourceId = transaction.FinancialSourceId,
+                FinancialSourceName = transaction.FinancialSource?.Name, // ✅ Adicionar
                 UserId = transaction.UserId,
                 CardInstallments = transaction.CardInstallments?.Select(ci => new CardInstallmentReadDto
                 {
@@ -216,6 +187,45 @@ namespace Piggino.Api.Domain.Transactions.Services
                     TransactionId = ci.TransactionId
                 }).ToList()
             };
+        }
+
+        public async Task<bool> ToggleInstallmentPaidStatusAsync(int installmentId)
+        {
+            Guid userId = GetCurrentUserId();
+            // A validação de segurança aqui é mais complexa, pois precisamos garantir que a parcela
+            // pertence a uma transação do usuário.
+            var installment = await _transactionRepository.GetCardInstallmentByIdAsync(installmentId);
+
+            if (installment == null) return false;
+
+            // Carrega a transação pai para verificar o dono
+            var transaction = await _transactionRepository.GetByIdAsync(installment.TransactionId, userId);
+            if (transaction == null)
+            {
+                // Se a transação não pertence ao usuário, não autoriza a alteração
+                return false;
+            }
+
+            installment.IsPaid = !installment.IsPaid;
+            // O SaveChangesAsync já está no repositório, mas como estamos modificando
+            // uma entidade carregada, podemos chamar o do contexto diretamente aqui por simplicidade.
+            return await _transactionRepository.SaveChangesAsync();
+        }
+
+        public async Task<bool> ToggleTransactionPaidStatusAsync(int transactionId)
+        {
+            Guid userId = GetCurrentUserId();
+            var transaction = await _transactionRepository.GetByIdAsync(transactionId, userId);
+
+            if (transaction == null || transaction.IsInstallment)
+            {
+                // Não permite alterar transações parceladas por este método ou se não existir
+                return false;
+            }
+
+            transaction.IsPaid = !transaction.IsPaid;
+            _transactionRepository.Update(transaction);
+            return await _transactionRepository.SaveChangesAsync();
         }
     }
 }

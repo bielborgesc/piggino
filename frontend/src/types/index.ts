@@ -12,7 +12,9 @@ export interface Transaction {
   installmentCount?: number;
   isPaid: boolean;
   categoryId: number;
+  categoryName?: string; // ✅ Adicionar
   financialSourceId: number;
+  financialSourceName?: string; // ✅ Adicionar
   userId: string;
   cardInstallments?: CardInstallment[];
 }

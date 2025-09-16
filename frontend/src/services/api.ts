@@ -107,4 +107,12 @@ export const deleteTransaction = async (id: number): Promise<void> => {
   await apiClient.delete(`/Transactions/${id}`);
 };
 
+export const toggleInstallmentPaidStatus = async (installmentId: number): Promise<void> => {
+  await apiClient.patch(`/Transactions/installments/${installmentId}/toggle-paid`);
+};
+
+export const toggleTransactionPaidStatus = async (transactionId: number): Promise<void> => {
+  await apiClient.patch(`/Transactions/${transactionId}/toggle-paid`);
+};
+
 export default apiClient;

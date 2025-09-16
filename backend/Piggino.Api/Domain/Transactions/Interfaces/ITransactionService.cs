@@ -9,5 +9,7 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         Task<TransactionReadDto> CreateAsync(TransactionCreateDto createDto);
         Task<bool> UpdateAsync(int id, TransactionUpdateDto updateDto);
         Task<bool> DeleteAsync(int id);
+        Task<bool> ToggleInstallmentPaidStatusAsync(int installmentId); // ✅ Adicionar
+        Task<bool> ToggleTransactionPaidStatusAsync(int transactionId); // ✅ Adicionar esta linha
     }
 }
