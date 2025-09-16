@@ -25,16 +25,16 @@ services:
 
   # NOVO SERVIÇO: Caddy
   caddy:
-    image: caddy:latest
-    container_name: caddy
-    restart: unless-stopped
-    ports:
-      - "8081:80"   # Desafio HTTP agora entra pela 8081
-      - "8443:443"  # Acesso seguro HTTPS agora entra pela 8443
-    volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile # Mapeia nosso arquivo de configuração
-      - caddy_data:/data # Volume para armazenar os certificados SSL
-      - caddy_config:/config
+     image: caddy:latest
+     container_name: caddy
+     restart: unless-stopped
+     ports:
+       # Vamos expor APENAS a porta segura 443
+       - "443:443"
+     volumes:
+       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+       - caddy_data:/data
+       - caddy_config:/config
 
 volumes:
   data:
