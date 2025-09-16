@@ -1,0 +1,3 @@
+piggino.duckdns.org {
+    reverse_proxy piggino-frontend:80
+}

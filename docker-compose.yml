@@ -1,35 +1,42 @@
 version: '3.8'
 
 services:
-  # Definição do serviço do Backend (API)
+  # Serviço do Backend (API) - Sem alterações
   piggino-api:
     container_name: piggino-api
     build:
-      context: ./backend # Onde encontrar o código
-      dockerfile: Piggino.Api/Dockerfile # Qual Dockerfile usar
-    ports:
-      - "8080:8080" # Mapeia a porta 8080 do servidor para a porta 8080 do contêiner
+      context: ./backend
+      dockerfile: Piggino.Api/Dockerfile
     volumes:
-      # Garante que o banco de dados seja salvo fora do contêiner, na pasta 'data'
       - ./data:/app/data
     environment:
       - ASPNETCORE_URLS=http://+:8080
-      # Aponta para o caminho do banco de dados dentro do contêiner
       - ConnectionStrings__DefaultConnection=Data Source=/app/data/piggino.db
     restart: unless-stopped
 
-  # Definição do serviço do Frontend
+  # Serviço do Frontend - A porta foi removida
   piggino-frontend:
     container_name: piggino-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "80:80" # Mapeia a porta 80 (HTTP) do servidor para o contêiner
-    depends_on:
-      - piggino-api # Garante que o backend suba antes do frontend
     restart: unless-stopped
+    # A porta foi removida daqui, pois o Caddy vai gerenciar o acesso
 
-# Declara o volume para persistência de dados
+  # NOVO SERVIÇO: Caddy
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"   # Porta para o desafio HTTP do SSL
+      - "443:443" # Porta para o tráfego HTTPS seguro
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile # Mapeia nosso arquivo de configuração
+      - caddy_data:/data # Volume para armazenar os certificados SSL
+      - caddy_config:/config
+
 volumes:
   data:
+  caddy_data:
+  caddy_config:
