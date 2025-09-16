@@ -29,8 +29,8 @@ services:
     container_name: caddy
     restart: unless-stopped
     ports:
-      - "80:80"   # Porta para o desafio HTTP do SSL
-      - "443:443" # Porta para o tráfego HTTPS seguro
+      - "8081:80"   # Desafio HTTP agora entra pela 8081
+      - "8443:443"  # Acesso seguro HTTPS agora entra pela 8443
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile # Mapeia nosso arquivo de configuração
       - caddy_data:/data # Volume para armazenar os certificados SSL
