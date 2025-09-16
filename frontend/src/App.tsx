@@ -1,21 +1,22 @@
-import { useState, useEffect } from 'react'; // 1. Importe o useEffect
+import { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
 import { Dashboard } from './components/Dashboard';
 import { TransactionsPage } from './components/TransactionsPage';
+import { CategoriesPage } from './components/CategoriesPage';
+import { FinancialSourcesPage } from './components/FinancialSourcesPage'; // ✅ 1. Importa a nova página
 import { MainLayout } from './components/MainLayout';
 
 enum AuthView { Login, Register }
-type Page = 'dashboard' | 'transactions';
+// ✅ 2. Adiciona a nova página ao tipo
+type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources';
 
 function App() {
-  // O estado inicial agora é determinado pela presença do token
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('piggino_token'));
   const [authView, setAuthView] = useState<AuthView>(AuthView.Login);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
 
-  // 2. useEffect para sincronizar o estado com o localStorage (opcional, mas bom para abas múltiplas)
   useEffect(() => {
     const handleStorageChange = () => {
       setIsAuthenticated(!!localStorage.getItem('piggino_token'));
@@ -28,13 +29,12 @@ function App() {
 
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
+    setCurrentPage('dashboard'); // Volta para o dashboard após o login
   };
 
-  // 3. Crie a função de logout
   const handleLogout = () => {
     localStorage.removeItem('piggino_token');
     setIsAuthenticated(false);
-    // Garante que a próxima tela seja a de login
     setAuthView(AuthView.Login); 
   };
 
@@ -44,14 +44,16 @@ function App() {
         <Toaster position="top-right" toastOptions={{
           style: { background: '#334155', color: '#f1f5f9' },
         }} />
-        {/* 4. Passe a função de logout para o MainLayout */}
         <MainLayout 
           activePage={currentPage} 
           onNavigate={setCurrentPage}
           onLogout={handleLogout}
         >
+          {/* ✅ 3. O seu bloco de renderização, que já está correto */}
           {currentPage === 'dashboard' && <Dashboard />}
           {currentPage === 'transactions' && <TransactionsPage />}
+          {currentPage === 'categories' && <CategoriesPage />}
+          {currentPage === 'financial-sources' && <FinancialSourcesPage />}
         </MainLayout>
       </>
     );

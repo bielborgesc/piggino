@@ -1,11 +1,13 @@
 import axios from 'axios';
 import { 
-  Transaction, // O tipo já está atualizado
+  Transaction,
   Category, 
   FinancialSource, 
   TransactionData, 
   UserRegistrationData,
-  UserLoginData
+  UserLoginData,
+  CategoryType,
+  FinancialSourceData
 } from '../types';
 
 const API_BASE_URL = 'https://localhost:7216/api';
@@ -30,7 +32,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// --- Funções da API de Autenticação ---
+// --- Funções da API de Autenticação (permanecem as mesmas) ---
 export const registerUser = async (userData: UserRegistrationData) => {
   const response = await apiClient.post('/User', userData);
   return response.data;
@@ -43,26 +45,66 @@ export const loginUser = async (userData: UserLoginData) => {
 
 // --- Funções da API de Transações ---
 export const getTransactions = async (): Promise<Transaction[]> => {
-  console.log('Buscando transações da API real...');
-  // Esta chamada agora será autenticada automaticamente pelo interceptor
   const response = await apiClient.get('/Transactions');
   return response.data;
 };
 
-// --- Outras Funções da API (placeholders) ---
+// ✅ NOVA IMPLEMENTAÇÃO
+export const createTransaction = async (transactionData: TransactionData): Promise<Transaction> => {
+  const response = await apiClient.post('/Transactions', transactionData);
+  return response.data;
+};
+
+
+// --- Funções da API de Categorias e Fontes ---
+// ✅ NOVA IMPLEMENTAÇÃO
 export const getCategories = async (): Promise<Category[]> => {
-  console.log('Buscando categorias da API real...');
-  return [];
+  const response = await apiClient.get('/Categories');
+  return response.data;
 };
 
+// ✅ NOVA FUNÇÃO
+export const createCategory = async (categoryData: { name: string, type: CategoryType }): Promise<Category> => {
+  const response = await apiClient.post('/Categories', categoryData);
+  return response.data;
+};
+
+// ✅ NOVA FUNÇÃO
+export const updateCategory = async (id: number, categoryData: { name: string, type: CategoryType }): Promise<void> => {
+  await apiClient.put(`/Categories/${id}`, categoryData);
+};
+
+// ✅ NOVA FUNÇÃO
+export const deleteCategory = async (id: number): Promise<void> => {
+  await apiClient.delete(`/Categories/${id}`);
+};
+
+
+// ✅ NOVA IMPLEMENTAÇÃO
 export const getFinancialSources = async (): Promise<FinancialSource[]> => {
-  console.log('Buscando fontes financeiras da API real...');
-  return [];
+  const response = await apiClient.get('/FinancialSources');
+  return response.data;
 };
 
-export const createTransaction = async (transactionData: TransactionData): Promise<any> => {
-  console.log('Enviando nova transação para a API real:', transactionData);
-  return { id: Math.random(), ...transactionData };
+export const createFinancialSource = async (data: FinancialSourceData): Promise<FinancialSource> => {
+  const response = await apiClient.post('/FinancialSources', data);
+  return response.data;
+};
+
+export const updateFinancialSource = async (id: number, data: FinancialSourceData): Promise<void> => {
+  await apiClient.put(`/FinancialSources/${id}`, data);
+};
+
+export const deleteFinancialSource = async (id: number): Promise<void> => {
+  await apiClient.delete(`/FinancialSources/${id}`);
+};
+
+export const updateTransaction = async (id: number, transactionData: TransactionData): Promise<void> => {
+  await apiClient.put(`/Transactions/${id}`, transactionData);
+};
+
+export const deleteTransaction = async (id: number): Promise<void> => {
+  await apiClient.delete(`/Transactions/${id}`);
 };
 
 export default apiClient;

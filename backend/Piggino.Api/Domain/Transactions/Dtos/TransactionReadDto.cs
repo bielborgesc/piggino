@@ -1,4 +1,5 @@
-﻿using Piggino.Api.Enum;
+﻿using Piggino.Api.Domain.CardInstallments.Dtos;
+using Piggino.Api.Enum;
 
 namespace Piggino.Api.Domain.Transactions.Dtos
 {
@@ -15,5 +16,7 @@ namespace Piggino.Api.Domain.Transactions.Dtos
         public int CategoryId { get; set; }
         public int FinancialSourceId { get; set; }
         public Guid UserId { get; set; }
+        public ICollection<CardInstallmentReadDto>? CardInstallments { get; set; }
+
     }
 }

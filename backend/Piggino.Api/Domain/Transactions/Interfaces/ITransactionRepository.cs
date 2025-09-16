@@ -11,5 +11,6 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         void Update(Transaction transaction);
         void Delete(Transaction transaction);
         Task<bool> SaveChangesAsync();
+        Task<Transaction?> GetByIdWithInstallmentsAsync(int id, Guid userId); // ✅ Adicione esta linha
     }
 }

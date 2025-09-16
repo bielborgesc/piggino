@@ -14,6 +14,7 @@ export interface Transaction {
   categoryId: number;
   financialSourceId: number;
   userId: string;
+  cardInstallments?: CardInstallment[];
 }
 
 export interface Category {
@@ -23,10 +24,13 @@ export interface Category {
   userId: string;
 }
 
+// ✅ CORREÇÃO: Adicione as propriedades opcionais aqui
 export interface FinancialSource {
   id: number;
   name: string;
   type: FinancialSourceType;
+  closingDay?: number; // Campo opcional
+  dueDay?: number;   // Campo opcional
   userId: string;
 }
 
@@ -37,6 +41,7 @@ export interface TransactionData {
     financialSourceId: number;
     categoryId: number;
     isInstallment: boolean;
+    installmentCount?: number;
     purchaseDate: string;
 }
 
@@ -49,4 +54,24 @@ export interface UserRegistrationData {
 export interface UserLoginData {
   email: string;
   password: string;
+}
+
+export interface CategoryData {
+  name: string;
+  type: CategoryType;
+}
+
+export interface FinancialSourceData {
+  name: string;
+  type: FinancialSourceType;
+  closingDay?: number | null;
+  dueDay?: number | null;
+}
+
+export interface CardInstallment {
+  id: number;
+  installmentNumber: number;
+  amount: number;
+  isPaid: boolean;
+  transactionId: number;
 }

@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, ArrowRightLeft, Settings, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, ArrowRightLeft, Settings, LogOut, Menu, X, Shapes, Wallet } from 'lucide-react';
+
+type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources';
 
 interface MainLayoutProps {
   children: React.ReactNode;
-  activePage: 'dashboard' | 'transactions';
-  onNavigate: (page: 'dashboard' | 'transactions') => void;
-  onLogout: () => void; // 1. Receba a função de logout
+  activePage: PageType;
+  onNavigate: (page: PageType) => void;
+  onLogout: () => void;
 }
-
 // Sidebar permanece o mesmo, mas agora fecha ao navegar
-function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNavigate: (page: 'dashboard' | 'transactions') => void; onClose: () => void; }) {
-  const handleNavigation = (page: 'dashboard' | 'transactions') => {
+function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNavigate: (page: PageType) => void; onClose: () => void; }) {
+  // 1. Defina a função 'handleNavigation' aqui
+  const handleNavigation = (page: PageType) => {
     onNavigate(page);
     onClose();
   };
 
+  // 2. O 'return' do componente vem depois da definição da função
   return (
     <aside className="w-64 bg-slate-800 p-6 flex-col flex z-40 h-full">
       <div className="flex items-center justify-between mb-10">
@@ -40,6 +43,21 @@ function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNa
         >
           <ArrowRightLeft className="h-5 w-5" />
           Transações
+        </button>
+        {/* O novo botão de categorias está correto */}
+        <button 
+          onClick={() => handleNavigation('categories')}
+          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'categories' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
+        >
+          <Shapes className="h-5 w-5" />
+          Categorias
+        </button>
+        <button 
+          onClick={() => handleNavigation('financial-sources')}
+          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'financial-sources' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
+        >
+          <Wallet className="h-5 w-5" />
+          Fontes Financeiras
         </button>
       </nav>
     </aside>

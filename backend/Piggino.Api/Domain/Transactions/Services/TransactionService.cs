@@ -1,4 +1,5 @@
-﻿using Piggino.Api.Domain.CardInstallments.Entities;
+﻿using Piggino.Api.Domain.CardInstallments.Dtos;
+using Piggino.Api.Domain.CardInstallments.Entities;
 using Piggino.Api.Domain.Categories.Interfaces;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
 using Piggino.Api.Domain.Transactions.Dtos;
@@ -122,14 +123,14 @@ namespace Piggino.Api.Domain.Transactions.Services
         public async Task<bool> UpdateAsync(int id, TransactionUpdateDto updateDto)
         {
             Guid userId = GetCurrentUserId();
-            Transaction? transaction = await _transactionRepository.GetByIdAsync(id, userId);
+            // Precisamos carregar a transação E suas parcelas existentes
+            Transaction? transaction = await _transactionRepository.GetByIdWithInstallmentsAsync(id, userId);
 
             if (transaction == null)
             {
                 return false;
             }
 
-            // Validação de segurança na atualização
             var category = await _categoryRepository.GetByIdAsync(updateDto.CategoryId, userId);
             var financialSource = await _financialSourceRepository.GetByIdAsync(updateDto.FinancialSourceId, userId);
 
@@ -138,19 +139,56 @@ namespace Piggino.Api.Domain.Transactions.Services
                 throw new InvalidOperationException("Category or Financial Source not found or does not belong to the user.");
             }
 
-            // Atualiza as propriedades
+            // Atualiza as propriedades principais
             transaction.Description = updateDto.Description;
             transaction.TotalAmount = updateDto.TotalAmount;
             transaction.TransactionType = updateDto.TransactionType;
             transaction.PurchaseDate = updateDto.PurchaseDate;
-            transaction.IsInstallment = updateDto.IsInstallment;
-            transaction.InstallmentCount = updateDto.InstallmentCount;
             transaction.IsPaid = updateDto.IsPaid;
             transaction.CategoryId = updateDto.CategoryId;
             transaction.FinancialSourceId = updateDto.FinancialSourceId;
 
+            // Lógica para lidar com a mudança no parcelamento
+            bool installmentChanged = transaction.IsInstallment != updateDto.IsInstallment ||
+                                      transaction.InstallmentCount != updateDto.InstallmentCount;
+
+            transaction.IsInstallment = updateDto.IsInstallment;
+            transaction.InstallmentCount = updateDto.InstallmentCount;
+
+            // Se o parcelamento mudou ou o valor total mudou, recalcula as parcelas
+            if (installmentChanged || transaction.TotalAmount != updateDto.TotalAmount)
+            {
+                // Limpa as parcelas antigas e gera novas
+                transaction.CardInstallments?.Clear();
+                GenerateInstallments(transaction);
+            }
+
             _transactionRepository.Update(transaction);
             return await _transactionRepository.SaveChangesAsync();
+        }
+
+        // ✅ NOVA FUNÇÃO PRIVADA PARA GERAR PARCELAS
+        private void GenerateInstallments(Transaction transaction)
+        {
+            if (transaction.IsInstallment && transaction.InstallmentCount.HasValue && transaction.InstallmentCount > 0)
+            {
+                if (transaction.CardInstallments == null)
+                {
+                    transaction.CardInstallments = new List<CardInstallment>();
+                }
+
+                decimal installmentAmount = Math.Round(transaction.TotalAmount / transaction.InstallmentCount.Value, 2);
+
+                for (int i = 1; i <= transaction.InstallmentCount.Value; i++)
+                {
+                    transaction.CardInstallments.Add(new CardInstallment
+                    {
+                        InstallmentNumber = i,
+                        Amount = installmentAmount,
+                        IsPaid = false
+                    });
+                }
+            }
         }
 
         // Método de mapeamento privado para evitar repetição de código
@@ -168,7 +206,15 @@ namespace Piggino.Api.Domain.Transactions.Services
                 IsPaid = transaction.IsPaid,
                 CategoryId = transaction.CategoryId,
                 FinancialSourceId = transaction.FinancialSourceId,
-                UserId = transaction.UserId
+                UserId = transaction.UserId,
+                CardInstallments = transaction.CardInstallments?.Select(ci => new CardInstallmentReadDto
+                {
+                    Id = ci.Id,
+                    InstallmentNumber = ci.InstallmentNumber,
+                    Amount = ci.Amount,
+                    IsPaid = ci.IsPaid,
+                    TransactionId = ci.TransactionId
+                }).ToList()
             };
         }
     }

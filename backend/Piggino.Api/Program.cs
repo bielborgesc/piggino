@@ -18,6 +18,7 @@ using Piggino.Api.Resources;
 using Piggino.Api.Settings;
 using System.Globalization;
 using System.Text;
+using System.Text.Json.Serialization;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -48,7 +49,11 @@ builder.Services.AddControllers()
     {
         options.DataAnnotationLocalizerProvider = (type, factory) =>
             factory.Create(typeof(Messages));
-    });
+    })
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    }); ;
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

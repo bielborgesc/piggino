@@ -26,9 +26,17 @@ namespace Piggino.Api.Infrastructure.Repositories
             // Retorna todas as transações que pertencem ao utilizador especificado,
             // ordenadas da mais recente para a mais antiga.
             return await _context.Transactions
-                //.Where(t => t.UserId == userId)
+                .Include(t => t.CardInstallments) // ✅ ADICIONE ESTA LINHA PARA INCLUIR AS PARCELAS
+                .Where(t => t.UserId == userId)
                 .OrderByDescending(t => t.PurchaseDate)
                 .ToListAsync();
+        }
+
+        public async Task<Transaction?> GetByIdWithInstallmentsAsync(int id, Guid userId)
+        {
+            return await _context.Transactions
+                .Include(t => t.CardInstallments)
+                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
         }
 
         public async Task AddAsync(Transaction transaction)
