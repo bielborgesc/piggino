@@ -26,7 +26,6 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
   const [isInstallment, setIsInstallment] = useState(false);
   const [installmentCount, setInstallmentCount] = useState('');
 
-  // ✅ 1. useEffect para CARREGAR os dados dos dropdowns (executa uma vez)
   useEffect(() => {
     async function loadData() {
       setIsLoadingData(true);
@@ -43,7 +42,6 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
     loadData();
   }, []);
 
-  // ✅ 2. useEffect para PREENCHER o formulário (executa quando initialData muda)
   useEffect(() => {
     if (initialData) {
       setDescription(initialData.description);
@@ -100,9 +98,23 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
           <input type="text" id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-gray-700 border border-gray-600 rounded-md p-2" placeholder="Ex: Café com amigos"/>
         </div>
         <div className="grid grid-cols-2 gap-4">
+          {/* ✅ Bloco do campo "Valor" ATUALIZADO */}
           <div>
             <label htmlFor="amount" className="block text-sm font-medium text-gray-400 mb-1">Valor</label>
-            <input type="number" id="amount" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-gray-700 border border-gray-600 rounded-md p-2" placeholder="0,00" step="0.01"/>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                R$
+              </span>
+              <input 
+                type="number" 
+                id="amount" 
+                value={amount} 
+                onChange={(e) => setAmount(e.target.value)} 
+                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 pl-10" // Padding à esquerda para o R$
+                placeholder="0,00" 
+                step="0.01"
+              />
+            </div>
           </div>
           <div>
             <label htmlFor="purchaseDate" className="block text-sm font-medium text-gray-400 mb-1">Data</label>
@@ -130,7 +142,6 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
           </div>
           {isInstallment && (
             <div className="flex-1">
-              {/* ✅ 3. Campo de parcelas agora é editável */}
               <input type="number" value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} placeholder="Nº de parcelas" className="w-full bg-gray-700 border-gray-600 rounded-md p-2 text-sm" min="2"/>
             </div>
           )}

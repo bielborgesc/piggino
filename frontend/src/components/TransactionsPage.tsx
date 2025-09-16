@@ -21,6 +21,7 @@ export function TransactionsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
+    const [searchQuery, setSearchQuery] = useState(''); // ✅ 1. Estado para a busca
     const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -70,8 +71,18 @@ export function TransactionsPage() {
                 }
             }
         }
-        return items.filter(item => filterType === 'all' || item.transactionType.toLowerCase() === filterType);
-    }, [currentDate, filterType, allTransactions]);
+        
+        // ✅ 3. Lógica de filtro atualizada
+        let filteredItems = items.filter(item => filterType === 'all' || item.transactionType.toLowerCase() === filterType);
+
+        if (searchQuery) {
+            filteredItems = filteredItems.filter(item => 
+                item.description.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+
+        return filteredItems;
+    }, [currentDate, filterType, allTransactions, searchQuery]); // Adiciona searchQuery como dependência
 
     const summary = useMemo(() => {
         const expenses = monthlyItems.filter(item => item.transactionType === 'Expense');
@@ -157,7 +168,17 @@ export function TransactionsPage() {
 
                 <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6 flex flex-col lg:flex-row gap-4 items-center">
                     <MonthNavigator currentDate={currentDate} onPreviousMonth={handlePreviousMonth} onNextMonth={handleNextMonth} />
-                    <div className="relative flex-1 w-full lg:w-auto"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} /><input type="text" placeholder="Pesquisar..." className="w-full bg-slate-700 border-slate-600 rounded-md p-2 pl-10 text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-green-500" /></div>
+                    {/* ✅ 2. Input conectado ao estado */}
+                    <div className="relative flex-1 w-full lg:w-auto">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                        <input 
+                            type="text" 
+                            placeholder="Pesquisar..." 
+                            className="w-full bg-slate-700 border-slate-600 rounded-md p-2 pl-10 text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-green-500"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
                     <div className="flex gap-2 w-full lg:w-auto"><button onClick={() => setFilterType('all')} className={`flex-1 lg:flex-none ${filterType === 'all' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg`}>Tudo</button><button onClick={() => setFilterType('income')} className={`flex-1 lg:flex-none ${filterType === 'income' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg`}>Receitas</button><button onClick={() => setFilterType('expense')} className={`flex-1 lg:flex-none ${filterType === 'expense' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg`}>Despesas</button></div>
                 </div>
 
@@ -165,7 +186,7 @@ export function TransactionsPage() {
                     <div className="flex justify-center items-center p-10"><LoaderCircle className="animate-spin text-green-500" size={40} /></div>
                 ) : (
                     <>
-                        {/* ✅ LISTA DE CARDS PARA MOBILE - REINTRODUZIDA E ATUALIZADA */}
+                        {/* LISTA DE CARDS PARA MOBILE */}
                         <div className="space-y-4 md:hidden">
                             {monthlyItems.length > 0 ? (
                                 monthlyItems.map((item) => (
@@ -191,7 +212,7 @@ export function TransactionsPage() {
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">Nenhuma transação para este mês.</div>
+                                <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">Nenhuma transação encontrada.</div>
                             )}
                         </div>
 
@@ -226,7 +247,7 @@ export function TransactionsPage() {
                                             </tr>
                                         ))
                                     ) : (
-                                        <tr><td colSpan={5} className="text-center p-8 text-slate-400">Nenhuma transação para este mês.</td></tr>
+                                        <tr><td colSpan={5} className="text-center p-8 text-slate-400">Nenhuma transação encontrada.</td></tr>
                                     )}
                                 </tbody>
                             </table>

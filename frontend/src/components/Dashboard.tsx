@@ -1,18 +1,29 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { TransactionModal } from './TransactionModal';
-import { getTransactions } from '../services/api'; // Importe a função da API
-import { Transaction } from '../types'; // Importe o tipo
+import { getTransactions } from '../services/api';
+import { Transaction } from '../types';
 import toast from 'react-hot-toast';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+
+// Componente para o navegador de meses
+function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: { currentDate: Date; onPreviousMonth: () => void; onNextMonth: () => void; }) {
+    const monthName = currentDate.toLocaleString('pt-BR', { month: 'long', timeZone: 'UTC' });
+    const year = currentDate.getFullYear();
+    return (
+        <div className="flex items-center justify-center gap-2 sm:gap-4 bg-slate-700/50 p-2 rounded-lg mb-6">
+            <button onClick={onPreviousMonth} className="p-2 rounded-md hover:bg-slate-600 transition-colors"><ChevronLeft size={20} /></button>
+            <span className="text-base sm:text-lg font-semibold w-32 sm:w-40 text-center capitalize">{monthName} de {year}</span>
+            <button onClick={onNextMonth} className="p-2 rounded-md hover:bg-slate-600 transition-colors"><ChevronRight size={20} /></button>
+        </div>
+    );
+}
 
 export function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // Estados para os dados reais
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Função para buscar os dados
   const fetchTransactions = async () => {
     try {
       setIsLoading(true);
@@ -26,47 +37,68 @@ export function Dashboard() {
     }
   };
 
-  // useEffect para buscar os dados quando o componente é montado
   useEffect(() => {
     fetchTransactions();
   }, []);
+  
+  const handlePreviousMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  const handleNextMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
 
-  // useMemo para calcular as métricas de forma eficiente
+  // ✅ LÓGICA CORRIGIDA: Processa transações e parcelas para o mês selecionado
+  const monthlyItems = useMemo(() => {
+    const items: any[] = [];
+    for (const t of transactions) {
+        if (!t.isInstallment) {
+            const transactionDate = new Date(t.purchaseDate);
+            if (transactionDate.getFullYear() === currentDate.getFullYear() && transactionDate.getMonth() === currentDate.getMonth()) {
+                items.push({ ...t, displayAmount: t.totalAmount, isInstallmentItem: false });
+            }
+        } else if (t.cardInstallments) {
+            const purchaseDate = new Date(t.purchaseDate);
+            for (const installment of t.cardInstallments) {
+                const installmentMonth = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + installment.installmentNumber - 1, 1);
+                if (installmentMonth.getFullYear() === currentDate.getFullYear() && installmentMonth.getMonth() === currentDate.getMonth()) {
+                    items.push({
+                        ...t,
+                        syntheticId: `${t.id}-${installment.id}`,
+                        description: `${t.description} (${installment.installmentNumber}/${t.installmentCount})`,
+                        displayAmount: installment.amount,
+                        isInstallmentItem: true,
+                        isPaid: installment.isPaid,
+                        installmentId: installment.id
+                    });
+                }
+            }
+        }
+    }
+    return items;
+  }, [currentDate, transactions]);
+
   const metrics = useMemo(() => {
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-
-    const transactionsThisMonth = transactions.filter(t => {
-      const transactionDate = new Date(t.purchaseDate);
-      return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
-    });
-
-    const income = transactionsThisMonth
+    const income = monthlyItems
       .filter(t => t.transactionType.toLowerCase() === 'income')
-      .reduce((acc, t) => acc + t.totalAmount, 0);
+      .reduce((acc, t) => acc + t.displayAmount, 0);
 
-    const expenses = transactionsThisMonth
+    const expenses = monthlyItems
       .filter(t => t.transactionType.toLowerCase() === 'expense')
-      .reduce((acc, t) => acc + t.totalAmount, 0);
+      .reduce((acc, t) => acc + t.displayAmount, 0);
       
-    // O saldo total considera todas as transações, não apenas as do mês
-    const balance = transactions.reduce((acc, t) => acc + t.totalAmount, 0);
+    // O saldo total continua considerando todas as transações, independente do mês
+    const balance = transactions.reduce((acc, t) => {
+        return t.transactionType.toLowerCase() === 'income' ? acc + t.totalAmount : acc - t.totalAmount;
+    }, 0);
 
     return { balance, income, expenses };
-  }, [transactions]);
+  }, [monthlyItems, transactions]);
 
-  // Pega as 4 transações mais recentes para exibir na lista
   const recentTransactions = useMemo(() => {
-    return [...transactions]
+    return [...monthlyItems]
       .sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime())
       .slice(0, 4);
-  }, [transactions]);
+  }, [monthlyItems]);
 
-  // Função para ser chamada quando uma nova transação é salva
   const handleTransactionSaved = () => {
     setIsModalOpen(false);
-    // Busca os dados novamente para atualizar a UI
     fetchTransactions(); 
   };
 
@@ -79,10 +111,15 @@ export function Dashboard() {
           </div>
         ) : (
           <>
+            <MonthNavigator 
+                currentDate={currentDate}
+                onPreviousMonth={handlePreviousMonth}
+                onNextMonth={handleNextMonth}
+            />
             {/* Seção de Métricas Principais */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-                <h3 className="text-slate-400 text-sm">Saldo Atual</h3>
+                <h3 className="text-slate-400 text-sm">Saldo Atual (Total)</h3>
                 <p className="text-3xl font-bold text-white mt-2">R$ {metrics.balance.toFixed(2)}</p>
               </div>
               <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
@@ -98,20 +135,20 @@ export function Dashboard() {
             {/* Seção de Ações Rápidas e Transações Recentes */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 bg-slate-800 p-6 rounded-lg border border-slate-700">
-                <h3 className="text-xl font-bold mb-4">Transações Recentes</h3>
+                <h3 className="text-xl font-bold mb-4">Transações Recentes do Mês</h3>
                 <div className="space-y-4">
                   {recentTransactions.length > 0 ? recentTransactions.map(t => (
-                    <div key={t.id} className="flex justify-between items-center">
+                    <div key={t.syntheticId || t.id} className="flex justify-between items-center">
                       <div>
                         <p className="font-semibold">{t.description}</p>
                         <p className="text-sm text-slate-400">{new Date(t.purchaseDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</p>
                       </div>
                       <p className={`font-bold ${t.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                        {t.transactionType.toLowerCase() === 'income' ? '+' : '-'} R$ {Math.abs(t.totalAmount).toFixed(2)}
+                        {t.transactionType.toLowerCase() === 'income' ? '+' : '-'} R$ {Math.abs(t.displayAmount).toFixed(2)}
                       </p>
                     </div>
                   )) : (
-                    <p className="text-slate-400">Nenhuma transação recente.</p>
+                    <p className="text-slate-400">Nenhuma transação para este mês.</p>
                   )}
                 </div>
               </div>
@@ -128,7 +165,6 @@ export function Dashboard() {
           </>
         )}
       </div>
-      {/* Passamos a nova função para o modal */}
       <TransactionModal isOpen={isModalOpen} onClose={handleTransactionSaved} />
     </>
   );
