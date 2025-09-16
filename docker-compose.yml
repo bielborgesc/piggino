@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # Definição do serviço do Backend (API)
+  piggino-api:
+    container_name: piggino-api
+    build:
+      context: ./backend # Onde encontrar o código
+      dockerfile: Piggino.Api/Dockerfile # Qual Dockerfile usar
+    ports:
+      - "8080:8080" # Mapeia a porta 8080 do servidor para a porta 8080 do contêiner
+    volumes:
+      # Garante que o banco de dados seja salvo fora do contêiner, na pasta 'data'
+      - ./data:/app/data
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      # Aponta para o caminho do banco de dados dentro do contêiner
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/piggino.db
+    restart: unless-stopped
+
+  # Definição do serviço do Frontend
+  piggino-frontend:
+    container_name: piggino-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80" # Mapeia a porta 80 (HTTP) do servidor para o contêiner
+    depends_on:
+      - piggino-api # Garante que o backend suba antes do frontend
+    restart: unless-stopped
+
+# Declara o volume para persistência de dados
+volumes:
+  data:

@@ -1,0 +1,6 @@
+# Ignora as pastas de build e binários
+**/bin
+**/obj
+
+# Ignora a pasta do projeto de testes
+Piggino.Api.Tests/

@@ -83,35 +83,35 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// --- CÓDIGO CORRIGIDO ---
+// --- Cï¿½DIGO CORRIGIDO ---
 
-// 1. Lê a secção de configuração
+// 1. Lï¿½ a secï¿½ï¿½o de configuraï¿½ï¿½o
 var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
 var jwtKey = jwtSettingsSection["Key"];
 
-// Validação para garantir que a chave não é nula ou vazia
+// Validaï¿½ï¿½o para garantir que a chave nï¿½o ï¿½ nula ou vazia
 if (string.IsNullOrEmpty(jwtKey))
 {
-    throw new InvalidOperationException("A chave JWT (JwtSettings:Key) não está configurada no appsettings.json");
+    throw new InvalidOperationException("A chave JWT (JwtSettings:Key) nï¿½o estï¿½ configurada no appsettings.json");
 }
 
-// 2. Vincula a configuração a um objeto fortemente tipado
+// 2. Vincula a configuraï¿½ï¿½o a um objeto fortemente tipado
 var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
 
-// 3. Adiciona uma validação CRÍTICA para garantir que a chave foi carregada
+// 3. Adiciona uma validaï¿½ï¿½o CRï¿½TICA para garantir que a chave foi carregada
 if (string.IsNullOrEmpty(jwtSettings?.Key))
 {
-    throw new InvalidOperationException("A chave JWT (JwtSettings:Key) não está configurada ou não pôde ser lida do appsettings.json.");
+    throw new InvalidOperationException("A chave JWT (JwtSettings:Key) nï¿½o estï¿½ configurada ou nï¿½o pï¿½de ser lida do appsettings.json.");
 }
 
-// 4. Configura o IOptions para que o TokenService receba estas mesmas configurações
+// 4. Configura o IOptions para que o TokenService receba estas mesmas configuraï¿½ï¿½es
 builder.Services.Configure<JwtSettings>(jwtSettingsSection);
 
-// 5. Configura a autenticação USANDO O MESMO OBJETO que foi validado
+// 5. Configura a autenticaï¿½ï¿½o USANDO O MESMO OBJETO que foi validado
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        // ... (a sua configuração de TokenValidationParameters continua a mesma)
+        // ... (a sua configuraï¿½ï¿½o de TokenValidationParameters continua a mesma)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -128,9 +128,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             OnAuthenticationFailed = context =>
             {
-                // Este ponto será atingido sempre que um token falhar na validação.
-                Console.WriteLine("--- FALHA NA AUTENTICAÇÃO ---");
-                Console.WriteLine("Exceção: " + context.Exception.ToString());
+                // Este ponto serï¿½ atingido sempre que um token falhar na validaï¿½ï¿½o.
+                Console.WriteLine("--- FALHA NA AUTENTICAï¿½ï¿½O ---");
+                Console.WriteLine("Exceï¿½ï¿½o: " + context.Exception.ToString());
                 Console.WriteLine("-----------------------------");
                 return Task.CompletedTask;
             }
@@ -162,6 +162,13 @@ CultureInfo[] supportedCultures = new[]
 };
 
 WebApplication app = builder.Build();
+
+// Bloco para aplicar as migrations automaticamente
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<PigginoDbContext>();
+    dbContext.Database.Migrate();
+}
 
 RequestLocalizationOptions localizationOptions = new RequestLocalizationOptions
 {
