@@ -1,38 +1,35 @@
+# A linha "version" é opcional, pode remover se quiser.
 version: '3.8'
 
 services:
+  # Serviço do Backend (API) - Sem alterações
   piggino-api:
     container_name: piggino-api
     build:
       context: ./backend
       dockerfile: Piggino.Api/Dockerfile
+    restart: unless-stopped
     volumes:
       - ./data:/app/data
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Data Source=/app/data/piggino.db
-    restart: unless-stopped
 
+  # Serviço do Frontend - Sem o Nginx, agora usamos a versão de desenvolvimento
   piggino-frontend:
     container_name: piggino-frontend
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      # Usamos o Dockerfile padrão que servirá com o Nginx, pois a Cloudflare se conectará a ele.
+      dockerfile: Dockerfile 
     restart: unless-stopped
 
-  caddy:
-    image: caddy:latest
-    container_name: caddy
+  # NOVO SERVIÇO: Conector do Cloudflare Tunnel
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-connector
     restart: unless-stopped
-    ports:
-      # Expõe apenas a porta 8081 para o acesso HTTP
-      - "8081:8081"
-    volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
+    command: tunnel --no-autoupdate run --token eyJhIjoiNDRlZGQ5YjFjMjJmODQwYjYyNjM3ODZkYmJiMjVkMjciLCJ0IjoiMTFkNDZhZGYtNTYyOS00MDllLWE4MDQtYjg1M2Q2YTM5OTAzIiwicyI6Ik16TTRNRGhsTmpjdFlXRTVaaTAwT1dZeUxXRTRaVFF0WWpKalpHUXhOREkzTURVeiJ9
 
 volumes:
   data:
-  caddy_data:
-  caddy_config:
