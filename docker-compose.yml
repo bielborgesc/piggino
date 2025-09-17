@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Serviço do Backend (API) - Sem alterações
   piggino-api:
     container_name: piggino-api
     build:
@@ -14,27 +13,23 @@ services:
       - ConnectionStrings__DefaultConnection=Data Source=/app/data/piggino.db
     restart: unless-stopped
 
-  # Serviço do Frontend - A porta foi removida
   piggino-frontend:
     container_name: piggino-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
-    # A porta foi removida daqui, pois o Caddy vai gerenciar o acesso
 
-  # NOVO SERVIÇO: Caddy
   caddy:
-     image: caddy:latest
-     container_name: caddy
-     restart: unless-stopped
-     ports:
-       # Vamos expor APENAS a porta segura 443
-       - "443:443"
-     volumes:
-       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
-       - caddy_data:/data
-       - caddy_config:/config
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "8081:8081" # Expõe apenas a porta 8081 para o acesso local
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
 
 volumes:
   data:

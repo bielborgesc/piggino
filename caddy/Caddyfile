@@ -1,8 +1,3 @@
-piggino.duckdns.org {
-    tls {
-        issuer acme {
-            challenges tls-alpn
-        }
-    }
+:8081 {
     reverse_proxy piggino-frontend:80
 }
