@@ -14,6 +14,8 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Data Source=/app/data/piggino.db
+    networks: # Adicione esta seção
+      - piggino-net
 
   # Serviço do Frontend - Sem o Nginx, agora usamos a versão de desenvolvimento
   piggino-frontend:
@@ -23,6 +25,8 @@ services:
       # Usamos o Dockerfile padrão que servirá com o Nginx, pois a Cloudflare se conectará a ele.
       dockerfile: Dockerfile 
     restart: unless-stopped
+    networks: # Adicione esta seção
+      - piggino-net
 
   # NOVO SERVIÇO: Conector do Cloudflare Tunnel
   cloudflared:
@@ -30,6 +34,13 @@ services:
     container_name: cloudflared-connector
     restart: unless-stopped
     command: tunnel --no-autoupdate run --token eyJhIjoiNDRlZGQ5YjFjMjJmODQwYjYyNjM3ODZkYmJiMjVkMjciLCJ0IjoiMTFkNDZhZGYtNTYyOS00MDllLWE4MDQtYjg1M2Q2YTM5OTAzIiwicyI6Ik16TTRNRGhsTmpjdFlXRTVaaTAwT1dZeUxXRTRaVFF0WWpKalpHUXhOREkzTURVeiJ9
+    networks: # Adicione esta seção
+      - piggino-net
 
 volumes:
   data:
+
+# Adicione esta seção inteira no final do arquivo
+networks:
+  piggino-net:
+    driver: bridge
