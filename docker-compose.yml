@@ -1,8 +1,7 @@
-# A linha "version" é opcional, pode remover se quiser.
+# docker-compose.yml
 version: '3.8'
 
 services:
-  # Serviço do Backend (API) - Sem alterações
   piggino-api:
     container_name: piggino-api
     build:
@@ -14,33 +13,30 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Data Source=/app/data/piggino.db
-    networks: # Adicione esta seção
+    networks:
       - piggino-net
 
-  # Serviço do Frontend - Sem o Nginx, agora usamos a versão de desenvolvimento
   piggino-frontend:
     container_name: piggino-frontend
     build:
       context: ./frontend
-      # Usamos o Dockerfile padrão que servirá com o Nginx, pois a Cloudflare se conectará a ele.
-      dockerfile: Dockerfile 
+      dockerfile: Dockerfile
     restart: unless-stopped
-    networks: # Adicione esta seção
+    networks:
       - piggino-net
 
-  # NOVO SERVIÇO: Conector do Cloudflare Tunnel
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared-connector
     restart: unless-stopped
+    # A mágica acontece aqui: o token conecta, e a configuração no painel Cloudflare direciona.
     command: tunnel --no-autoupdate run --token eyJhIjoiNDRlZGQ5YjFjMjJmODQwYjYyNjM3ODZkYmJiMjVkMjciLCJ0IjoiMTFkNDZhZGYtNTYyOS00MDllLWE4MDQtYjg1M2Q2YTM5OTAzIiwicyI6Ik16TTRNRGhsTmpjdFlXRTVaaTAwT1dZeUxXRTRaVFF0WWpKalpHUXhOREkzTURVeiJ9
-    networks: # Adicione esta seção
+    networks:
       - piggino-net
 
 volumes:
   data:
 
-# Adicione esta seção inteira no final do arquivo
 networks:
   piggino-net:
     driver: bridge
