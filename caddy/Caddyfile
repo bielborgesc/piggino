@@ -1,0 +1,10 @@
+# caddy/Caddyfile
+piggino.duckdns.org {
+    # O Caddy vai automaticamente gerar e renovar o certificado HTTPS para você
+    
+    # Envia todo o tráfego que começa com /api/ para o seu backend
+    reverse_proxy /api/* piggino-api:8080
+
+    # Envia todo o resto do tráfego para o seu frontend
+    reverse_proxy piggino-frontend:80
+}

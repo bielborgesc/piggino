@@ -11,6 +11,8 @@ services:
     volumes:
       - ./data:/app/data
     environment:
+      # Passa a chave do arquivo .env para a variável de ambiente dentro do contêiner
+      - JwtSettings__Key=${JWT_KEY}
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Data Source=/app/data/piggino.db
     networks:
@@ -22,22 +24,27 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "8080:80"
     networks:
       - piggino-net
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflared-connector
+  caddy:
+    image: caddy:latest
+    container_name: caddy
     restart: unless-stopped
-    # A mágica acontece aqui: o token conecta, e a configuração no painel Cloudflare direciona.
-    command: tunnel --no-autoupdate run --token eyJhIjoiNDRlZGQ5YjFjMjJmODQwYjYyNjM3ODZkYmJiMjVkMjciLCJ0IjoiMTFkNDZhZGYtNTYyOS00MDllLWE4MDQtYjg1M2Q2YTM5OTAzIiwicyI6Ik16TTRNRGhsTmpjdFlXRTVaaTAwT1dZeUxXRTRaVFF0WWpKalpHUXhOREkzTURVeiJ9
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
     networks:
       - piggino-net
 
 volumes:
   data:
+  caddy_data:
+  caddy_config:
 
 networks:
   piggino-net:

@@ -106,7 +106,7 @@ namespace Piggino.Api.Tests.IntegrationTests.Controllers
 
         private string GenerateTestJwtToken(Guid userId, string email)
         {
-            SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("PMvk++AZeBwdXWXzkZb44Sobk+anpASZ4Nw8nEp9vh0="));
+            SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(""));
             SigningCredentials credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             Claim[] claims = new[] {
