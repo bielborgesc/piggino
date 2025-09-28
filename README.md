@@ -1,53 +1,76 @@
-# 🐷 Piggino
-
-**Piggino** is a personal finance tracking system designed to be **simple**, **friendly**, and **evolutionary**.  
-It helps users manage income, expenses, credit card installments, and payment reminders — all in an intuitive and customizable experience.
-
-> 💡 **Why “Piggino”?**  
-> The name combines "**piggy**" (as in *piggy bank*) with the Italian-style suffix "**-ino**", giving it a warm, friendly tone.  
-> Think of Piggino as your **personal digital piggy bank** — always there to help you grow your financial awareness.
+<div align="center">
+  <img src="frontend/public/piggino-logo.jpg" alt="Piggino Logo" width="150px" />
+  <h1>Piggino</h1>
+  <p><strong>Your smart, intuitive, and personal financial assistant.</strong></p>
+  <p>A full-stack web application designed to simplify the management of expenses, income, and credit cards.</p>
+</div>
 
 ---
 
-## 📁 Monorepo Structure
+## 🚀 About The Project
 
-```bash
-piggino/
-├── backend/        # .NET API (EF Core + SQLite/PostgreSQL)
-├── frontend/       # Web application (React or Angular)
-└── documentation/  # ER diagrams, specs, mockups
-```
+Piggino was born from the need for a financial tracking tool that combines a simple user experience with powerful features. More than just a spreadsheet, Piggino is a complete web application built on a modern, scalable, and production-ready architecture.
 
-Each subproject will have its own `README.md` with setup instructions and architecture details.
+Version 1.0 is fully functional and deployed, offering users the essential tools to take control of their finances with clarity and purpose.
 
----
+**[IMAGE SUGGESTION: A GIF or screenshot of the main application dashboard in action.]**
 
-## 🚧 Project Status
+### ✨ Core Features (v1.0)
 
-> ⚠️ This project is currently **under active development**.  
-> The database model is defined, and the backend implementation is about to begin.  
-> Features and structure are still evolving.
+* **Secure Authentication:** Robust user registration and login system using JWT (JSON Web Tokens).
+* **Intuitive Dashboard:** A clear overview of financial health, including balances, monthly income, and expenses.
+* **Transaction Management:** Full CRUD functionality for income and expense tracking, with support for installment purchases.
+* **Custom Categories:** Users can create and manage personalized categories to organize their transactions.
+* **Financial Sources:** Ability to register multiple sources, such as bank accounts and credit cards.
 
 ---
 
-## 🛠️ Tech Stack (planned)
+## 🛠️ Architecture & Tech Stack
 
-- **Backend:** ASP.NET Core (.NET 8), Entity Framework Core
-- **Frontend:** React or Angular *(TBD)*
-- **Database:** SQLite (local), PostgreSQL (production)
-- **Infra (future):** Docker, GitHub Actions, AWS
-- **Extras:** Swagger, AutoMapper, background tasks for reminders
+Piggino is built with a containerized microservices architecture, leveraging modern technologies and DevOps best practices to ensure scalability, security, and an agile development cycle.
+
+**[IMAGE SUGGESTION: Your database schema diagram, `final_er_model_en.png`.]**
+*You can move this image to a new `.github/assets` folder to keep the root directory clean.*
+
+### Solution Architecture
+
+* **Backend API (.NET):** A robust RESTful API built with ASP.NET 8, following Domain-Driven Design (DDD) principles with a clear separation of concerns (Controllers, Services, Repositories).
+* **Frontend SPA (React):** A modern and reactive Single-Page Application developed with React, Vite, TypeScript, and Tailwind CSS for a fast and fluid user experience.
+* **Database:** Utilizes SQLite for simplicity and portability, managed via Entity Framework Core.
+* **Infrastructure as Code (IaC):** The entire infrastructure is defined and orchestrated through a `docker-compose.yml` file, ensuring consistency between development and production environments.
+* **Reverse Proxy (Caddy):** Caddy is used as the reverse proxy to manage all incoming traffic, route requests to the appropriate frontend and backend services, and automate the generation and renewal of SSL/TLS certificates for HTTPS.
+* **CI/CD with GitHub Actions:** A fully automated continuous integration and continuous deployment pipeline. Every push to the `main` branch triggers a workflow that builds the Docker images, pushes them to Docker Hub, and updates the application in production with zero downtime.
+
+### Technology Stack
+
+| Category         | Technology                                                                                                |
+| :--------------- | :-------------------------------------------------------------------------------------------------------- |
+| **Backend** | ASP.NET 8, C#, Entity Framework Core, LINQ, SQLite                                                        |
+| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS, Axios                                                           |
+| **Infra & DevOps** | Docker, Docker Compose, Caddy Server, Digital Ocean, GitHub Actions                                       |
+| **Authentication** | JWT (JSON Web Tokens)                                                                                     |
+
+---
+
+## 🌿 Branching Strategy
+
+This project follows a GitFlow-like branching model to ensure code stability in production:
+
+-   `main`: Contains the stable, production-ready code. Only accepts merges from the `develop` branch. Every merge to `main` triggers the deployment pipeline.
+-   `develop`: The main development branch where all new features are integrated before being released.
+-   `feature/*`: Short-lived branches created from `develop` to build new features in isolation.
 
 ---
 
 ## 📄 License
 
-> 🔒 This project is currently private and **not intended for commercial use**.  
-> A custom license will be added when the project becomes public.
+This project is licensed under the MIT License. See the `LICENSE` file for more details.
 
 ---
 
 ## 👨‍💻 Author
 
-[Gabriel Borges](https://github.com/bielborgesc)  
-Software Engineer passionate about backend development, personal finance, and building tools that solve real-life problems.
+**Gabriel Borges**
+
+-   [GitHub](https://github.com/bielborgesc)
+-   [LinkedIn](https://www.linkedin.com/in/bielborgesc/)
