@@ -1,17 +1,15 @@
-# docker-compose.yml
+# docker-compose.yml (Versão final para CI/CD)
 version: '3.8'
 
 services:
   piggino-api:
+    # A imagem virá do Docker Hub
+    image: bielborgesc/piggino-api:latest 
     container_name: piggino-api
-    build:
-      context: ./backend
-      dockerfile: Piggino.Api/Dockerfile
     restart: unless-stopped
     volumes:
       - ./data:/app/data
     environment:
-      # Passa a chave do arquivo .env para a variável de ambiente dentro do contêiner
       - JwtSettings__Key=${JWT_KEY}
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Data Source=/app/data/piggino.db
@@ -19,10 +17,9 @@ services:
       - piggino-net
 
   piggino-frontend:
+    # A imagem virá do Docker Hub
+    image: bielborgesc/piggino-frontend:latest
     container_name: piggino-frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
     restart: unless-stopped
     networks:
       - piggino-net
