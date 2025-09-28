@@ -1,6 +1,6 @@
 <div align="center">
   <img src="frontend/public/piggino-logo.jpg" alt="Piggino Logo" width="150px" />
-  <h1>Piggino</h1>
+  <h1>🐷 Piggino</h1>
   <p><strong>Your smart, intuitive, and personal financial assistant.</strong></p>
   <p>A full-stack web application designed to simplify the management of expenses, income, and credit cards.</p>
 </div>
@@ -13,15 +13,15 @@ Piggino was born from the need for a financial tracking tool that combines a sim
 
 Version 1.0 is fully functional and deployed, offering users the essential tools to take control of their finances with clarity and purpose.
 
-**[IMAGE SUGGESTION: A GIF or screenshot of the main application dashboard in action.]**
+<img width="1908" height="912" alt="image" src="https://github.com/user-attachments/assets/50e4c04f-4074-43f6-a68c-1146b4a9b769" />
 
 ### ✨ Core Features (v1.0)
 
-* **Secure Authentication:** Robust user registration and login system using JWT (JSON Web Tokens).
-* **Intuitive Dashboard:** A clear overview of financial health, including balances, monthly income, and expenses.
-* **Transaction Management:** Full CRUD functionality for income and expense tracking, with support for installment purchases.
-* **Custom Categories:** Users can create and manage personalized categories to organize their transactions.
-* **Financial Sources:** Ability to register multiple sources, such as bank accounts and credit cards.
+* 🔐 **Secure Authentication:** Robust user registration and login system using JWT (JSON Web Tokens).
+* 📊 **Intuitive Dashboard:** A clear overview of financial health, including balances, monthly income, and expenses.
+* 💸 **Transaction Management:** Full CRUD functionality for income and expense tracking, with support for installment purchases.
+* 🏷️ **Custom Categories:** Users can create and manage personalized categories to organize their transactions.
+* 💳 **Financial Sources:** Ability to register multiple sources, such as bank accounts and credit cards.
 
 ---
 
@@ -29,8 +29,7 @@ Version 1.0 is fully functional and deployed, offering users the essential tools
 
 Piggino is built with a containerized microservices architecture, leveraging modern technologies and DevOps best practices to ensure scalability, security, and an agile development cycle.
 
-**[IMAGE SUGGESTION: Your database schema diagram, `final_er_model_en.png`.]**
-*You can move this image to a new `.github/assets` folder to keep the root directory clean.*
+<img width="1268" height="511" alt="image" src="https://github.com/user-attachments/assets/49e6b3a6-f10e-451a-9c3e-723e6ab41645" />
 
 ### Solution Architecture
 
@@ -43,12 +42,12 @@ Piggino is built with a containerized microservices architecture, leveraging mod
 
 ### Technology Stack
 
-| Category         | Technology                                                                                                |
-| :--------------- | :-------------------------------------------------------------------------------------------------------- |
-| **Backend** | ASP.NET 8, C#, Entity Framework Core, LINQ, SQLite                                                        |
-| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS, Axios                                                           |
-| **Infra & DevOps** | Docker, Docker Compose, Caddy Server, Digital Ocean, GitHub Actions                                       |
-| **Authentication** | JWT (JSON Web Tokens)                                                                                     |
+| Category | Technology |
+| :--- | :--- |
+| 🖥️ **Backend** | ASP.NET 8, C#, Entity Framework Core, LINQ, SQLite |
+| 🎨 **Frontend** | React 19, TypeScript, Vite, Tailwind CSS, Axios |
+| ☁️ **Infra & DevOps** | Docker, Docker Compose, Caddy Server, Digital Ocean, GitHub Actions |
+| 🔑 **Authentication** | JWT (JSON Web Tokens) |
 
 ---
 
@@ -56,9 +55,9 @@ Piggino is built with a containerized microservices architecture, leveraging mod
 
 This project follows a GitFlow-like branching model to ensure code stability in production:
 
--   `main`: Contains the stable, production-ready code. Only accepts merges from the `develop` branch. Every merge to `main` triggers the deployment pipeline.
--   `develop`: The main development branch where all new features are integrated before being released.
--   `feature/*`: Short-lived branches created from `develop` to build new features in isolation.
+* `main`: Contains the stable, production-ready code. Only accepts merges from the `develop` branch. Every merge to `main` triggers the deployment pipeline.
+* `develop`: The main development branch where all new features are integrated before being released.
+* `feature/*`: Short-lived branches created from `develop` to build new features in isolation.
 
 ---
 
@@ -72,5 +71,5 @@ This project is licensed under the MIT License. See the `LICENSE` file for more 
 
 **Gabriel Borges**
 
--   [GitHub](https://github.com/bielborgesc)
--   [LinkedIn](https://www.linkedin.com/in/bielborgesc/)
+* [GitHub](https://github.com/bielborgesc)
+* [LinkedIn](https://www.linkedin.com/in/bielborgesc/)
