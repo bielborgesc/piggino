@@ -14,6 +14,8 @@ namespace Piggino.Api.Domain.Transactions.Dtos
         public int? InstallmentCount { get; set; }
         public bool IsPaid { get; set; }
         public int CategoryId { get; set; }
+        public bool IsFixed { get; set; }
+        public int? DayOfMonth { get; set; }
         public string? CategoryName { get; set; } // ✅ Adicionar
         public int FinancialSourceId { get; set; }
         public string? FinancialSourceName { get; set; } // ✅ Adicionar

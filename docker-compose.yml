@@ -3,8 +3,7 @@ version: '3.8'
 
 services:
   piggino-api:
-    # A imagem virá do Docker Hub
-    image: bielborgesc/piggino-api:latest 
+    image: bielborgesc/piggino-api:latest
     container_name: piggino-api
     restart: unless-stopped
     volumes:
@@ -13,6 +12,8 @@ services:
       - JwtSettings__Key=${JWT_KEY}
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Data Source=/app/data/piggino.db
+    command: >
+      sh -c "dotnet ef database update && dotnet Piggino.Api.dll"
     networks:
       - piggino-net
 

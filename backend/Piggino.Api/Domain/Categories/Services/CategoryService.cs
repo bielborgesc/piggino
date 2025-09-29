@@ -1,4 +1,6 @@
-﻿using Piggino.Api.Domain.Categories.Dtos;
+﻿using Microsoft.EntityFrameworkCore;
+using Piggino.Api.Data;
+using Piggino.Api.Domain.Categories.Dtos;
 using Piggino.Api.Domain.Categories.Entities;
 using Piggino.Api.Domain.Categories.Interfaces;
 using Piggino.Api.Infrastructure.Repositories;
@@ -10,11 +12,13 @@ namespace Piggino.Api.Domain.Categories.Services
     {
         private readonly ICategoryRepository _repository;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly PigginoDbContext _context;
 
-        public CategoryService(ICategoryRepository repository, IHttpContextAccessor httpContextAccessor)
+        public CategoryService(ICategoryRepository repository, IHttpContextAccessor httpContextAccessor, PigginoDbContext context)
         {
             _repository = repository;
             _httpContextAccessor = httpContextAccessor;
+            _context = context;
         }
 
         // Método privado para obter o ID do utilizador logado de forma segura a partir do token
@@ -62,6 +66,14 @@ namespace Piggino.Api.Domain.Categories.Services
             {
                 // Retorna false se a categoria não for encontrada ou não pertencer ao utilizador
                 return false;
+            }
+
+            // ✅ 5. Adicionar a verificação ANTES de apagar
+            var isCategoryInUse = await _context.Transactions.AnyAsync(t => t.CategoryId == id && t.UserId == userId);
+            if (isCategoryInUse)
+            {
+                // Lança uma exceção que será capturada pelo Controller
+                throw new InvalidOperationException("Esta categoria está em uso por uma ou mais transações e não pode ser apagada.");
             }
 
             _repository.Delete(category);

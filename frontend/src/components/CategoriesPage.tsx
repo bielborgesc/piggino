@@ -40,17 +40,23 @@ export function CategoriesPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Tem certeza que deseja excluir esta categoria? As transações associadas também podem ser afetadas.')) {
-      const toastId = toast.loading('Excluindo...');
-      try {
-        await deleteCategory(id);
-        toast.success('Categoria excluída!', { id: toastId });
-        fetchCategories(); // Atualiza a lista
-      } catch (error) {
-        console.error('Falha ao excluir categoria:', error);
-        toast.error('Não foi possível excluir a categoria.', { id: toastId });
-      }
+ const handleDelete = async (id: number) => {
+    if (window.confirm('Tem certeza que deseja excluir esta categoria?')) {
+        const toastId = toast.loading('Excluindo...');
+        try {
+            await deleteCategory(id);
+            toast.success('Categoria excluída!', { id: toastId });
+            fetchCategories(); // Atualiza a lista
+        } catch (error: any) { // ✅ Capturar o erro
+            console.error('Falha ao excluir categoria:', error);
+
+            // ✅ Mostrar a mensagem de erro vinda da API
+            if (error.response && error.response.data && error.response.data.message) {
+                toast.error(error.response.data.message, { id: toastId });
+            } else {
+                toast.error('Não foi possível excluir a categoria.', { id: toastId });
+            }
+        }
     }
   };
 

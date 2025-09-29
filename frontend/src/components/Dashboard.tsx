@@ -82,11 +82,8 @@ export function Dashboard() {
     const expenses = monthlyItems
       .filter(t => t.transactionType.toLowerCase() === 'expense')
       .reduce((acc, t) => acc + t.displayAmount, 0);
-      
-    // O saldo total continua considerando todas as transações, independente do mês
-    const balance = transactions.reduce((acc, t) => {
-        return t.transactionType.toLowerCase() === 'income' ? acc + t.totalAmount : acc - t.totalAmount;
-    }, 0);
+
+    const balance = income - expenses;
 
     return { balance, income, expenses };
   }, [monthlyItems, transactions]);
@@ -119,7 +116,7 @@ export function Dashboard() {
             {/* Seção de Métricas Principais */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-                <h3 className="text-slate-400 text-sm">Saldo Atual (Total)</h3>
+                <h3 className="text-slate-400 text-sm">Balanço do Mês</h3>
                 <p className="text-3xl font-bold text-white mt-2">R$ {metrics.balance.toFixed(2)}</p>
               </div>
               <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">

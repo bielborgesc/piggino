@@ -61,14 +61,21 @@ namespace Piggino.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFinancialSource(int id)
         {
-            bool success = await _service.DeleteAsync(id);
-
-            if (!success)
+            try // ✅ Adicionar try-catch
             {
-                return NotFound();
-            }
+                bool success = await _service.DeleteAsync(id);
 
-            return NoContent();
+                if (!success)
+                {
+                    return NotFound();
+                }
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex) // ✅ Capturar a exceção
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

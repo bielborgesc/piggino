@@ -15,11 +15,11 @@ namespace Piggino.Api.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     Email = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false),
-                    Password = table.Column<string>(type: "TEXT", nullable: false),
+                    PasswordHash = table.Column<byte[]>(type: "BLOB", nullable: false),
+                    PasswordSalt = table.Column<byte[]>(type: "BLOB", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -35,7 +35,7 @@ namespace Piggino.Api.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     Type = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    UserId = table.Column<int>(type: "INTEGER", nullable: false)
+                    UserId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -58,7 +58,7 @@ namespace Piggino.Api.Migrations
                     Type = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     ClosingDay = table.Column<int>(type: "INTEGER", nullable: true),
                     DueDay = table.Column<int>(type: "INTEGER", nullable: true),
-                    UserId = table.Column<int>(type: "INTEGER", nullable: false)
+                    UserId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -84,9 +84,11 @@ namespace Piggino.Api.Migrations
                     IsInstallment = table.Column<bool>(type: "INTEGER", nullable: false),
                     InstallmentCount = table.Column<int>(type: "INTEGER", nullable: true),
                     IsPaid = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsFixed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    DayOfMonth = table.Column<int>(type: "INTEGER", nullable: true),
                     CategoryId = table.Column<int>(type: "INTEGER", nullable: false),
                     FinancialSourceId = table.Column<int>(type: "INTEGER", nullable: false),
-                    UserId = table.Column<int>(type: "INTEGER", nullable: false)
+                    UserId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

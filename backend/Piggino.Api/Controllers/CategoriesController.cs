@@ -61,14 +61,22 @@ namespace Piggino.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            bool success = await _service.DeleteAsync(id);
-
-            if (!success)
+            try // ✅ 1. Adicionar try-catch
             {
-                return NotFound();
-            }
+                bool success = await _service.DeleteAsync(id);
 
-            return NoContent();
+                if (!success)
+                {
+                    return NotFound();
+                }
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex) // ✅ 2. Capturar a exceção
+            {
+                // Retorna um erro 400 com a mensagem que definimos no serviço
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { PlusCircle, Search, ChevronLeft, ChevronRight, LoaderCircle, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { TransactionModal } from './TransactionModal';
-import { getTransactions, deleteTransaction, toggleInstallmentPaidStatus, toggleTransactionPaidStatus } from '../services/api';
-import { Transaction } from '../types';
+// ✅ 1. Importar funções e tipos necessários
+import { getTransactions, deleteTransaction, toggleInstallmentPaidStatus, toggleTransactionPaidStatus, getCategories, getFinancialSources } from '../services/api';
+import { Transaction, Category, FinancialSource } from '../types';
 import toast from 'react-hot-toast';
 
 function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: { currentDate: Date; onPreviousMonth: () => void; onNextMonth: () => void; }) {
@@ -21,17 +22,32 @@ export function TransactionsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
-    const [searchQuery, setSearchQuery] = useState(''); // ✅ 1. Estado para a busca
+    const [searchQuery, setSearchQuery] = useState('');
     const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
-    const fetchTransactions = useCallback(async () => {
+    // ✅ 2. Estados para os novos filtros e para guardar as opções
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [financialSources, setFinancialSources] = useState<FinancialSource[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
+    const [selectedSource, setSelectedSource] = useState<string>('');
+
+    const fetchPageData = useCallback(async () => {
         try {
-            const data = await getTransactions();
-            setAllTransactions(data);
+            // Carrega todos os dados necessários em paralelo para melhor performance
+            const [transactionsData, categoriesData, sourcesData] = await Promise.all([
+                getTransactions(),
+                getCategories(),
+                getFinancialSources()
+            ]);
+            
+            setAllTransactions(transactionsData);
+            setCategories(categoriesData);
+            setFinancialSources(sourcesData);
+
         } catch (error) {
-            toast.error("Não foi possível carregar as transações.");
+            toast.error("Não foi possível carregar os dados da página.");
         } finally {
             setIsLoading(false);
         }
@@ -39,21 +55,23 @@ export function TransactionsPage() {
 
     useEffect(() => {
         setIsLoading(true);
-        fetchTransactions();
-    }, [fetchTransactions]);
+        fetchPageData();
+    }, [fetchPageData]);
 
     const handlePreviousMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
     const handleNextMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
 
     const monthlyItems = useMemo(() => {
-        const items: any[] = [];
+        let items: any[] = [];
+        
+        // Esta lógica de processamento de transações, parcelas e fixas permanece a mesma
         for (const t of allTransactions) {
-            if (!t.isInstallment) {
+            if (!t.isInstallment && !t.isFixed) {
                 const transactionDate = new Date(t.purchaseDate);
                 if (transactionDate.getFullYear() === currentDate.getFullYear() && transactionDate.getMonth() === currentDate.getMonth()) {
                     items.push({ ...t, displayAmount: t.totalAmount, isInstallmentItem: false });
                 }
-            } else if (t.cardInstallments) {
+            } else if (t.isInstallment && t.cardInstallments) {
                 const purchaseDate = new Date(t.purchaseDate);
                 for (const installment of t.cardInstallments) {
                     const installmentMonth = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + installment.installmentNumber - 1, 1);
@@ -69,11 +87,28 @@ export function TransactionsPage() {
                         });
                     }
                 }
+            } else if (t.isFixed) {
+                const transactionDate = new Date(t.purchaseDate);
+                 if (transactionDate.getFullYear() === currentDate.getFullYear() && transactionDate.getMonth() === currentDate.getMonth()) {
+                    items.push({ ...t, displayAmount: t.totalAmount, isInstallmentItem: false });
+                }
             }
         }
         
-        // ✅ 3. Lógica de filtro atualizada
-        let filteredItems = items.filter(item => filterType === 'all' || item.transactionType.toLowerCase() === filterType);
+        // ✅ 3. Lógica de filtragem atualizada para incluir os novos filtros
+        let filteredItems = items;
+
+        if (filterType !== 'all') {
+            filteredItems = filteredItems.filter(item => item.transactionType.toLowerCase() === filterType);
+        }
+        
+        if (selectedCategory) {
+            filteredItems = filteredItems.filter(item => String(item.categoryId) === selectedCategory);
+        }
+
+        if (selectedSource) {
+            filteredItems = filteredItems.filter(item => String(item.financialSourceId) === selectedSource);
+        }
 
         if (searchQuery) {
             filteredItems = filteredItems.filter(item => 
@@ -82,7 +117,7 @@ export function TransactionsPage() {
         }
 
         return filteredItems;
-    }, [currentDate, filterType, allTransactions, searchQuery]); // Adiciona searchQuery como dependência
+    }, [currentDate, filterType, allTransactions, searchQuery, selectedCategory, selectedSource]);
 
     const summary = useMemo(() => {
         const expenses = monthlyItems.filter(item => item.transactionType === 'Expense');
@@ -97,11 +132,18 @@ export function TransactionsPage() {
         try {
             if (item.isInstallmentItem) {
                 await toggleInstallmentPaidStatus(item.installmentId);
-            } else {
+            } else if (item.isFixed) {
+                toast.error("Status de transações fixas será uma funcionalidade futura!");
+                toast.dismiss(toastId);
+                return;
+            }
+             else {
                 await toggleTransactionPaidStatus(item.id);
             }
             toast.success("Status atualizado!", { id: toastId });
-            fetchTransactions();
+            // Apenas recarrega os dados para refletir a mudança
+            const data = await getTransactions();
+            setAllTransactions(data);
         } catch (error) {
             toast.error("Não foi possível atualizar o status.", { id: toastId });
         }
@@ -120,17 +162,17 @@ export function TransactionsPage() {
     const handleModalClose = () => {
         setIsModalOpen(false);
         setEditingTransaction(null);
-        fetchTransactions();
+        fetchPageData();
     };
 
     const handleDelete = async (item: any) => {
         const transactionIdToDelete = item.isInstallmentItem ? item.id : item.id;
-        if (window.confirm('Tem certeza? A transação e todas as suas parcelas serão excluídas.')) {
+        if (window.confirm('Tem certeza? A transação e todas as suas parcelas (se houver) serão excluídas.')) {
             const toastId = toast.loading('Excluindo...');
             try {
                 await deleteTransaction(transactionIdToDelete);
                 toast.success('Transação excluída!', { id: toastId });
-                fetchTransactions();
+                fetchPageData();
             } catch (error) {
                 toast.error('Falha ao excluir a transação.', { id: toastId });
             }
@@ -166,10 +208,11 @@ export function TransactionsPage() {
                     </div>
                 </div>
 
-                <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6 flex flex-col lg:flex-row gap-4 items-center">
+                {/* ✅ 4. BARRA DE FILTROS ATUALIZADA */}
+                <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6 flex flex-col lg:flex-row gap-4 items-center flex-wrap">
                     <MonthNavigator currentDate={currentDate} onPreviousMonth={handlePreviousMonth} onNextMonth={handleNextMonth} />
-                    {/* ✅ 2. Input conectado ao estado */}
-                    <div className="relative flex-1 w-full lg:w-auto">
+                    
+                    <div className="relative flex-grow w-full lg:w-auto">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                         <input 
                             type="text" 
@@ -179,7 +222,30 @@ export function TransactionsPage() {
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <div className="flex gap-2 w-full lg:w-auto"><button onClick={() => setFilterType('all')} className={`flex-1 lg:flex-none ${filterType === 'all' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg`}>Tudo</button><button onClick={() => setFilterType('income')} className={`flex-1 lg:flex-none ${filterType === 'income' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg`}>Receitas</button><button onClick={() => setFilterType('expense')} className={`flex-1 lg:flex-none ${filterType === 'expense' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg`}>Despesas</button></div>
+
+                    <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full lg:w-auto bg-slate-700 border-slate-600 rounded-md p-2 text-slate-100 focus:ring-2 focus:ring-green-500"
+                    >
+                        <option value="">Todas as Categorias</option>
+                        {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                    </select>
+
+                    <select
+                        value={selectedSource}
+                        onChange={(e) => setSelectedSource(e.target.value)}
+                        className="w-full lg:w-auto bg-slate-700 border-slate-600 rounded-md p-2 text-slate-100 focus:ring-2 focus:ring-green-500"
+                    >
+                        <option value="">Todas as Origens</option>
+                        {financialSources.map(source => <option key={source.id} value={source.id}>{source.name}</option>)}
+                    </select>
+                    
+                    <div className="flex gap-2 w-full lg:w-auto">
+                        <button onClick={() => setFilterType('all')} className={`flex-1 lg:flex-none ${filterType === 'all' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg`}>Tudo</button>
+                        <button onClick={() => setFilterType('income')} className={`flex-1 lg:flex-none ${filterType === 'income' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg`}>Receitas</button>
+                        <button onClick={() => setFilterType('expense')} className={`flex-1 lg:flex-none ${filterType === 'expense' ? 'bg-slate-600' : 'bg-slate-900'} hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg`}>Despesas</button>
+                    </div>
                 </div>
 
                 {isLoading ? (
@@ -198,7 +264,7 @@ export function TransactionsPage() {
                                         </div>
                                         <div className="flex-1">
                                             <p className={`font-semibold ${item.isPaid ? 'line-through text-slate-400' : 'text-white'}`}>{item.description}</p>
-                                            <p className={`text-sm ${item.isPaid ? 'line-through text-slate-500' : 'text-slate-400'}`}>{item.categoryName}</p>
+                                            <p className={`text-sm ${item.isPaid ? 'line-through text-slate-500' : 'text-slate-400'}`}>{item.categoryName} • {item.financialSourceName}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className={`font-bold text-lg ${item.isPaid ? 'opacity-50' : ''} ${item.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>
@@ -225,6 +291,7 @@ export function TransactionsPage() {
                                         <th className="p-4 font-semibold">Descrição</th>
                                         <th className="p-4 font-semibold">Valor</th>
                                         <th className="p-4 font-semibold">Categoria</th>
+                                        <th className="p-4 font-semibold">Fonte</th>
                                         <th className="p-4 font-semibold text-right">Ações</th>
                                     </tr>
                                 </thead>
@@ -240,6 +307,7 @@ export function TransactionsPage() {
                                                 <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-100'}`}>{item.description}</td>
                                                 <td className={`p-4 font-bold ${item.isPaid ? 'opacity-50' : ''} ${item.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>{item.transactionType.toLowerCase() === 'income' ? '+' : '-'} R$ {Math.abs(item.displayAmount).toFixed(2)}</td>
                                                 <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>{item.categoryName}</td>
+                                                <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>{item.financialSourceName}</td>
                                                 <td className="p-4 text-right">
                                                     <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-white p-2" title="Editar Transação Original"><Edit size={18} /></button>
                                                     <button onClick={() => handleDelete(item)} className="text-slate-400 hover:text-red-400 p-2" title="Excluir Transação Original"><Trash2 size={18} /></button>
@@ -247,7 +315,7 @@ export function TransactionsPage() {
                                             </tr>
                                         ))
                                     ) : (
-                                        <tr><td colSpan={5} className="text-center p-8 text-slate-400">Nenhuma transação encontrada.</td></tr>
+                                        <tr><td colSpan={6} className="text-center p-8 text-slate-400">Nenhuma transação encontrada para os filtros selecionados.</td></tr>
                                     )}
                                 </tbody>
                             </table>
