@@ -61,7 +61,9 @@ namespace Piggino.Api.Domain.Transactions.Services
                 CategoryId = createDto.CategoryId,
                 FinancialSourceId = createDto.FinancialSourceId,
                 UserId = userId,
-                CardInstallments = new List<CardInstallment>()
+                CardInstallments = new List<CardInstallment>(),
+                IsFixed = createDto.IsFixed,
+                DayOfMonth = createDto.IsFixed ? createDto.DayOfMonth : null
             };
 
             GenerateInstallments(newTransaction);
@@ -83,8 +85,58 @@ namespace Piggino.Api.Domain.Transactions.Services
         public async Task<IEnumerable<TransactionReadDto>> GetAllAsync()
         {
             Guid userId = GetCurrentUserId();
-            IEnumerable<Transaction> transactions = await _transactionRepository.GetAllAsync(userId);
-            return transactions.Select(MapToReadDto);
+            IEnumerable<Transaction> allTransactions = await _transactionRepository.GetAllAsync(userId);
+
+            var projectedTransactions = new List<Transaction>();
+
+            var fixedTransactions = allTransactions.Where(t => t.IsFixed && t.DayOfMonth.HasValue).ToList();
+            var nonFixedTransactions = allTransactions.Where(t => !t.IsFixed).ToList();
+
+            // Adiciona as transações normais e parceladas à lista final
+            projectedTransactions.AddRange(nonFixedTransactions);
+
+            // Gera as ocorrências das transações fixas para os próximos 12 meses
+            if (fixedTransactions.Any())
+            {
+                DateTime startDate = DateTime.UtcNow.AddMonths(-2); // Começa 2 meses atrás para pegar transações recentes
+                for (int i = 0; i < 14; i++) // Projeta por 14 meses (2 passados, atual, 11 futuros)
+                {
+                    DateTime currentMonth = startDate.AddMonths(i);
+                    foreach (var fixedTx in fixedTransactions)
+                    {
+                        // Garante que o dia seja válido para o mês (ex: dia 31 em fevereiro)
+                        int day = Math.Min(fixedTx.DayOfMonth.Value, DateTime.DaysInMonth(currentMonth.Year, currentMonth.Month));
+                        var projectedDate = new DateTime(currentMonth.Year, currentMonth.Month, day, 0, 0, 0, DateTimeKind.Utc);
+
+                        // Só adiciona se a data da projeção for igual ou posterior à data de início da transação original
+                        if (projectedDate.Date >= fixedTx.PurchaseDate.Date)
+                        {
+                            // Cria uma "cópia virtual" da transação para o mês atual
+                            projectedTransactions.Add(new Transaction
+                            {
+                                Id = fixedTx.Id, // Mantém o ID original para referência
+                                Description = fixedTx.Description,
+                                TotalAmount = fixedTx.TotalAmount,
+                                TransactionType = fixedTx.TransactionType,
+                                PurchaseDate = projectedDate, // A data projetada é a chave aqui!
+                                IsInstallment = false,
+                                IsFixed = true, // Sinaliza que é uma ocorrência de uma transação fixa
+                                IsPaid = false, // O status de "pago" deve ser por ocorrência
+                                CategoryId = fixedTx.CategoryId,
+                                Category = fixedTx.Category,
+                                FinancialSourceId = fixedTx.FinancialSourceId,
+                                FinancialSource = fixedTx.FinancialSource,
+                                UserId = fixedTx.UserId,
+                                DayOfMonth = fixedTx.DayOfMonth
+                            });
+                        }
+                    }
+                }
+            }
+
+            return projectedTransactions
+                .OrderByDescending(t => t.PurchaseDate)
+                .Select(MapToReadDto);
         }
 
         public async Task<TransactionReadDto?> GetByIdAsync(int id)
@@ -117,6 +169,9 @@ namespace Piggino.Api.Domain.Transactions.Services
             transaction.IsPaid = updateDto.IsPaid; // Geralmente se aplica a transações não parceladas
             transaction.CategoryId = updateDto.CategoryId;
             transaction.FinancialSourceId = updateDto.FinancialSourceId;
+
+            transaction.IsFixed = updateDto.IsFixed;
+            transaction.DayOfMonth = updateDto.IsFixed ? updateDto.DayOfMonth : null;
 
             // Lógica crucial para recalcular parcelas
             bool needsRecalculation = transaction.IsInstallment != updateDto.IsInstallment ||
@@ -173,6 +228,8 @@ namespace Piggino.Api.Domain.Transactions.Services
                 IsInstallment = transaction.IsInstallment,
                 InstallmentCount = transaction.InstallmentCount,
                 IsPaid = transaction.IsPaid,
+                IsFixed = transaction.IsFixed, // ✅ Adicionar
+                DayOfMonth = transaction.DayOfMonth, // ✅ Adicionar
                 CategoryId = transaction.CategoryId,
                 CategoryName = transaction.Category?.Name, // ✅ Adicionar
                 FinancialSourceId = transaction.FinancialSourceId,

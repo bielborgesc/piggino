@@ -83,35 +83,24 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// --- C�DIGO CORRIGIDO ---
+// --- CÓDIGO CORRIGIDO ---
 
-// 1. L� a sec��o de configura��o
-var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
-var jwtKey = jwtSettingsSection["Key"];
+// 1. Vincula a configuração a um objeto fortemente tipado e o registra
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 
-// Valida��o para garantir que a chave n�o � nula ou vazia
-if (string.IsNullOrEmpty(jwtKey))
-{
-    throw new InvalidOperationException("A chave JWT (JwtSettings:Key) n�o est� configurada no appsettings.json");
-}
-
-// 2. Vincula a configura��o a um objeto fortemente tipado
-var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
-
-// 3. Adiciona uma valida��o CR�TICA para garantir que a chave foi carregada
+// 2. Validação CRÍTICA para garantir que a chave foi carregada (do appsettings ou User Secrets)
 if (string.IsNullOrEmpty(jwtSettings?.Key))
 {
-    throw new InvalidOperationException("A chave JWT (JwtSettings:Key) n�o est� configurada ou n�o p�de ser lida do appsettings.json.");
+    throw new InvalidOperationException("A chave JWT (JwtSettings:Key) não está configurada ou não pôde ser lida.");
 }
 
-// 4. Configura o IOptions para que o TokenService receba estas mesmas configura��es
-builder.Services.Configure<JwtSettings>(jwtSettingsSection);
+// 3. Adiciona as configurações como um singleton para que todos os serviços (como o TokenService) a recebam via IOptions
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 
-// 5. Configura a autentica��o USANDO O MESMO OBJETO que foi validado
+// 4. Configura a autenticação USANDO O MESMO OBJETO que foi validado
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        // ... (a sua configura��o de TokenValidationParameters continua a mesma)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -123,20 +112,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
         };
 
-        // --- ADICIONE ESTE BLOCO PARA DEBUGAR ---
+        // Opcional: Bloco de debug para ver falhas de autenticação no console do backend
         options.Events = new JwtBearerEvents
         {
             OnAuthenticationFailed = context =>
             {
-                // Este ponto ser� atingido sempre que um token falhar na valida��o.
-                Console.WriteLine("--- FALHA NA AUTENTICA��O ---");
-                Console.WriteLine("Exce��o: " + context.Exception.ToString());
-                Console.WriteLine("-----------------------------");
+                Console.WriteLine("--- FALHA NA AUTENTICAÇÃO DO TOKEN ---");
+                Console.WriteLine("Exceção: " + context.Exception?.Message);
+                Console.WriteLine("-------------------------------------");
                 return Task.CompletedTask;
             }
         };
-        // --- FIM DO BLOCO DE DEBUG ---
     });
+
+// --- FIM DO CÓDIGO CORRIGIDO ---
 
 builder.Services.AddAuthorization();
 

@@ -31,5 +31,9 @@ namespace Piggino.Api.Domain.Transactions.Dtos
 
         [Required]
         public int FinancialSourceId { get; set; }
+
+        public bool IsFixed { get; set; }
+
+        public int? DayOfMonth { get; set; }
     }
 }

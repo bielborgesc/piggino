@@ -26,6 +26,10 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
   const [isInstallment, setIsInstallment] = useState(false);
   const [installmentCount, setInstallmentCount] = useState('');
 
+  // ✅ NOVOS ESTADOS para a transação fixa
+  const [isFixed, setIsFixed] = useState(false);
+  const [dayOfMonth, setDayOfMonth] = useState('');
+
   useEffect(() => {
     async function loadData() {
       setIsLoadingData(true);
@@ -52,6 +56,9 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       setTransactionType(initialData.transactionType);
       setIsInstallment(initialData.isInstallment);
       setInstallmentCount(initialData.installmentCount ? String(initialData.installmentCount) : '');
+      // ✅ Popula os campos de transação fixa ao editar
+      setIsFixed(initialData.isFixed);
+      setDayOfMonth(initialData.dayOfMonth ? String(initialData.dayOfMonth) : '');
     } else {
       // Reseta para o estado de criação
       setDescription('');
@@ -62,6 +69,9 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       setTransactionType('Expense');
       setIsInstallment(false);
       setInstallmentCount('');
+      // ✅ Reseta os campos de transação fixa ao criar
+      setIsFixed(false);
+      setDayOfMonth('');
     }
   }, [initialData]);
 
@@ -73,6 +83,13 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       toast.error('Para transações parceladas, informe pelo menos 2 parcelas.');
       return;
     }
+    
+    // ✅ Validação para transação fixa
+    if (isFixed && (!dayOfMonth || parseInt(dayOfMonth) < 1 || parseInt(dayOfMonth) > 31)) {
+        toast.error('Para transações fixas, informe um dia do mês válido (1 a 31).');
+        return;
+    }
+
     const transactionData: TransactionData = {
       description,
       totalAmount: parseFloat(amount),
@@ -82,6 +99,9 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       isInstallment,
       installmentCount: isInstallment ? parseInt(installmentCount) : undefined,
       purchaseDate: new Date(purchaseDate).toISOString(),
+      // ✅ Adiciona os novos dados ao objeto a ser salvo
+      isFixed,
+      dayOfMonth: isFixed ? parseInt(dayOfMonth) : undefined,
     };
     onSave(transactionData, initialData?.id);
   };
@@ -98,7 +118,6 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
           <input type="text" id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-gray-700 border border-gray-600 rounded-md p-2" placeholder="Ex: Café com amigos"/>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          {/* ✅ Bloco do campo "Valor" ATUALIZADO */}
           <div>
             <label htmlFor="amount" className="block text-sm font-medium text-gray-400 mb-1">Valor</label>
             <div className="relative">
@@ -110,7 +129,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
                 id="amount" 
                 value={amount} 
                 onChange={(e) => setAmount(e.target.value)} 
-                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 pl-10" // Padding à esquerda para o R$
+                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 pl-10"
                 placeholder="0,00" 
                 step="0.01"
               />
@@ -135,20 +154,55 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
             {filteredCategories.map(cat => (<option key={cat.id} value={cat.id}>{cat.name}</option>))}
           </select>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="installment" checked={isInstallment} onChange={(e) => setIsInstallment(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"/>
-            <label htmlFor="installment" className="text-sm text-gray-300">É parcelado?</label>
-          </div>
-          {isInstallment && (
-            <div className="flex-1">
-              <input type="number" value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} placeholder="Nº de parcelas" className="w-full bg-gray-700 border-gray-600 rounded-md p-2 text-sm" min="2"/>
+        
+        {/* ✅ Bloco de seleção "Parcelado" ou "Fixo" */}
+        <div className="flex items-center justify-between gap-4 pt-2">
+            <div className="flex items-center gap-2">
+                <input 
+                    type="checkbox" 
+                    id="installment" 
+                    checked={isInstallment} 
+                    disabled={isFixed} // Desabilita se for fixo
+                    onChange={(e) => setIsInstallment(e.target.checked)} 
+                    className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:opacity-50"
+                />
+                <label htmlFor="installment" className={`text-sm ${isFixed ? 'text-gray-500' : 'text-gray-300'}`}>É parcelado?</label>
             </div>
-          )}
+
+            <div className="flex items-center gap-2">
+                <input 
+                    type="checkbox" 
+                    id="isFixed" 
+                    checked={isFixed}
+                    disabled={isInstallment} // Desabilita se for parcelado
+                    onChange={(e) => setIsFixed(e.target.checked)} 
+                    className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:opacity-50"
+                />
+                <label htmlFor="isFixed" className={`text-sm ${isInstallment ? 'text-gray-500' : 'text-gray-300'}`}>É fixo?</label>
+            </div>
         </div>
-        <button type="submit" disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition-colors disabled:bg-slate-500">
-          {isSaving ? 'Salvando...' : 'Salvar Transação'}
-        </button>
+        
+        {/* ✅ Bloco que mostra o campo de input correto */}
+        <div>
+            {isInstallment && (
+                <div className="mt-2">
+                    <label htmlFor="installmentCount" className="block text-sm font-medium text-gray-400 mb-1">Nº de Parcelas</label>
+                    <input type="number" id="installmentCount" value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} placeholder="Ex: 12" className="w-full bg-gray-700 border-gray-600 rounded-md p-2 text-sm" min="2"/>
+                </div>
+            )}
+            {isFixed && (
+                <div className="mt-2">
+                    <label htmlFor="dayOfMonth" className="block text-sm font-medium text-gray-400 mb-1">Repetir todo dia</label>
+                    <input type="number" id="dayOfMonth" value={dayOfMonth} onChange={(e) => setDayOfMonth(e.target.value)} placeholder="Ex: 5" className="w-full bg-gray-700 border-gray-600 rounded-md p-2 text-sm" min="1" max="31"/>
+                </div>
+            )}
+        </div>
+        
+        <div className="pt-4">
+            <button type="submit" disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition-colors disabled:bg-slate-500">
+                {isSaving ? 'Salvando...' : 'Salvar Transação'}
+            </button>
+        </div>
       </form>
     </div>
   );

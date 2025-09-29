@@ -22,6 +22,17 @@ namespace Piggino.Api.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Transaction>()
+                .HasOne(t => t.Category)
+                .WithMany(c => c.Transactions)
+                .HasForeignKey(t => t.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Transaction>()
+                .HasOne(t => t.FinancialSource)
+                .WithMany(fs => fs.Transactions)
+                .HasForeignKey(t => t.FinancialSourceId)
+                .OnDelete(DeleteBehavior.Restrict);
             modelBuilder
                 .Entity<Transaction>()
                 .Property(t => t.TransactionType)

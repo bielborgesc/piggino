@@ -1,4 +1,6 @@
-﻿using Piggino.Api.Domain.FinancialSources.Dtos;
+﻿using Microsoft.EntityFrameworkCore;
+using Piggino.Api.Data;
+using Piggino.Api.Domain.FinancialSources.Dtos;
 using Piggino.Api.Domain.FinancialSources.Entities;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
 using System.Security.Claims;
@@ -9,11 +11,13 @@ namespace Piggino.Api.Domain.FinancialSources.Services
     {
         private readonly IFinancialSourceRepository _repository;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly PigginoDbContext _context;
 
-        public FinancialSourceService(IFinancialSourceRepository repository, IHttpContextAccessor httpContextAccessor)
+        public FinancialSourceService(IFinancialSourceRepository repository, IHttpContextAccessor httpContextAccessor, PigginoDbContext context) // ✅ Adicionar no construtor
         {
             _repository = repository;
             _httpContextAccessor = httpContextAccessor;
+            _context = context; // ✅ Atribuir
         }
 
         private Guid GetCurrentUserId()
@@ -61,8 +65,14 @@ namespace Piggino.Api.Domain.FinancialSources.Services
 
             if (financialSource == null)
             {
-                // Não encontrou a fonte ou o utilizador não tem permissão
                 return false;
+            }
+
+            // ✅ Adicionar verificação
+            var isSourceInUse = await _context.Transactions.AnyAsync(t => t.FinancialSourceId == id && t.UserId == userId);
+            if (isSourceInUse)
+            {
+                throw new InvalidOperationException("Esta fonte financeira está em uso por uma ou mais transações e não pode ser apagada.");
             }
 
             _repository.Delete(financialSource);

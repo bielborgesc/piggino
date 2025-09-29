@@ -11,14 +11,14 @@ using Piggino.Api.Data;
 namespace Piggino.Api.Migrations
 {
     [DbContext(typeof(PigginoDbContext))]
-    [Migration("20250704013130_FinalSchemaUpdateForAuth")]
-    partial class FinalSchemaUpdateForAuth
+    [Migration("20250929013732_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.5");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.20");
 
             modelBuilder.Entity("Piggino.Api.Domain.CardInstallments.Entities.CardInstallment", b =>
                 {
@@ -112,6 +112,9 @@ namespace Piggino.Api.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("DayOfMonth")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -121,6 +124,9 @@ namespace Piggino.Api.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("InstallmentCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsFixed")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsInstallment")

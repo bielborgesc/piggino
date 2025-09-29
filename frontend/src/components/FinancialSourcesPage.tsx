@@ -43,8 +43,13 @@ export function FinancialSourcesPage() {
         await deleteFinancialSource(id);
         toast.success('Fonte excluída!', { id: toastId });
         fetchSources();
-      } catch (error) {
-        toast.error('Não foi possível excluir a fonte.', { id: toastId });
+      } catch (error: any) { // ✅ Capturar o erro
+        // ✅ Mostrar a mensagem de erro vinda da API
+        if (error.response && error.response.data && error.response.data.message) {
+            toast.error(error.response.data.message, { id: toastId });
+        } else {
+            toast.error('Não foi possível excluir a fonte.', { id: toastId });
+        }
       }
     }
   };
