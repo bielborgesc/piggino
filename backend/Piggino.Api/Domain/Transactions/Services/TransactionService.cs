@@ -1,10 +1,12 @@
 ﻿using Piggino.Api.Domain.CardInstallments.Dtos;
 using Piggino.Api.Domain.CardInstallments.Entities;
 using Piggino.Api.Domain.Categories.Interfaces;
+using Piggino.Api.Domain.FinancialSources.Entities;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
 using Piggino.Api.Domain.Transactions.Dtos;
 using Piggino.Api.Domain.Transactions.Entities;
 using Piggino.Api.Domain.Transactions.Interfaces;
+using Piggino.Api.Enum;
 using System.Security.Claims;
 
 namespace Piggino.Api.Domain.Transactions.Services
@@ -66,7 +68,7 @@ namespace Piggino.Api.Domain.Transactions.Services
                 DayOfMonth = createDto.IsFixed ? createDto.DayOfMonth : null
             };
 
-            GenerateInstallments(newTransaction);
+            GenerateInstallments(newTransaction, financialSource);
             await _transactionRepository.AddAsync(newTransaction);
             await _transactionRepository.SaveChangesAsync();
             return MapToReadDto(newTransaction);
@@ -186,23 +188,44 @@ namespace Piggino.Api.Domain.Transactions.Services
                 // Remove as parcelas antigas. O EF Core rastreia isso para deletar do banco.
                 transaction.CardInstallments?.Clear();
                 // Gera as novas parcelas com base nos dados atualizados
-                GenerateInstallments(transaction);
+                GenerateInstallments(transaction, financialSource);
             }
 
             _transactionRepository.Update(transaction);
             return await _transactionRepository.SaveChangesAsync();
         }
 
-        private void GenerateInstallments(Transaction transaction)
+        private void GenerateInstallments(Transaction transaction, FinancialSource financialSource)
         {
-            if (transaction.IsInstallment && transaction.InstallmentCount.HasValue && transaction.InstallmentCount > 0)
+            if (transaction.IsInstallment && transaction.InstallmentCount.HasValue && transaction.InstallmentCount.Value > 0)
             {
-                if (transaction.CardInstallments == null)
-                {
-                    transaction.CardInstallments = new List<CardInstallment>();
-                }
-                
+                transaction.CardInstallments ??= new List<CardInstallment>();
+
                 decimal installmentAmount = Math.Round(transaction.TotalAmount / transaction.InstallmentCount.Value, 2);
+                var purchaseDate = transaction.PurchaseDate;
+                DateTime firstInvoiceDate;
+
+                if (financialSource.Type == FinancialSourceType.Card && financialSource.ClosingDay.HasValue && financialSource.DueDay.HasValue)
+                {
+                    // Constrói a data de fechamento para o mês da compra
+                    DateTime closingDateOfPurchaseMonth = new DateTime(purchaseDate.Year, purchaseDate.Month, financialSource.ClosingDay.Value);
+
+                    if (purchaseDate.Date >= closingDateOfPurchaseMonth.Date)
+                    {
+                        // A compra foi DEPOIS do fechamento. A fatura vence no PRÓXIMO mês.
+                        firstInvoiceDate = new DateTime(purchaseDate.Year, purchaseDate.Month, financialSource.DueDay.Value).AddMonths(1);
+                    }
+                    else
+                    {
+                        // A compra foi ANTES OU NO DIA do fechamento. A fatura vence NESTE mês.
+                        firstInvoiceDate = new DateTime(purchaseDate.Year, purchaseDate.Month, financialSource.DueDay.Value);
+                    }
+                }
+                else
+                {
+                    // Lógica padrão para outras fontes financeiras (não cartões)
+                    firstInvoiceDate = purchaseDate.AddMonths(1);
+                }
 
                 for (int i = 1; i <= transaction.InstallmentCount.Value; i++)
                 {
@@ -210,7 +233,9 @@ namespace Piggino.Api.Domain.Transactions.Services
                     {
                         InstallmentNumber = i,
                         Amount = installmentAmount,
-                        IsPaid = false
+                        IsPaid = false,
+                        // Adiciona as parcelas nos meses subsequentes
+                        DueDate = firstInvoiceDate.AddMonths(i - 1)
                     });
                 }
             }
@@ -241,7 +266,8 @@ namespace Piggino.Api.Domain.Transactions.Services
                     InstallmentNumber = ci.InstallmentNumber,
                     Amount = ci.Amount,
                     IsPaid = ci.IsPaid,
-                    TransactionId = ci.TransactionId
+                    TransactionId = ci.TransactionId,
+                    DueDate = ci.DueDate
                 }).ToList()
             };
         }

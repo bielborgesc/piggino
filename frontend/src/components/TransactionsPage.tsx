@@ -72,10 +72,12 @@ export function TransactionsPage() {
                     items.push({ ...t, displayAmount: t.totalAmount, isInstallmentItem: false });
                 }
             } else if (t.isInstallment && t.cardInstallments) {
-                const purchaseDate = new Date(t.purchaseDate);
                 for (const installment of t.cardInstallments) {
-                    const installmentMonth = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + installment.installmentNumber - 1, 1);
-                    if (installmentMonth.getFullYear() === currentDate.getFullYear() && installmentMonth.getMonth() === currentDate.getMonth()) {
+                    // CORREÇÃO ESSENCIAL: Usar o dueDate que vem da API
+                    const installmentDueDate = new Date(installment.dueDate);
+
+                    // Compara o ano e o mês da data de vencimento da parcela com o mês atual da visualização
+                    if (installmentDueDate.getUTCFullYear() === currentDate.getFullYear() && installmentDueDate.getUTCMonth() === currentDate.getMonth()) {
                         items.push({
                             ...t,
                             syntheticId: `${t.id}-${installment.id}`,
@@ -83,7 +85,9 @@ export function TransactionsPage() {
                             displayAmount: installment.amount,
                             isInstallmentItem: true,
                             isPaid: installment.isPaid,
-                            installmentId: installment.id
+                            installmentId: installment.id,
+                            // Usamos o dueDate para fins de exibição e ordenação no mês correto
+                            purchaseDate: installment.dueDate 
                         });
                     }
                 }

@@ -16,6 +16,9 @@ namespace Piggino.Api.Domain.CardInstallments.Entities
         public bool IsPaid { get; set; }
 
         public int TransactionId { get; set; }
+
         public Transaction? Transaction { get; set; }
+
+        public DateTime DueDate { get; set; }
     }
 }

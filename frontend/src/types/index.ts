@@ -80,4 +80,5 @@ export interface CardInstallment {
   amount: number;
   isPaid: boolean;
   transactionId: number;
+  dueDate: string;
 }

@@ -44,7 +44,6 @@ export function Dashboard() {
   const handlePreviousMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   const handleNextMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
 
-  // ✅ LÓGICA CORRIGIDA: Processa transações e parcelas para o mês selecionado
   const monthlyItems = useMemo(() => {
     const items: any[] = [];
     for (const t of transactions) {
@@ -53,22 +52,25 @@ export function Dashboard() {
             if (transactionDate.getFullYear() === currentDate.getFullYear() && transactionDate.getMonth() === currentDate.getMonth()) {
                 items.push({ ...t, displayAmount: t.totalAmount, isInstallmentItem: false });
             }
-        } else if (t.cardInstallments) {
-            const purchaseDate = new Date(t.purchaseDate);
-            for (const installment of t.cardInstallments) {
-                const installmentMonth = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + installment.installmentNumber - 1, 1);
-                if (installmentMonth.getFullYear() === currentDate.getFullYear() && installmentMonth.getMonth() === currentDate.getMonth()) {
-                    items.push({
-                        ...t,
-                        syntheticId: `${t.id}-${installment.id}`,
-                        description: `${t.description} (${installment.installmentNumber}/${t.installmentCount})`,
-                        displayAmount: installment.amount,
-                        isInstallmentItem: true,
-                        isPaid: installment.isPaid,
-                        installmentId: installment.id
-                    });
-                }
-            }
+        } else if (t.isInstallment && t.cardInstallments) {
+          for (const installment of t.cardInstallments) {
+              // CORREÇÃO ESSENCIAL: Usar o dueDate que vem da API
+              const installmentDueDate = new Date(installment.dueDate);
+
+              // Compara o ano e o mês da data de vencimento com o mês atual da visualização
+              if (installmentDueDate.getUTCFullYear() === currentDate.getFullYear() && installmentDueDate.getUTCMonth() === currentDate.getMonth()) {
+                  items.push({
+                      ...t,
+                      syntheticId: `${t.id}-${installment.id}`,
+                      description: `${t.description} (${installment.installmentNumber}/${t.installmentCount})`,
+                      displayAmount: installment.amount,
+                      isInstallmentItem: true,
+                      isPaid: installment.isPaid,
+                      installmentId: installment.id,
+                      purchaseDate: installment.dueDate // Usa o dueDate para ordenação e exibição
+                  });
+              }
+          }
         }
     }
     return items;
