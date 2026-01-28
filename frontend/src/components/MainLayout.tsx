@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LayoutDashboard, ArrowRightLeft, Settings, LogOut, Menu, X, Shapes, Wallet } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode';
+import { TokenPayload } from '../types';
 
 type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources';
 
@@ -66,6 +68,21 @@ function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNa
 
 // 2. Header agora recebe onLogout
 function Header({ onOpenSidebar, onLogout }: { onOpenSidebar: () => void; onLogout: () => void; }) {
+    const [userName, setUserName] = useState('Usuário');
+
+    useEffect(() => {
+      const token = localStorage.getItem('piggino_token');
+      if (token) {
+        try {
+          const decoded = jwtDecode<TokenPayload>(token);
+          if (decoded.name) {
+            setUserName(decoded.name);
+          }
+        } catch (error) {
+          console.error("Erro ao decodificar token", error);
+        }
+      }
+    }, []);
     return (
         <header className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-700">
           <div className="flex items-center gap-4">
@@ -73,7 +90,7 @@ function Header({ onOpenSidebar, onLogout }: { onOpenSidebar: () => void; onLogo
                 <Menu size={24} />
             </button>
             <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-white">Olá, Gabriel!</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-white">Olá, {userName}!</h1>
                 <p className="text-slate-400 text-sm sm:text-base">Bem-vindo de volta.</p>
             </div>
           </div>

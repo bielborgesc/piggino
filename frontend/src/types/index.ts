@@ -82,3 +82,9 @@ export interface CardInstallment {
   transactionId: number;
   dueDate: string;
 }
+
+export interface TokenPayload {
+  name: string;
+  id: string;
+  email: string;
+}
