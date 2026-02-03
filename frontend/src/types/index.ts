@@ -5,6 +5,7 @@ export type FinancialSourceType = 'Card' | 'Account' | 'Cash';
 export interface Transaction {
   id: number;
   description: string;
+  syntheticId?: string;
   totalAmount: number;
   transactionType: CategoryType;
   purchaseDate: string; // A API envia como string no formato ISO

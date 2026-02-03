@@ -25,11 +25,10 @@ namespace Piggino.Api.Infrastructure.Repositories
         public async Task<IEnumerable<Transaction>> GetAllAsync(Guid userId)
         {
             return await _context.Transactions
+                .Include(t => t.FinancialSource)
+                .Include(t => t.Category)
                 .Include(t => t.CardInstallments)
-                .Include(t => t.Category) // ✅ Adicionar
-                .Include(t => t.FinancialSource) // ✅ Adicionar
                 .Where(t => t.UserId == userId)
-                .OrderByDescending(t => t.PurchaseDate)
                 .ToListAsync();
         }
 

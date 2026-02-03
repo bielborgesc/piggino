@@ -62,48 +62,26 @@ export function TransactionsPage() {
     const handleNextMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
 
     const monthlyItems = useMemo(() => {
-        let items: any[] = [];
-        
-        // Esta lógica de processamento de transações, parcelas e fixas permanece a mesma
-        for (const t of allTransactions) {
-            if (!t.isInstallment && !t.isFixed) {
-                const transactionDate = new Date(t.purchaseDate);
-                if (transactionDate.getFullYear() === currentDate.getFullYear() && transactionDate.getMonth() === currentDate.getMonth()) {
-                    items.push({ ...t, displayAmount: t.totalAmount, isInstallmentItem: false });
-                }
-            } else if (t.isInstallment && t.cardInstallments) {
-                for (const installment of t.cardInstallments) {
-                    // CORREÇÃO ESSENCIAL: Usar o dueDate que vem da API
-                    const installmentDueDate = new Date(installment.dueDate);
+        // 1. Filtragem por Mês e Ano (Usando UTC para evitar bugs de fuso horário)
+        const items = allTransactions.filter(t => {
+            const date = new Date(t.purchaseDate); // Esta já é a data de exibição/vencimento vinda do backend
+            const viewYear = currentDate.getFullYear();
+            const viewMonth = currentDate.getMonth();
 
-                    // Compara o ano e o mês da data de vencimento da parcela com o mês atual da visualização
-                    if (installmentDueDate.getUTCFullYear() === currentDate.getFullYear() && installmentDueDate.getUTCMonth() === currentDate.getMonth()) {
-                        items.push({
-                            ...t,
-                            syntheticId: `${t.id}-${installment.id}`,
-                            description: `${t.description} (${installment.installmentNumber}/${t.installmentCount})`,
-                            displayAmount: installment.amount,
-                            isInstallmentItem: true,
-                            isPaid: installment.isPaid,
-                            installmentId: installment.id,
-                            // Usamos o dueDate para fins de exibição e ordenação no mês correto
-                            purchaseDate: installment.dueDate 
-                        });
-                    }
-                }
-            } else if (t.isFixed) {
-                const transactionDate = new Date(t.purchaseDate);
-                 if (transactionDate.getFullYear() === currentDate.getFullYear() && transactionDate.getMonth() === currentDate.getMonth()) {
-                    items.push({ ...t, displayAmount: t.totalAmount, isInstallmentItem: false });
-                }
-            }
-        }
-        
-        // ✅ 3. Lógica de filtragem atualizada para incluir os novos filtros
+            return date.getUTCFullYear() === viewYear && date.getUTCMonth() === viewMonth;
+        }).map(t => ({
+            ...t,
+            // displayAmount agora é o totalAmount que o backend já enviou (já é o valor da parcela)
+            displayAmount: t.totalAmount,
+            // Identificador único para o React
+            syntheticId: `${t.id}-${t.purchaseDate}`
+        }));
+
+        // 2. Aplicação dos filtros de busca e categoria
         let filteredItems = items;
 
         if (filterType !== 'all') {
-            filteredItems = filteredItems.filter(item => item.transactionType.toLowerCase() === filterType);
+            filteredItems = filteredItems.filter(item => item.transactionType.toLowerCase() === filterType.toLowerCase());
         }
         
         if (selectedCategory) {

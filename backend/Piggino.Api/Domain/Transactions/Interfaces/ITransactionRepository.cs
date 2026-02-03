@@ -1,5 +1,6 @@
 ﻿
 using Piggino.Api.Domain.CardInstallments.Entities;
+using Piggino.Api.Domain.Transactions.Dtos;
 using Piggino.Api.Domain.Transactions.Entities;
 
 namespace Piggino.Api.Domain.Transactions.Interfaces

@@ -87,43 +87,86 @@ namespace Piggino.Api.Domain.Transactions.Services
         public async Task<IEnumerable<TransactionReadDto>> GetAllAsync()
         {
             Guid userId = GetCurrentUserId();
+            // Importante: Incluir os CardInstallments na busca do banco
             IEnumerable<Transaction> allTransactions = await _transactionRepository.GetAllAsync(userId);
 
             var projectedTransactions = new List<Transaction>();
 
+            // 1. Separar por tipos de comportamento
             var fixedTransactions = allTransactions.Where(t => t.IsFixed && t.DayOfMonth.HasValue).ToList();
-            var nonFixedTransactions = allTransactions.Where(t => !t.IsFixed).ToList();
 
-            // Adiciona as transações normais e parceladas à lista final
-            projectedTransactions.AddRange(nonFixedTransactions);
+            // Transações que NÃO são fixas e NÃO são de cartão (ex: dinheiro, pix, débito)
+            // Essas devem aparecer na data da compra mesmo.
+            var normalTransactions = allTransactions.Where(t => !t.IsFixed &&
+                (t.FinancialSource == null || t.FinancialSource.Type != FinancialSourceType.Card)).ToList();
 
-            // Gera as ocorrências das transações fixas para os próximos 12 meses
+            // Transações de Cartão de Crédito (que possuem parcelas/vencimentos)
+            var creditCardTransactions = allTransactions.Where(t => !t.IsFixed &&
+                t.FinancialSource != null && t.FinancialSource.Type == FinancialSourceType.Card).ToList();
+
+            // Adiciona transações normais (dinheiro/débito)
+            projectedTransactions.AddRange(normalTransactions);
+
+            // 2. PROJEÇÃO DE CARTÃO DE CRÉDITO
+            foreach (var cardTx in creditCardTransactions)
+            {
+                if (cardTx.CardInstallments != null && cardTx.CardInstallments.Any())
+                {
+                    foreach (var installment in cardTx.CardInstallments)
+                    {
+                        projectedTransactions.Add(new Transaction
+                        {
+                            Id = cardTx.Id,
+                            Description = cardTx.InstallmentCount > 1
+                                ? $"{cardTx.Description} ({installment.InstallmentNumber}/{cardTx.InstallmentCount})"
+                                : cardTx.Description,
+                            TotalAmount = installment.Amount,
+                            TransactionType = cardTx.TransactionType,
+                            // AQUI: A PurchaseDate (exibição) vira o Vencimento, mas a Original continua a mesma
+                            PurchaseDate = installment.DueDate,
+                            OriginalPurchaseDate = cardTx.OriginalPurchaseDate,
+                            IsInstallment = true,
+                            IsFixed = false,
+                            IsPaid = installment.IsPaid,
+                            CategoryId = cardTx.CategoryId,
+                            Category = cardTx.Category,
+                            FinancialSourceId = cardTx.FinancialSourceId,
+                            FinancialSource = cardTx.FinancialSource,
+                            UserId = cardTx.UserId,
+                            InstallmentCount = cardTx.InstallmentCount
+                        });
+                    }
+                }
+                else
+                {
+                    projectedTransactions.Add(cardTx);
+                }
+            }
+
+            // 3. PROJEÇÃO DE TRANSACÕES FIXAS (Sua lógica atual)
             if (fixedTransactions.Any())
             {
-                DateTime startDate = DateTime.UtcNow.AddMonths(-2); // Começa 2 meses atrás para pegar transações recentes
-                for (int i = 0; i < 14; i++) // Projeta por 14 meses (2 passados, atual, 11 futuros)
+                DateTime startDate = DateTime.UtcNow.AddMonths(-2);
+                for (int i = 0; i < 14; i++)
                 {
                     DateTime currentMonth = startDate.AddMonths(i);
                     foreach (var fixedTx in fixedTransactions)
                     {
-                        // Garante que o dia seja válido para o mês (ex: dia 31 em fevereiro)
                         int day = Math.Min(fixedTx.DayOfMonth.Value, DateTime.DaysInMonth(currentMonth.Year, currentMonth.Month));
                         var projectedDate = new DateTime(currentMonth.Year, currentMonth.Month, day, 0, 0, 0, DateTimeKind.Utc);
 
-                        // Só adiciona se a data da projeção for igual ou posterior à data de início da transação original
                         if (projectedDate.Date >= fixedTx.PurchaseDate.Date)
                         {
-                            // Cria uma "cópia virtual" da transação para o mês atual
                             projectedTransactions.Add(new Transaction
                             {
-                                Id = fixedTx.Id, // Mantém o ID original para referência
+                                Id = fixedTx.Id,
                                 Description = fixedTx.Description,
                                 TotalAmount = fixedTx.TotalAmount,
                                 TransactionType = fixedTx.TransactionType,
-                                PurchaseDate = projectedDate, // A data projetada é a chave aqui!
+                                PurchaseDate = projectedDate,
                                 IsInstallment = false,
-                                IsFixed = true, // Sinaliza que é uma ocorrência de uma transação fixa
-                                IsPaid = false, // O status de "pago" deve ser por ocorrência
+                                IsFixed = true,
+                                IsPaid = false,
                                 CategoryId = fixedTx.CategoryId,
                                 Category = fixedTx.Category,
                                 FinancialSourceId = fixedTx.FinancialSourceId,
@@ -155,39 +198,42 @@ namespace Piggino.Api.Domain.Transactions.Services
 
             if (transaction == null) return false;
 
-            var category = await _categoryRepository.GetByIdAsync(updateDto.CategoryId, userId);
             var financialSource = await _financialSourceRepository.GetByIdAsync(updateDto.FinancialSourceId, userId);
+            if (financialSource == null) throw new InvalidOperationException("Financial Source not found.");
 
-            if (category == null || financialSource == null)
-            {
-                throw new InvalidOperationException("Category or Financial Source not found or does not belong to the user.");
-            }
+            // Limpa o nome para evitar (1/1) (1/1)
+            string cleanDescription = System.Text.RegularExpressions.Regex.Replace(updateDto.Description, @"\s\(\d+/\d+\)$", "");
 
-            // Atualiza as propriedades principais da transação
-            transaction.Description = updateDto.Description;
-            transaction.TotalAmount = updateDto.TotalAmount;
-            transaction.TransactionType = updateDto.TransactionType;
-            transaction.PurchaseDate = updateDto.PurchaseDate;
-            transaction.IsPaid = updateDto.IsPaid; // Geralmente se aplica a transações não parceladas
-            transaction.CategoryId = updateDto.CategoryId;
-            transaction.FinancialSourceId = updateDto.FinancialSourceId;
+            // Valor da parcela atual (Total / Count)
+            decimal currentInstallmentAmount = (transaction.IsInstallment && transaction.InstallmentCount > 0)
+                ? transaction.TotalAmount / transaction.InstallmentCount.Value
+                : transaction.TotalAmount;
 
-            transaction.IsFixed = updateDto.IsFixed;
-            transaction.DayOfMonth = updateDto.IsFixed ? updateDto.DayOfMonth : null;
-
-            // Lógica crucial para recalcular parcelas
+            // Verificação de recálculo baseada na data ORIGINAL
             bool needsRecalculation = transaction.IsInstallment != updateDto.IsInstallment ||
                                       transaction.InstallmentCount != updateDto.InstallmentCount ||
-                                      (updateDto.IsInstallment && transaction.TotalAmount != updateDto.TotalAmount);
+                                      transaction.FinancialSourceId != updateDto.FinancialSourceId ||
+                                      transaction.OriginalPurchaseDate.Date != updateDto.PurchaseDate.Date ||
+                                      currentInstallmentAmount != updateDto.TotalAmount;
 
+            transaction.Description = cleanDescription;
+            transaction.TransactionType = updateDto.TransactionType;
+
+            transaction.PurchaseDate = updateDto.PurchaseDate;
+            transaction.OriginalPurchaseDate = updateDto.PurchaseDate;
+
+            transaction.IsPaid = updateDto.IsPaid;
+            transaction.CategoryId = updateDto.CategoryId;
+            transaction.FinancialSourceId = updateDto.FinancialSourceId;
+            transaction.IsFixed = updateDto.IsFixed;
+            transaction.DayOfMonth = updateDto.IsFixed ? updateDto.DayOfMonth : null;
             transaction.IsInstallment = updateDto.IsInstallment;
             transaction.InstallmentCount = updateDto.InstallmentCount;
+            transaction.TotalAmount = updateDto.TotalAmount;
 
             if (needsRecalculation)
             {
-                // Remove as parcelas antigas. O EF Core rastreia isso para deletar do banco.
                 transaction.CardInstallments?.Clear();
-                // Gera as novas parcelas com base nos dados atualizados
                 GenerateInstallments(transaction, financialSource);
             }
 
@@ -197,48 +243,54 @@ namespace Piggino.Api.Domain.Transactions.Services
 
         private void GenerateInstallments(Transaction transaction, FinancialSource financialSource)
         {
-            if (transaction.IsInstallment && transaction.InstallmentCount.HasValue && transaction.InstallmentCount.Value > 0)
+            bool isCreditCard = financialSource.Type == FinancialSourceType.Card;
+
+            if ((transaction.IsInstallment && transaction.InstallmentCount > 0) || isCreditCard)
             {
                 transaction.CardInstallments ??= new List<CardInstallment>();
+                int count = (transaction.InstallmentCount ?? 1);
+                decimal installmentValue = transaction.TotalAmount;
+                transaction.TotalAmount = installmentValue * count;
 
-                decimal installmentAmount = Math.Round(transaction.TotalAmount / transaction.InstallmentCount.Value, 2);
                 var purchaseDate = transaction.PurchaseDate;
-                DateTime firstInvoiceDate;
+                DateTime firstInstallmentDueDate;
 
-                if (financialSource.Type == FinancialSourceType.Card && financialSource.ClosingDay.HasValue && financialSource.DueDay.HasValue)
+                if (isCreditCard && financialSource.ClosingDay.HasValue && financialSource.DueDay.HasValue)
                 {
-                    // Constrói a data de fechamento para o mês da compra
-                    DateTime closingDateOfPurchaseMonth = new DateTime(purchaseDate.Year, purchaseDate.Month, financialSource.ClosingDay.Value);
+                    DateTime invoiceRef = purchaseDate;
+                    var closingDate = GetValidDate(purchaseDate.Year, purchaseDate.Month, financialSource.ClosingDay.Value);
 
-                    if (purchaseDate.Date >= closingDateOfPurchaseMonth.Date)
-                    {
-                        // A compra foi DEPOIS do fechamento. A fatura vence no PRÓXIMO mês.
-                        firstInvoiceDate = new DateTime(purchaseDate.Year, purchaseDate.Month, financialSource.DueDay.Value).AddMonths(1);
-                    }
-                    else
-                    {
-                        // A compra foi ANTES OU NO DIA do fechamento. A fatura vence NESTE mês.
-                        firstInvoiceDate = new DateTime(purchaseDate.Year, purchaseDate.Month, financialSource.DueDay.Value);
-                    }
+                    if (purchaseDate.Date >= closingDate.Date)
+                        invoiceRef = invoiceRef.AddMonths(1);
+
+                    firstInstallmentDueDate = GetValidDate(invoiceRef.Year, invoiceRef.Month, financialSource.DueDay.Value);
+
+                    if (financialSource.DueDay.Value < financialSource.ClosingDay.Value)
+                        firstInstallmentDueDate = firstInstallmentDueDate.AddMonths(1);
                 }
                 else
                 {
-                    // Lógica padrão para outras fontes financeiras (não cartões)
-                    firstInvoiceDate = purchaseDate.AddMonths(1);
+                    firstInstallmentDueDate = purchaseDate.AddMonths(1);
                 }
 
-                for (int i = 1; i <= transaction.InstallmentCount.Value; i++)
+                for (int i = 1; i <= count; i++)
                 {
                     transaction.CardInstallments.Add(new CardInstallment
                     {
                         InstallmentNumber = i,
-                        Amount = installmentAmount,
+                        Amount = installmentValue,
                         IsPaid = false,
-                        // Adiciona as parcelas nos meses subsequentes
-                        DueDate = firstInvoiceDate.AddMonths(i - 1)
+                        DueDate = firstInstallmentDueDate.AddMonths(i - 1)
                     });
                 }
             }
+        }
+
+        // Helper Obrigatório para evitar erros em dias como 31/Fev
+        private DateTime GetValidDate(int year, int month, int day)
+        {
+            int daysInMonth = DateTime.DaysInMonth(year, month);
+            return new DateTime(year, month, Math.Min(day, daysInMonth));
         }
 
         private TransactionReadDto MapToReadDto(Transaction transaction)
@@ -253,12 +305,12 @@ namespace Piggino.Api.Domain.Transactions.Services
                 IsInstallment = transaction.IsInstallment,
                 InstallmentCount = transaction.InstallmentCount,
                 IsPaid = transaction.IsPaid,
-                IsFixed = transaction.IsFixed, // ✅ Adicionar
-                DayOfMonth = transaction.DayOfMonth, // ✅ Adicionar
+                IsFixed = transaction.IsFixed,
+                DayOfMonth = transaction.DayOfMonth,
                 CategoryId = transaction.CategoryId,
-                CategoryName = transaction.Category?.Name, // ✅ Adicionar
+                CategoryName = transaction.Category?.Name,
                 FinancialSourceId = transaction.FinancialSourceId,
-                FinancialSourceName = transaction.FinancialSource?.Name, // ✅ Adicionar
+                FinancialSourceName = transaction.FinancialSource?.Name,
                 UserId = transaction.UserId,
                 CardInstallments = transaction.CardInstallments?.Select(ci => new CardInstallmentReadDto
                 {
