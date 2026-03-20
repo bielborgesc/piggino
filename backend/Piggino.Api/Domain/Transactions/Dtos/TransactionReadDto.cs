@@ -16,9 +16,10 @@ namespace Piggino.Api.Domain.Transactions.Dtos
         public int CategoryId { get; set; }
         public bool IsFixed { get; set; }
         public int? DayOfMonth { get; set; }
-        public string? CategoryName { get; set; } // ✅ Adicionar
+        public bool IsRecurring { get; set; }
+        public string? CategoryName { get; set; }
         public int FinancialSourceId { get; set; }
-        public string? FinancialSourceName { get; set; } // ✅ Adicionar
+        public string? FinancialSourceName { get; set; }
         public Guid UserId { get; set; }
         public ICollection<CardInstallmentReadDto>? CardInstallments { get; set; }
 

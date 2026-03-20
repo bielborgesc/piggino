@@ -135,6 +135,9 @@ namespace Piggino.Api.Migrations
                     b.Property<bool>("IsPaid")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsRecurring")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("PurchaseDate")
                         .HasColumnType("TEXT");
 

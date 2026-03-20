@@ -12,8 +12,9 @@ export interface Transaction {
   isInstallment: boolean;
   installmentCount?: number;
   isPaid: boolean;
-  isFixed: boolean; // ✅ Adicionar
-  dayOfMonth?: number; // ✅ Adicionar
+  isFixed: boolean;
+  dayOfMonth?: number;
+  isRecurring: boolean;
   categoryId: number;
   categoryName?: string; // ✅ Adicionar
   financialSourceId: number;
@@ -45,11 +46,12 @@ export interface TransactionData {
     transactionType: CategoryType;
     financialSourceId: number;
     categoryId: number;
-    isFixed: boolean; // ✅ Adicionar
-    dayOfMonth?: number; // ✅ Adicionar
+    isFixed: boolean;
+    dayOfMonth?: number;
     isInstallment: boolean;
     installmentCount?: number;
     purchaseDate: string;
+    isRecurring: boolean;
 }
 
 export interface UserRegistrationData {

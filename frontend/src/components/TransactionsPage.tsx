@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { PlusCircle, Search, ChevronLeft, ChevronRight, LoaderCircle, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { PlusCircle, Search, ChevronLeft, ChevronRight, LoaderCircle, Edit, Trash2, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { TransactionModal } from './TransactionModal';
 // ✅ 1. Importar funções e tipos necessários
 import { getTransactions, deleteTransaction, toggleInstallmentPaidStatus, toggleTransactionPaidStatus, getCategories, getFinancialSources } from '../services/api';
@@ -245,7 +245,15 @@ export function TransactionsPage() {
                                             </button>
                                         </div>
                                         <div className="flex-1">
-                                            <p className={`font-semibold ${item.isPaid ? 'line-through text-slate-400' : 'text-white'}`}>{item.description}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className={`font-semibold ${item.isPaid ? 'line-through text-slate-400' : 'text-white'}`}>{item.description}</p>
+                                                {item.isRecurring && (
+                                                    <span title="Recorrente" className="flex items-center gap-1 text-xs text-blue-400 bg-blue-900/40 px-1.5 py-0.5 rounded">
+                                                        <RefreshCw size={10} />
+                                                        Recorrente
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className={`text-sm ${item.isPaid ? 'line-through text-slate-500' : 'text-slate-400'}`}>{item.categoryName} • {item.financialSourceName}</p>
                                         </div>
                                         <div className="text-right">
@@ -286,7 +294,17 @@ export function TransactionsPage() {
                                                         {item.isPaid ? <CheckCircle className="text-green-400" /> : <XCircle className="text-slate-500 hover:text-slate-300" />}
                                                     </button>
                                                 </td>
-                                                <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-100'}`}>{item.description}</td>
+                                                <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-100'}`}>
+                                                    <div className="flex items-center gap-2">
+                                                        <span>{item.description}</span>
+                                                        {item.isRecurring && (
+                                                            <span title="Recorrente" className="flex items-center gap-1 text-xs text-blue-400 bg-blue-900/40 px-1.5 py-0.5 rounded whitespace-nowrap">
+                                                                <RefreshCw size={10} />
+                                                                Recorrente
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td className={`p-4 font-bold ${item.isPaid ? 'opacity-50' : ''} ${item.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>{item.transactionType.toLowerCase() === 'income' ? '+' : '-'} R$ {Math.abs(item.displayAmount).toFixed(2)}</td>
                                                 <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>{item.categoryName}</td>
                                                 <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>{item.financialSourceName}</td>

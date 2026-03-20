@@ -63,6 +63,14 @@ namespace Piggino.Api.Infrastructure.Repositories
             return await _context.SaveChangesAsync() > 0;
         }
 
+        public async Task<Transaction?> GetByIdWithInstallmentsAndSourceAsync(int id, Guid userId)
+        {
+            return await _context.Transactions
+                .Include(t => t.CardInstallments)
+                .Include(t => t.FinancialSource)
+                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+        }
+
         public async Task<CardInstallment?> GetCardInstallmentByIdAsync(int installmentId)
         {
             return await _context.CardInstallments.FindAsync(installmentId);

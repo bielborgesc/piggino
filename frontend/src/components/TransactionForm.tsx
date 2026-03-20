@@ -29,6 +29,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
   // ✅ NOVOS ESTADOS para a transação fixa
   const [isFixed, setIsFixed] = useState(false);
   const [dayOfMonth, setDayOfMonth] = useState('');
+  const [isRecurring, setIsRecurring] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -59,8 +60,8 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       // ✅ Popula os campos de transação fixa ao editar
       setIsFixed(initialData.isFixed);
       setDayOfMonth(initialData.dayOfMonth ? String(initialData.dayOfMonth) : '');
+      setIsRecurring(initialData.isRecurring);
     } else {
-      // Reseta para o estado de criação
       setDescription('');
       setAmount('');
       setPurchaseDate(new Date().toISOString().split('T')[0]);
@@ -69,9 +70,9 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       setTransactionType('Expense');
       setIsInstallment(false);
       setInstallmentCount('');
-      // ✅ Reseta os campos de transação fixa ao criar
       setIsFixed(false);
       setDayOfMonth('');
+      setIsRecurring(false);
     }
   }, [initialData]);
 
@@ -99,9 +100,9 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       isInstallment,
       installmentCount: isInstallment ? parseInt(installmentCount) : undefined,
       purchaseDate: new Date(purchaseDate).toISOString(),
-      // ✅ Adiciona os novos dados ao objeto a ser salvo
       isFixed,
       dayOfMonth: isFixed ? parseInt(dayOfMonth) : undefined,
+      isRecurring: isInstallment ? isRecurring : false,
     };
     onSave(transactionData, initialData?.id);
   };
@@ -185,9 +186,23 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
         {/* ✅ Bloco que mostra o campo de input correto */}
         <div>
             {isInstallment && (
-                <div className="mt-2">
-                    <label htmlFor="installmentCount" className="block text-sm font-medium text-gray-400 mb-1">Nº de Parcelas</label>
-                    <input type="number" id="installmentCount" value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} placeholder="Ex: 12" className="w-full bg-gray-700 border-gray-600 rounded-md p-2 text-sm" min="2"/>
+                <div className="mt-2 space-y-3">
+                    <div>
+                        <label htmlFor="installmentCount" className="block text-sm font-medium text-gray-400 mb-1">Nº de Parcelas</label>
+                        <input type="number" id="installmentCount" value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} placeholder="Ex: 12" className="w-full bg-gray-700 border-gray-600 rounded-md p-2 text-sm" min="2"/>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="isRecurring"
+                            checked={isRecurring}
+                            onChange={(e) => setIsRecurring(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        />
+                        <label htmlFor="isRecurring" className="text-sm text-gray-300">
+                            Recorrente (reinicia automaticamente após a última parcela)
+                        </label>
+                    </div>
                 </div>
             )}
             {isFixed && (

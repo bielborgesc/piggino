@@ -30,10 +30,12 @@ namespace Piggino.Api.Domain.Transactions.Entities
         public int? InstallmentCount { get; set; }
 
         public bool IsPaid { get; set; }
-        
+
         public bool IsFixed { get; set; } = false;
-        
+
         public int? DayOfMonth { get; set; }
+
+        public bool IsRecurring { get; set; } = false;
 
         public int CategoryId { get; set; }
         public Category? Category { get; set; }
