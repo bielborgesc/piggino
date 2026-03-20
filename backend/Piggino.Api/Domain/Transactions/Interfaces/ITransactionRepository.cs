@@ -1,6 +1,5 @@
 ﻿
 using Piggino.Api.Domain.CardInstallments.Entities;
-using Piggino.Api.Domain.Transactions.Dtos;
 using Piggino.Api.Domain.Transactions.Entities;
 
 namespace Piggino.Api.Domain.Transactions.Interfaces
@@ -13,8 +12,9 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         void Update(Transaction transaction);
         void Delete(Transaction transaction);
         Task<bool> SaveChangesAsync();
-        Task<Transaction?> GetByIdWithInstallmentsAsync(int id, Guid userId); // ✅ Adicione esta linha
-        Task<CardInstallment?> GetCardInstallmentByIdAsync(int installmentId); // ✅ Adicionar
+        Task<Transaction?> GetByIdWithInstallmentsAsync(int id, Guid userId);
+        Task<Transaction?> GetByIdWithInstallmentsAndSourceAsync(int id, Guid userId);
+        Task<CardInstallment?> GetCardInstallmentByIdAsync(int installmentId);
 
     }
 }
