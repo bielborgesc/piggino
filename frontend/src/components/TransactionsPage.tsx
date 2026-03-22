@@ -3,7 +3,7 @@ import { PlusCircle, Search, ChevronLeft, ChevronRight, LoaderCircle, Edit, Tras
 import { TransactionModal } from './TransactionModal';
 import { InstallmentBreakdown } from './InstallmentBreakdown';
 import { RecurrenceScopeModal } from './RecurrenceScopeModal';
-import { getTransactions, deleteTransaction, toggleInstallmentPaidStatus, toggleTransactionPaidStatus, getCategories, getFinancialSources } from '../services/api';
+import { getTransactions, deleteTransaction, deleteInstallmentsByScope, getCategories, getFinancialSources, toggleInstallmentPaidStatus, toggleTransactionPaidStatus } from '../services/api';
 import { Transaction, Category, FinancialSource, RecurrenceScope } from '../types';
 import toast from 'react-hot-toast';
 
@@ -33,6 +33,12 @@ export function TransactionsPage() {
     const [scopeModalAction, setScopeModalAction] = useState<'edit' | 'delete'>('edit');
     const [pendingScopeItem, setPendingScopeItem] = useState<Transaction | null>(null);
     const [pendingEditScope, setPendingEditScope] = useState<RecurrenceScope | undefined>(undefined);
+
+    const [isInstallmentScopeModalOpen, setIsInstallmentScopeModalOpen] = useState(false);
+    const [installmentScopeModalAction, setInstallmentScopeModalAction] = useState<'edit' | 'delete'>('edit');
+    const [pendingInstallmentItem, setPendingInstallmentItem] = useState<Transaction | null>(null);
+    const [pendingInstallmentEditScope, setPendingInstallmentEditScope] = useState<RecurrenceScope | undefined>(undefined);
+    const [pendingInstallmentNumber, setPendingInstallmentNumber] = useState<number | undefined>(undefined);
 
     // ✅ 2. Estados para os novos filtros e para guardar as opções
     const [categories, setCategories] = useState<Category[]>([]);
@@ -150,6 +156,13 @@ export function TransactionsPage() {
             return;
         }
 
+        if (item.isInstallment && item.currentInstallmentNumber !== undefined) {
+            setPendingInstallmentItem(item);
+            setInstallmentScopeModalAction('edit');
+            setIsInstallmentScopeModalOpen(true);
+            return;
+        }
+
         const original = resolveOriginalTransaction(item);
 
         if (original.isRecurring) {
@@ -167,10 +180,19 @@ export function TransactionsPage() {
         setIsModalOpen(false);
         setEditingTransaction(null);
         setPendingEditScope(undefined);
+        setPendingInstallmentEditScope(undefined);
+        setPendingInstallmentNumber(undefined);
         fetchPageData();
     };
 
     const handleDelete = (item: Transaction) => {
+        if (item.isInstallment && item.currentInstallmentNumber !== undefined) {
+            setPendingInstallmentItem(item);
+            setInstallmentScopeModalAction('delete');
+            setIsInstallmentScopeModalOpen(true);
+            return;
+        }
+
         const original = resolveOriginalTransaction(item);
 
         if (original.isRecurring) {
@@ -213,6 +235,42 @@ export function TransactionsPage() {
     const handleScopeCancel = () => {
         setIsScopeModalOpen(false);
         setPendingScopeItem(null);
+    };
+
+    const executeInstallmentDelete = async (transactionId: number, installmentNumber: number, scope: RecurrenceScope) => {
+        const toastId = toast.loading('Excluindo parcelas...');
+        try {
+            await deleteInstallmentsByScope(transactionId, installmentNumber, scope);
+            toast.success('Parcelas excluídas!', { id: toastId });
+            fetchPageData();
+        } catch (error) {
+            toast.error('Falha ao excluir as parcelas.', { id: toastId });
+        }
+    };
+
+    const handleInstallmentScopeConfirm = (scope: RecurrenceScope) => {
+        setIsInstallmentScopeModalOpen(false);
+
+        if (pendingInstallmentItem === null || pendingInstallmentItem.currentInstallmentNumber === undefined) return;
+
+        const installmentNumber = pendingInstallmentItem.currentInstallmentNumber;
+
+        if (installmentScopeModalAction === 'delete') {
+            executeInstallmentDelete(pendingInstallmentItem.id, installmentNumber, scope);
+        } else {
+            const originalForEdit = resolveOriginalTransaction(pendingInstallmentItem);
+            setPendingInstallmentEditScope(scope);
+            setPendingInstallmentNumber(installmentNumber);
+            setEditingTransaction(originalForEdit);
+            setIsModalOpen(true);
+        }
+
+        setPendingInstallmentItem(null);
+    };
+
+    const handleInstallmentScopeCancel = () => {
+        setIsInstallmentScopeModalOpen(false);
+        setPendingInstallmentItem(null);
     };
 
     const handleToggleInstallmentBreakdown = (rowId: string) => {
@@ -430,12 +488,21 @@ export function TransactionsPage() {
                 onClose={handleModalClose}
                 transactionToEdit={editingTransaction}
                 recurrenceScope={pendingEditScope}
+                installmentScope={pendingInstallmentEditScope}
+                installmentNumber={pendingInstallmentNumber}
             />
             <RecurrenceScopeModal
                 isOpen={isScopeModalOpen}
                 action={scopeModalAction}
                 onConfirm={handleScopeConfirm}
                 onCancel={handleScopeCancel}
+            />
+            <RecurrenceScopeModal
+                isOpen={isInstallmentScopeModalOpen}
+                action={installmentScopeModalAction}
+                variant="installment"
+                onConfirm={handleInstallmentScopeConfirm}
+                onCancel={handleInstallmentScopeCancel}
             />
         </>
     );

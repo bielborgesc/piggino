@@ -11,6 +11,8 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         Task<TransactionReadDto> CreateAsync(TransactionCreateDto createDto);
         Task<bool> UpdateAsync(int id, TransactionUpdateDto updateDto);
         Task<bool> DeleteAsync(int id, RecurrenceScope scope = RecurrenceScope.OnlyThis);
+        Task<bool> DeleteInstallmentsByScope(int transactionId, int anchorInstallmentNumber, RecurrenceScope scope);
+        Task<bool> UpdateInstallmentsByScope(int transactionId, int anchorInstallmentNumber, TransactionUpdateDto updateDto);
         Task<bool> ToggleInstallmentPaidStatusAsync(int installmentId);
         Task<bool> ToggleTransactionPaidStatusAsync(int transactionId);
     }

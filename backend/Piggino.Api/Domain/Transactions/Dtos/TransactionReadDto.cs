@@ -12,6 +12,7 @@ namespace Piggino.Api.Domain.Transactions.Dtos
         public DateTime PurchaseDate { get; set; }
         public bool IsInstallment { get; set; }
         public int? InstallmentCount { get; set; }
+        public int? CurrentInstallmentNumber { get; set; }
         public bool IsPaid { get; set; }
         public int CategoryId { get; set; }
         public bool IsFixed { get; set; }
@@ -22,6 +23,5 @@ namespace Piggino.Api.Domain.Transactions.Dtos
         public string? FinancialSourceName { get; set; }
         public Guid UserId { get; set; }
         public ICollection<CardInstallmentReadDto>? CardInstallments { get; set; }
-
     }
 }

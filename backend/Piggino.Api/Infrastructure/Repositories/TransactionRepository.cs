@@ -88,5 +88,10 @@ namespace Piggino.Api.Infrastructure.Repositories
                     t.CategoryId == anchor.CategoryId)
                 .ToListAsync();
         }
+
+        public void DeleteCardInstallment(CardInstallment installment)
+        {
+            _context.CardInstallments.Remove(installment);
+        }
     }
 }

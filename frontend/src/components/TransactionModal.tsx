@@ -3,28 +3,42 @@ import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { TransactionForm } from './TransactionForm';
 import { Transaction, TransactionData, RecurrenceScope } from '../types';
-import { createTransaction, updateTransaction } from '../services/api';
+import { createTransaction, updateTransaction, updateInstallmentsByScope } from '../services/api';
 
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   transactionToEdit?: Transaction | null;
   recurrenceScope?: RecurrenceScope;
+  installmentScope?: RecurrenceScope;
+  installmentNumber?: number;
 }
 
-export function TransactionModal({ isOpen, onClose, transactionToEdit, recurrenceScope }: TransactionModalProps) {
+export function TransactionModal({
+  isOpen,
+  onClose,
+  transactionToEdit,
+  recurrenceScope,
+  installmentScope,
+  installmentNumber,
+}: TransactionModalProps) {
   const [isSaving, setIsSaving] = useState(false);
 
   if (!isOpen) {
     return null;
   }
 
+  const isInstallmentEdit = installmentScope !== undefined && installmentNumber !== undefined;
+
   const handleSave = async (data: TransactionData, id?: number) => {
     setIsSaving(true);
     const toastId = toast.loading(id ? 'Atualizando transação...' : 'Salvando transação...');
 
     try {
-      if (id) {
+      if (id && isInstallmentEdit) {
+        await updateInstallmentsByScope(id, installmentNumber, data, installmentScope);
+        toast.success('Parcelas atualizadas!', { id: toastId });
+      } else if (id) {
         const dataWithScope: TransactionData = { ...data, recurrenceScope };
         await updateTransaction(id, dataWithScope);
         toast.success('Transação atualizada!', { id: toastId });

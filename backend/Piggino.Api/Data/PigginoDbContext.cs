@@ -39,6 +39,10 @@ namespace Piggino.Api.Data
                 .HasConversion<string>();
 
             modelBuilder
+                .Entity<Transaction>()
+                .Ignore(t => t.CurrentInstallmentNumber);
+
+            modelBuilder
                 .Entity<Category>()
                 .Property(c => c.Type)
                 .HasConversion<string>();

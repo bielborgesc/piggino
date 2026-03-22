@@ -77,6 +77,51 @@ namespace Piggino.Api.Domain.Transactions.Services
             return await _transactionRepository.SaveChangesAsync();
         }
 
+        public async Task<bool> DeleteInstallmentsByScope(int transactionId, int anchorInstallmentNumber, RecurrenceScope scope)
+        {
+            Guid userId = GetCurrentUserId();
+            Transaction? transaction = await _transactionRepository.GetByIdWithInstallmentsAsync(transactionId, userId);
+
+            if (transaction == null) return false;
+            if (transaction.CardInstallments == null || !transaction.CardInstallments.Any()) return false;
+
+            List<CardInstallment> targets = FilterInstallmentsByScope(
+                transaction.CardInstallments, anchorInstallmentNumber, scope).ToList();
+
+            foreach (CardInstallment installment in targets)
+                _transactionRepository.DeleteCardInstallment(installment);
+
+            bool noInstallmentsRemain = transaction.CardInstallments
+                .All(i => targets.Contains(i));
+
+            if (noInstallmentsRemain)
+                _transactionRepository.Delete(transaction);
+
+            return await _transactionRepository.SaveChangesAsync();
+        }
+
+        public async Task<bool> UpdateInstallmentsByScope(int transactionId, int anchorInstallmentNumber, TransactionUpdateDto updateDto)
+        {
+            Guid userId = GetCurrentUserId();
+            Transaction? transaction = await _transactionRepository.GetByIdWithInstallmentsAsync(transactionId, userId);
+
+            if (transaction == null) return false;
+            if (transaction.CardInstallments == null || !transaction.CardInstallments.Any()) return false;
+
+            IEnumerable<CardInstallment> targets = FilterInstallmentsByScope(
+                transaction.CardInstallments, anchorInstallmentNumber, updateDto.RecurrenceScope ?? RecurrenceScope.OnlyThis);
+
+            foreach (CardInstallment installment in targets)
+                installment.Amount = updateDto.TotalAmount;
+
+            transaction.Description = StripInstallmentSuffix(updateDto.Description);
+            transaction.CategoryId = updateDto.CategoryId;
+            transaction.TransactionType = updateDto.TransactionType;
+
+            _transactionRepository.Update(transaction);
+            return await _transactionRepository.SaveChangesAsync();
+        }
+
         public async Task<IEnumerable<TransactionReadDto>> GetAllAsync()
         {
             Guid userId = GetCurrentUserId();
@@ -300,7 +345,8 @@ namespace Piggino.Api.Domain.Transactions.Services
                 FinancialSourceId = source.FinancialSourceId,
                 FinancialSource = source.FinancialSource,
                 UserId = source.UserId,
-                InstallmentCount = source.InstallmentCount
+                InstallmentCount = source.InstallmentCount,
+                CurrentInstallmentNumber = installment.InstallmentNumber
             };
         }
 
@@ -468,6 +514,7 @@ namespace Piggino.Api.Domain.Transactions.Services
                 PurchaseDate = transaction.PurchaseDate,
                 IsInstallment = transaction.IsInstallment,
                 InstallmentCount = transaction.InstallmentCount,
+                CurrentInstallmentNumber = transaction.CurrentInstallmentNumber,
                 IsPaid = transaction.IsPaid,
                 IsFixed = transaction.IsFixed,
                 DayOfMonth = transaction.DayOfMonth,
@@ -509,6 +556,20 @@ namespace Piggino.Api.Domain.Transactions.Services
                 RecurrenceScope.ThisAndPast   => group.Where(t => t.PurchaseDate.Date <= anchorDate.Date),
                 RecurrenceScope.All           => group,
                 _                             => group.Where(t => t.PurchaseDate.Date == anchorDate.Date)
+            };
+        }
+
+        private static IEnumerable<CardInstallment> FilterInstallmentsByScope(
+            IEnumerable<CardInstallment> installments,
+            int anchorNumber,
+            RecurrenceScope scope)
+        {
+            return scope switch
+            {
+                RecurrenceScope.ThisAndFuture => installments.Where(i => i.InstallmentNumber >= anchorNumber),
+                RecurrenceScope.ThisAndPast   => installments.Where(i => i.InstallmentNumber <= anchorNumber),
+                RecurrenceScope.All           => installments,
+                _                             => installments.Where(i => i.InstallmentNumber == anchorNumber)
             };
         }
 

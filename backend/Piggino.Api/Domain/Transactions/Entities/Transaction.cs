@@ -47,5 +47,11 @@ namespace Piggino.Api.Domain.Transactions.Entities
         public User? User { get; set; }
 
         public ICollection<CardInstallment>? CardInstallments { get; set; }
+
+        /// <summary>
+        /// Populated only for projected installment rows. Not persisted to the database.
+        /// Carries the installment number of the specific CardInstallment this row represents.
+        /// </summary>
+        public int? CurrentInstallmentNumber { get; set; }
     }
 }

@@ -9,17 +9,18 @@ export interface Transaction {
   syntheticId?: string;
   totalAmount: number;
   transactionType: CategoryType;
-  purchaseDate: string; // A API envia como string no formato ISO
+  purchaseDate: string;
   isInstallment: boolean;
   installmentCount?: number;
+  currentInstallmentNumber?: number;
   isPaid: boolean;
   isFixed: boolean;
   dayOfMonth?: number;
   isRecurring: boolean;
   categoryId: number;
-  categoryName?: string; // ✅ Adicionar
+  categoryName?: string;
   financialSourceId: number;
-  financialSourceName?: string; // ✅ Adicionar
+  financialSourceName?: string;
   userId: string;
   cardInstallments?: CardInstallment[];
 }

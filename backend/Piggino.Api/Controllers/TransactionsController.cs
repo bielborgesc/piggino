@@ -86,6 +86,41 @@ namespace Piggino.Api.Controllers
             return NoContent();
         }
 
+        [HttpDelete("{id}/installments/{installmentNumber}")]
+        public async Task<IActionResult> DeleteInstallmentsByScope(
+            int id,
+            int installmentNumber,
+            [FromQuery] RecurrenceScope scope = RecurrenceScope.OnlyThis)
+        {
+            bool success = await _service.DeleteInstallmentsByScope(id, installmentNumber, scope);
+
+            if (!success)
+                return NotFound();
+
+            return NoContent();
+        }
+
+        [HttpPut("{id}/installments/{installmentNumber}")]
+        public async Task<IActionResult> UpdateInstallmentsByScope(
+            int id,
+            int installmentNumber,
+            TransactionUpdateDto updateDto)
+        {
+            try
+            {
+                bool success = await _service.UpdateInstallmentsByScope(id, installmentNumber, updateDto);
+
+                if (!success)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPatch("installments/{installmentId}/toggle-paid")]
         public async Task<IActionResult> ToggleInstallmentPaidStatus(int installmentId)
         {

@@ -108,6 +108,27 @@ export const deleteTransaction = async (id: number, scope: RecurrenceScope = 'On
   await apiClient.delete(`/Transactions/${id}`, { params: { scope } });
 };
 
+export const deleteInstallmentsByScope = async (
+  transactionId: number,
+  installmentNumber: number,
+  scope: RecurrenceScope
+): Promise<void> => {
+  await apiClient.delete(`/Transactions/${transactionId}/installments/${installmentNumber}`, { params: { scope } });
+};
+
+export const updateInstallmentsByScope = async (
+  transactionId: number,
+  installmentNumber: number,
+  transactionData: TransactionData,
+  scope: RecurrenceScope
+): Promise<void> => {
+  await apiClient.put(`/Transactions/${transactionId}/installments/${installmentNumber}`, {
+    ...transactionData,
+    recurrenceScope: scope,
+    installmentNumber,
+  });
+};
+
 export const toggleInstallmentPaidStatus = async (installmentId: number): Promise<void> => {
   await apiClient.patch(`/Transactions/installments/${installmentId}/toggle-paid`);
 };

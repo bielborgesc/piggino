@@ -31,19 +31,39 @@ const SCOPE_OPTIONS: ScopeOption[] = [
   },
 ];
 
+type ModalVariant = 'recurrence' | 'installment';
+
 interface RecurrenceScopeModalProps {
   isOpen: boolean;
   action: 'edit' | 'delete';
+  variant?: ModalVariant;
   onConfirm: (scope: RecurrenceScope) => void;
   onCancel: () => void;
 }
 
-export function RecurrenceScopeModal({ isOpen, action, onConfirm, onCancel }: RecurrenceScopeModalProps) {
+const TITLES: Record<ModalVariant, Record<'edit' | 'delete', string>> = {
+  recurrence: {
+    edit: 'Editar transação recorrente',
+    delete: 'Excluir transação recorrente',
+  },
+  installment: {
+    edit: 'Editar transação parcelada',
+    delete: 'Excluir transação parcelada',
+  },
+};
+
+const DESCRIPTIONS: Record<ModalVariant, string> = {
+  recurrence: 'Esta é uma transação recorrente. Selecione quais ocorrências devem ser afetadas:',
+  installment: 'Esta é uma transação parcelada. Selecione quais parcelas devem ser afetadas:',
+};
+
+export function RecurrenceScopeModal({ isOpen, action, variant = 'recurrence', onConfirm, onCancel }: RecurrenceScopeModalProps) {
   const [selectedScope, setSelectedScope] = useState<RecurrenceScope>('OnlyThis');
 
   if (!isOpen) return null;
 
-  const title = action === 'edit' ? 'Editar transação recorrente' : 'Excluir transação recorrente';
+  const title = TITLES[variant][action];
+  const description = DESCRIPTIONS[variant];
   const confirmLabel = action === 'edit' ? 'Confirmar edição' : 'Confirmar exclusão';
   const confirmClass = action === 'delete'
     ? 'bg-red-600 hover:bg-red-700'
@@ -66,7 +86,7 @@ export function RecurrenceScopeModal({ isOpen, action, onConfirm, onCancel }: Re
         </div>
 
         <p className="text-slate-400 text-sm mb-4">
-          Esta é uma transação recorrente. Selecione quais ocorrências devem ser afetadas:
+          {description}
         </p>
 
         <div className="space-y-3 mb-6">

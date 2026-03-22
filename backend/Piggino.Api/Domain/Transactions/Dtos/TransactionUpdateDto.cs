@@ -6,6 +6,7 @@ namespace Piggino.Api.Domain.Transactions.Dtos
     public class TransactionUpdateDto
     {
         public RecurrenceScope? RecurrenceScope { get; set; }
+        public int? InstallmentNumber { get; set; }
 
         [Required]
         [StringLength(150)]
