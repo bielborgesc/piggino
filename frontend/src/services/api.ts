@@ -1,13 +1,14 @@
 import axios from 'axios';
-import { 
+import {
   Transaction,
-  Category, 
-  FinancialSource, 
-  TransactionData, 
+  Category,
+  FinancialSource,
+  TransactionData,
   UserRegistrationData,
   UserLoginData,
   CategoryType,
-  FinancialSourceData
+  FinancialSourceData,
+  RecurrenceScope
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -103,8 +104,8 @@ export const updateTransaction = async (id: number, transactionData: Transaction
   await apiClient.put(`/Transactions/${id}`, transactionData);
 };
 
-export const deleteTransaction = async (id: number): Promise<void> => {
-  await apiClient.delete(`/Transactions/${id}`);
+export const deleteTransaction = async (id: number, scope: RecurrenceScope = 'OnlyThis'): Promise<void> => {
+  await apiClient.delete(`/Transactions/${id}`, { params: { scope } });
 };
 
 export const toggleInstallmentPaidStatus = async (installmentId: number): Promise<void> => {

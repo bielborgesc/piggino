@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { PlusCircle, Search, ChevronLeft, ChevronRight, LoaderCircle, Edit, Trash2, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { PlusCircle, Search, ChevronLeft, ChevronRight, LoaderCircle, Edit, Trash2, CheckCircle, XCircle, RefreshCw, CreditCard } from 'lucide-react';
 import { TransactionModal } from './TransactionModal';
-// ✅ 1. Importar funções e tipos necessários
+import { InstallmentBreakdown } from './InstallmentBreakdown';
+import { RecurrenceScopeModal } from './RecurrenceScopeModal';
 import { getTransactions, deleteTransaction, toggleInstallmentPaidStatus, toggleTransactionPaidStatus, getCategories, getFinancialSources } from '../services/api';
-import { Transaction, Category, FinancialSource } from '../types';
+import { Transaction, Category, FinancialSource, RecurrenceScope } from '../types';
 import toast from 'react-hot-toast';
 
 function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: { currentDate: Date; onPreviousMonth: () => void; onNextMonth: () => void; }) {
@@ -26,6 +27,12 @@ export function TransactionsPage() {
     const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+    const [expandedInstallmentRowId, setExpandedInstallmentRowId] = useState<string | null>(null);
+
+    const [isScopeModalOpen, setIsScopeModalOpen] = useState(false);
+    const [scopeModalAction, setScopeModalAction] = useState<'edit' | 'delete'>('edit');
+    const [pendingScopeItem, setPendingScopeItem] = useState<Transaction | null>(null);
+    const [pendingEditScope, setPendingEditScope] = useState<RecurrenceScope | undefined>(undefined);
 
     // ✅ 2. Estados para os novos filtros e para guardar as opções
     const [categories, setCategories] = useState<Category[]>([]);
@@ -131,34 +138,85 @@ export function TransactionsPage() {
         }
     };
     
-    const handleOpenModal = (item: any | null) => {
-        if (item && item.isInstallmentItem) {
-            const originalTransaction = allTransactions.find(t => t.id === item.id);
-            setEditingTransaction(originalTransaction || null);
-        } else {
-            setEditingTransaction(item);
+    const resolveOriginalTransaction = (item: Transaction): Transaction => {
+        const original = allTransactions.find(t => t.id === item.id);
+        return original ?? item;
+    };
+
+    const handleOpenModal = (item: Transaction | null) => {
+        if (item === null) {
+            setEditingTransaction(null);
+            setIsModalOpen(true);
+            return;
         }
+
+        const original = resolveOriginalTransaction(item);
+
+        if (original.isRecurring) {
+            setPendingScopeItem(original);
+            setScopeModalAction('edit');
+            setIsScopeModalOpen(true);
+            return;
+        }
+
+        setEditingTransaction(original);
         setIsModalOpen(true);
     };
 
     const handleModalClose = () => {
         setIsModalOpen(false);
         setEditingTransaction(null);
+        setPendingEditScope(undefined);
         fetchPageData();
     };
 
-    const handleDelete = async (item: any) => {
-        const transactionIdToDelete = item.isInstallmentItem ? item.id : item.id;
-        if (window.confirm('Tem certeza? A transação e todas as suas parcelas (se houver) serão excluídas.')) {
-            const toastId = toast.loading('Excluindo...');
-            try {
-                await deleteTransaction(transactionIdToDelete);
-                toast.success('Transação excluída!', { id: toastId });
-                fetchPageData();
-            } catch (error) {
-                toast.error('Falha ao excluir a transação.', { id: toastId });
-            }
+    const handleDelete = (item: Transaction) => {
+        const original = resolveOriginalTransaction(item);
+
+        if (original.isRecurring) {
+            setPendingScopeItem(original);
+            setScopeModalAction('delete');
+            setIsScopeModalOpen(true);
+            return;
         }
+
+        executeDelete(original.id, 'OnlyThis');
+    };
+
+    const executeDelete = async (id: number, scope: RecurrenceScope) => {
+        const toastId = toast.loading('Excluindo...');
+        try {
+            await deleteTransaction(id, scope);
+            toast.success('Transação excluída!', { id: toastId });
+            fetchPageData();
+        } catch (error) {
+            toast.error('Falha ao excluir a transação.', { id: toastId });
+        }
+    };
+
+    const handleScopeConfirm = (scope: RecurrenceScope) => {
+        setIsScopeModalOpen(false);
+
+        if (pendingScopeItem === null) return;
+
+        if (scopeModalAction === 'delete') {
+            executeDelete(pendingScopeItem.id, scope);
+        } else {
+            setPendingEditScope(scope);
+            setEditingTransaction(pendingScopeItem);
+            setIsModalOpen(true);
+        }
+
+        setPendingScopeItem(null);
+    };
+
+    const handleScopeCancel = () => {
+        setIsScopeModalOpen(false);
+        setPendingScopeItem(null);
+    };
+
+    const handleToggleInstallmentBreakdown = (rowId: string) => {
+        setExpandedInstallmentRowId(prev => (prev === rowId ? null : rowId));
     };
 
     return (
@@ -237,36 +295,56 @@ export function TransactionsPage() {
                         {/* LISTA DE CARDS PARA MOBILE */}
                         <div className="space-y-4 md:hidden">
                             {monthlyItems.length > 0 ? (
-                                monthlyItems.map((item) => (
-                                    <div key={item.syntheticId || item.id} className={`p-4 rounded-lg border transition-colors flex gap-4 ${item.isPaid ? 'bg-green-900/20 border-green-800/20 text-slate-500' : 'bg-slate-800 border-slate-700'}`}>
-                                        <div className="flex flex-col items-center justify-center">
-                                            <button onClick={() => handleTogglePaid(item)} title={item.isPaid ? "Marcar como pendente" : "Marcar como pago"}>
-                                                {item.isPaid ? <CheckCircle className="text-green-400" /> : <XCircle className="text-slate-500 hover:text-slate-300" />}
-                                            </button>
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <p className={`font-semibold ${item.isPaid ? 'line-through text-slate-400' : 'text-white'}`}>{item.description}</p>
-                                                {item.isRecurring && (
-                                                    <span title="Recorrente" className="flex items-center gap-1 text-xs text-blue-400 bg-blue-900/40 px-1.5 py-0.5 rounded">
-                                                        <RefreshCw size={10} />
-                                                        Recorrente
-                                                    </span>
-                                                )}
+                                monthlyItems.map((item) => {
+                                    const rowId = item.syntheticId ?? String(item.id);
+                                    const hasInstallments = item.cardInstallments && item.cardInstallments.length > 0;
+                                    const isExpanded = expandedInstallmentRowId === rowId;
+                                    return (
+                                        <div key={rowId} className={`p-4 rounded-lg border transition-colors ${item.isPaid ? 'bg-green-900/20 border-green-800/20 text-slate-500' : 'bg-slate-800 border-slate-700'}`}>
+                                            <div className="flex gap-4">
+                                                <div className="flex flex-col items-center justify-center">
+                                                    <button onClick={() => handleTogglePaid(item)} title={item.isPaid ? "Marcar como pendente" : "Marcar como pago"}>
+                                                        {item.isPaid ? <CheckCircle className="text-green-400" /> : <XCircle className="text-slate-500 hover:text-slate-300" />}
+                                                    </button>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <p className={`font-semibold ${item.isPaid ? 'line-through text-slate-400' : 'text-white'}`}>{item.description}</p>
+                                                        {item.isRecurring && (
+                                                            <span title="Recorrente" className="flex items-center gap-1 text-xs text-blue-400 bg-blue-900/40 px-1.5 py-0.5 rounded">
+                                                                <RefreshCw size={10} />
+                                                                Recorrente
+                                                            </span>
+                                                        )}
+                                                        {hasInstallments && (
+                                                            <button
+                                                                onClick={() => handleToggleInstallmentBreakdown(rowId)}
+                                                                title="Ver parcelas"
+                                                                className="flex items-center gap-1 text-xs text-purple-300 bg-purple-900/40 hover:bg-purple-800/60 px-1.5 py-0.5 rounded transition-colors"
+                                                            >
+                                                                <CreditCard size={10} />
+                                                                {item.cardInstallments!.length}x
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <p className={`text-sm ${item.isPaid ? 'line-through text-slate-500' : 'text-slate-400'}`}>{item.categoryName} • {item.financialSourceName}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className={`font-bold text-lg ${item.isPaid ? 'opacity-50' : ''} ${item.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                                                        {item.transactionType.toLowerCase() === 'income' ? '+' : '-'} R$ {Math.abs(item.displayAmount).toFixed(2)}
+                                                    </p>
+                                                    <div className="flex gap-2 justify-end mt-1">
+                                                        <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-white"><Edit size={16} /></button>
+                                                        <button onClick={() => handleDelete(item)} className="text-slate-400 hover:text-red-400"><Trash2 size={16} /></button>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <p className={`text-sm ${item.isPaid ? 'line-through text-slate-500' : 'text-slate-400'}`}>{item.categoryName} • {item.financialSourceName}</p>
+                                            {isExpanded && hasInstallments && (
+                                                <InstallmentBreakdown installments={item.cardInstallments!} />
+                                            )}
                                         </div>
-                                        <div className="text-right">
-                                            <p className={`font-bold text-lg ${item.isPaid ? 'opacity-50' : ''} ${item.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                                                {item.transactionType.toLowerCase() === 'income' ? '+' : '-'} R$ {Math.abs(item.displayAmount).toFixed(2)}
-                                            </p>
-                                            <div className="flex gap-2 justify-end mt-1">
-                                                <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-white"><Edit size={16} /></button>
-                                                <button onClick={() => handleDelete(item)} className="text-slate-400 hover:text-red-400"><Trash2 size={16} /></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             ) : (
                                 <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">Nenhuma transação encontrada.</div>
                             )}
@@ -287,33 +365,57 @@ export function TransactionsPage() {
                                 </thead>
                                 <tbody>
                                     {monthlyItems.length > 0 ? (
-                                        monthlyItems.map((item) => (
-                                            <tr key={item.syntheticId || item.id} className={`border-b border-slate-700 last:border-b-0 transition-colors ${item.isPaid ? 'bg-green-900/20 hover:bg-green-800/30 text-slate-500' : 'hover:bg-slate-700/30'}`}>
-                                                <td className="p-4 text-center">
-                                                    <button onClick={() => handleTogglePaid(item)} title={item.isPaid ? "Marcar como pendente" : "Marcar como pago"}>
-                                                        {item.isPaid ? <CheckCircle className="text-green-400" /> : <XCircle className="text-slate-500 hover:text-slate-300" />}
-                                                    </button>
-                                                </td>
-                                                <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-100'}`}>
-                                                    <div className="flex items-center gap-2">
-                                                        <span>{item.description}</span>
-                                                        {item.isRecurring && (
-                                                            <span title="Recorrente" className="flex items-center gap-1 text-xs text-blue-400 bg-blue-900/40 px-1.5 py-0.5 rounded whitespace-nowrap">
-                                                                <RefreshCw size={10} />
-                                                                Recorrente
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className={`p-4 font-bold ${item.isPaid ? 'opacity-50' : ''} ${item.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>{item.transactionType.toLowerCase() === 'income' ? '+' : '-'} R$ {Math.abs(item.displayAmount).toFixed(2)}</td>
-                                                <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>{item.categoryName}</td>
-                                                <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>{item.financialSourceName}</td>
-                                                <td className="p-4 text-right">
-                                                    <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-white p-2" title="Editar Transação Original"><Edit size={18} /></button>
-                                                    <button onClick={() => handleDelete(item)} className="text-slate-400 hover:text-red-400 p-2" title="Excluir Transação Original"><Trash2 size={18} /></button>
-                                                </td>
-                                            </tr>
-                                        ))
+                                        monthlyItems.map((item) => {
+                                            const rowId = item.syntheticId ?? String(item.id);
+                                            const hasInstallments = item.cardInstallments && item.cardInstallments.length > 0;
+                                            const isExpanded = expandedInstallmentRowId === rowId;
+                                            return (
+                                                <React.Fragment key={rowId}>
+                                                    <tr className={`border-b border-slate-700 transition-colors ${!isExpanded ? 'last:border-b-0' : ''} ${item.isPaid ? 'bg-green-900/20 hover:bg-green-800/30 text-slate-500' : 'hover:bg-slate-700/30'}`}>
+                                                        <td className="p-4 text-center">
+                                                            <button onClick={() => handleTogglePaid(item)} title={item.isPaid ? "Marcar como pendente" : "Marcar como pago"}>
+                                                                {item.isPaid ? <CheckCircle className="text-green-400" /> : <XCircle className="text-slate-500 hover:text-slate-300" />}
+                                                            </button>
+                                                        </td>
+                                                        <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-100'}`}>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span>{item.description}</span>
+                                                                {item.isRecurring && (
+                                                                    <span title="Recorrente" className="flex items-center gap-1 text-xs text-blue-400 bg-blue-900/40 px-1.5 py-0.5 rounded whitespace-nowrap">
+                                                                        <RefreshCw size={10} />
+                                                                        Recorrente
+                                                                    </span>
+                                                                )}
+                                                                {hasInstallments && (
+                                                                    <button
+                                                                        onClick={() => handleToggleInstallmentBreakdown(rowId)}
+                                                                        title="Ver parcelas"
+                                                                        className="flex items-center gap-1 text-xs text-purple-300 bg-purple-900/40 hover:bg-purple-800/60 px-1.5 py-0.5 rounded whitespace-nowrap transition-colors"
+                                                                    >
+                                                                        <CreditCard size={10} />
+                                                                        {item.cardInstallments!.length}x
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className={`p-4 font-bold ${item.isPaid ? 'opacity-50' : ''} ${item.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>{item.transactionType.toLowerCase() === 'income' ? '+' : '-'} R$ {Math.abs(item.displayAmount).toFixed(2)}</td>
+                                                        <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>{item.categoryName}</td>
+                                                        <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>{item.financialSourceName}</td>
+                                                        <td className="p-4 text-right">
+                                                            <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-white p-2" title="Editar Transação Original"><Edit size={18} /></button>
+                                                            <button onClick={() => handleDelete(item)} className="text-slate-400 hover:text-red-400 p-2" title="Excluir Transação Original"><Trash2 size={18} /></button>
+                                                        </td>
+                                                    </tr>
+                                                    {isExpanded && hasInstallments && (
+                                                        <tr className="border-b border-slate-700">
+                                                            <td colSpan={6} className="px-4 pb-4">
+                                                                <InstallmentBreakdown installments={item.cardInstallments!} />
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </React.Fragment>
+                                            );
+                                        })
                                     ) : (
                                         <tr><td colSpan={6} className="text-center p-8 text-slate-400">Nenhuma transação encontrada para os filtros selecionados.</td></tr>
                                     )}
@@ -323,7 +425,18 @@ export function TransactionsPage() {
                     </>
                 )}
             </div>
-            <TransactionModal isOpen={isModalOpen} onClose={handleModalClose} transactionToEdit={editingTransaction} />
+            <TransactionModal
+                isOpen={isModalOpen}
+                onClose={handleModalClose}
+                transactionToEdit={editingTransaction}
+                recurrenceScope={pendingEditScope}
+            />
+            <RecurrenceScopeModal
+                isOpen={isScopeModalOpen}
+                action={scopeModalAction}
+                onConfirm={handleScopeConfirm}
+                onCancel={handleScopeCancel}
+            />
         </>
     );
 }

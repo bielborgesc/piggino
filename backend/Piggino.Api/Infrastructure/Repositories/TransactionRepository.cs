@@ -75,5 +75,18 @@ namespace Piggino.Api.Infrastructure.Repositories
         {
             return await _context.CardInstallments.FindAsync(installmentId);
         }
+
+        public async Task<IEnumerable<Transaction>> GetRecurrenceGroupAsync(Transaction anchor, Guid userId)
+        {
+            return await _context.Transactions
+                .Where(t =>
+                    t.UserId == userId &&
+                    t.IsRecurring &&
+                    t.Description == anchor.Description &&
+                    t.TotalAmount == anchor.TotalAmount &&
+                    t.FinancialSourceId == anchor.FinancialSourceId &&
+                    t.CategoryId == anchor.CategoryId)
+                .ToListAsync();
+        }
     }
 }

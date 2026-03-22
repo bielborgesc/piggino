@@ -55,14 +55,25 @@ namespace Piggino.Api.Domain.Transactions.Services
             return MapToReadDto(newTransaction);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id, RecurrenceScope scope = RecurrenceScope.OnlyThis)
         {
             Guid userId = GetCurrentUserId();
-            Transaction? transaction = await _transactionRepository.GetByIdAsync(id, userId);
+            Transaction? anchor = await _transactionRepository.GetByIdAsync(id, userId);
 
-            if (transaction == null) return false;
+            if (anchor == null) return false;
 
-            _transactionRepository.Delete(transaction);
+            if (!anchor.IsRecurring || scope == RecurrenceScope.OnlyThis)
+            {
+                _transactionRepository.Delete(anchor);
+                return await _transactionRepository.SaveChangesAsync();
+            }
+
+            IEnumerable<Transaction> group = await _transactionRepository.GetRecurrenceGroupAsync(anchor, userId);
+            IEnumerable<Transaction> targets = FilterGroupByScope(group, anchor.PurchaseDate, scope);
+
+            foreach (Transaction target in targets)
+                _transactionRepository.Delete(target);
+
             return await _transactionRepository.SaveChangesAsync();
         }
 
@@ -95,26 +106,48 @@ namespace Piggino.Api.Domain.Transactions.Services
         public async Task<bool> UpdateAsync(int id, TransactionUpdateDto updateDto)
         {
             Guid userId = GetCurrentUserId();
-            Transaction? transaction = await _transactionRepository.GetByIdWithInstallmentsAsync(id, userId);
+            Transaction? anchor = await _transactionRepository.GetByIdWithInstallmentsAsync(id, userId);
 
-            if (transaction == null) return false;
+            if (anchor == null) return false;
 
             var financialSource = await _financialSourceRepository.GetByIdAsync(updateDto.FinancialSourceId, userId);
             if (financialSource == null)
                 throw new InvalidOperationException("Financial Source not found.");
 
+            RecurrenceScope scope = updateDto.RecurrenceScope ?? RecurrenceScope.OnlyThis;
+
+            if (!anchor.IsRecurring || scope == RecurrenceScope.OnlyThis)
+            {
+                ApplySingleTransactionUpdate(anchor, updateDto, financialSource);
+                _transactionRepository.Update(anchor);
+                return await _transactionRepository.SaveChangesAsync();
+            }
+
+            IEnumerable<Transaction> group = await _transactionRepository.GetRecurrenceGroupAsync(anchor, userId);
+            IEnumerable<Transaction> targets = FilterGroupByScope(group, anchor.PurchaseDate, scope);
+
+            foreach (Transaction target in targets)
+            {
+                Transaction? targetWithInstallments = await _transactionRepository.GetByIdWithInstallmentsAsync(target.Id, userId);
+                if (targetWithInstallments == null) continue;
+
+                ApplySingleTransactionUpdate(targetWithInstallments, updateDto, financialSource);
+                _transactionRepository.Update(targetWithInstallments);
+            }
+
+            return await _transactionRepository.SaveChangesAsync();
+        }
+
+        private void ApplySingleTransactionUpdate(Transaction transaction, TransactionUpdateDto updateDto, FinancialSource financialSource)
+        {
             bool needsInstallmentRecalculation = InstallmentRecalculationRequired(transaction, updateDto);
 
             ApplyUpdateFields(transaction, updateDto);
 
-            if (needsInstallmentRecalculation)
-            {
-                transaction.CardInstallments?.Clear();
-                GenerateInstallments(transaction, financialSource);
-            }
+            if (!needsInstallmentRecalculation) return;
 
-            _transactionRepository.Update(transaction);
-            return await _transactionRepository.SaveChangesAsync();
+            transaction.CardInstallments?.Clear();
+            GenerateInstallments(transaction, financialSource);
         }
 
         public async Task<bool> ToggleInstallmentPaidStatusAsync(int installmentId)
@@ -460,6 +493,22 @@ namespace Piggino.Api.Domain.Transactions.Services
                 IsPaid = installment.IsPaid,
                 TransactionId = installment.TransactionId,
                 DueDate = installment.DueDate
+            };
+        }
+
+        // --- Recurrence scope filtering ---
+
+        private static IEnumerable<Transaction> FilterGroupByScope(
+            IEnumerable<Transaction> group,
+            DateTime anchorDate,
+            RecurrenceScope scope)
+        {
+            return scope switch
+            {
+                RecurrenceScope.ThisAndFuture => group.Where(t => t.PurchaseDate.Date >= anchorDate.Date),
+                RecurrenceScope.ThisAndPast   => group.Where(t => t.PurchaseDate.Date <= anchorDate.Date),
+                RecurrenceScope.All           => group,
+                _                             => group.Where(t => t.PurchaseDate.Date == anchorDate.Date)
             };
         }
 

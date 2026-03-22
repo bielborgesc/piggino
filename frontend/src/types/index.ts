@@ -1,5 +1,6 @@
 export type CategoryType = 'Income' | 'Expense';
 export type FinancialSourceType = 'Card' | 'Account' | 'Cash';
+export type RecurrenceScope = 'OnlyThis' | 'ThisAndFuture' | 'ThisAndPast' | 'All';
 
 // A interface Transaction agora corresponde ao TransactionReadDto do backend
 export interface Transaction {
@@ -52,6 +53,7 @@ export interface TransactionData {
     installmentCount?: number;
     purchaseDate: string;
     isRecurring: boolean;
+    recurrenceScope?: RecurrenceScope;
 }
 
 export interface UserRegistrationData {

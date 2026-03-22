@@ -1,4 +1,6 @@
 ﻿using Piggino.Api.Domain.Transactions.Dtos;
+using Piggino.Api.Enum;
+
 
 namespace Piggino.Api.Domain.Transactions.Interfaces
 {
@@ -8,8 +10,8 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         Task<IEnumerable<TransactionReadDto>> GetAllAsync();
         Task<TransactionReadDto> CreateAsync(TransactionCreateDto createDto);
         Task<bool> UpdateAsync(int id, TransactionUpdateDto updateDto);
-        Task<bool> DeleteAsync(int id);
-        Task<bool> ToggleInstallmentPaidStatusAsync(int installmentId); // ✅ Adicionar
-        Task<bool> ToggleTransactionPaidStatusAsync(int transactionId); // ✅ Adicionar esta linha
+        Task<bool> DeleteAsync(int id, RecurrenceScope scope = RecurrenceScope.OnlyThis);
+        Task<bool> ToggleInstallmentPaidStatusAsync(int installmentId);
+        Task<bool> ToggleTransactionPaidStatusAsync(int transactionId);
     }
 }

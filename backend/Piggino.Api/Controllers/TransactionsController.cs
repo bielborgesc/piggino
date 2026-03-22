@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Piggino.Api.Domain.Transactions.Dtos;
 using Piggino.Api.Domain.Transactions.Interfaces;
+using Piggino.Api.Enum;
 
 namespace Piggino.Api.Controllers
 {
@@ -73,9 +74,9 @@ namespace Piggino.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTransaction(int id)
+        public async Task<IActionResult> DeleteTransaction(int id, [FromQuery] RecurrenceScope scope = RecurrenceScope.OnlyThis)
         {
-            bool success = await _service.DeleteAsync(id);
+            bool success = await _service.DeleteAsync(id, scope);
 
             if (!success)
             {

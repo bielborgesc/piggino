@@ -2,30 +2,31 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { TransactionForm } from './TransactionForm';
-import { Transaction, TransactionData } from '../types';
+import { Transaction, TransactionData, RecurrenceScope } from '../types';
 import { createTransaction, updateTransaction } from '../services/api';
 
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   transactionToEdit?: Transaction | null;
+  recurrenceScope?: RecurrenceScope;
 }
 
-export function TransactionModal({ isOpen, onClose, transactionToEdit }: TransactionModalProps) {
+export function TransactionModal({ isOpen, onClose, transactionToEdit, recurrenceScope }: TransactionModalProps) {
   const [isSaving, setIsSaving] = useState(false);
 
   if (!isOpen) {
     return null;
   }
-  
-  // ✅ Lógica para decidir entre criar ou atualizar
+
   const handleSave = async (data: TransactionData, id?: number) => {
     setIsSaving(true);
     const toastId = toast.loading(id ? 'Atualizando transação...' : 'Salvando transação...');
 
     try {
       if (id) {
-        await updateTransaction(id, data);
+        const dataWithScope: TransactionData = { ...data, recurrenceScope };
+        await updateTransaction(id, dataWithScope);
         toast.success('Transação atualizada!', { id: toastId });
       } else {
         await createTransaction(data);
