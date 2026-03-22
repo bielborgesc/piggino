@@ -12,5 +12,8 @@ namespace Piggino.Api.Domain.Categories.Dtos
         [Required(ErrorMessage = "TypeRequired")]
         [EnumDataType(typeof(CategoryType), ErrorMessage = "InvalidCategoryType")]
         public CategoryType Type { get; set; }
+
+        [MaxLength(7)]
+        public string? Color { get; set; }
     }
 }

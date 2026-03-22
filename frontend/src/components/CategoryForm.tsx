@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Category, CategoryData, CategoryType } from '../types';
 
+const DEFAULT_COLOR = '#6b7280';
+
 interface CategoryFormProps {
   onSave: (data: CategoryData) => void;
   onCancel: () => void;
@@ -11,20 +13,23 @@ interface CategoryFormProps {
 export function CategoryForm({ onSave, onCancel, initialData, isSaving }: CategoryFormProps) {
   const [name, setName] = useState('');
   const [type, setType] = useState<CategoryType>('Expense');
+  const [color, setColor] = useState(DEFAULT_COLOR);
 
   useEffect(() => {
     if (initialData) {
       setName(initialData.name);
       setType(initialData.type);
+      setColor(initialData.color ?? DEFAULT_COLOR);
     } else {
       setName('');
       setType('Expense');
+      setColor(DEFAULT_COLOR);
     }
   }, [initialData]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    onSave({ name, type });
+    onSave({ name, type, color });
   };
 
   return (
@@ -66,6 +71,27 @@ export function CategoryForm({ onSave, onCancel, initialData, isSaving }: Catego
           >
             Receita
           </button>
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="color" className="block text-sm font-medium text-slate-300 mb-2">
+          Cor da Categoria
+        </label>
+        <div className="flex items-center gap-3">
+          <input
+            type="color"
+            id="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            disabled={isSaving}
+            className="h-10 w-16 rounded-md border border-slate-600 bg-slate-700 cursor-pointer p-1 disabled:opacity-50"
+          />
+          <span className="text-slate-400 text-sm font-mono">{color}</span>
+          <span
+            className="inline-block w-6 h-6 rounded-full border border-slate-600 shrink-0"
+            style={{ backgroundColor: color }}
+          />
         </div>
       </div>
 

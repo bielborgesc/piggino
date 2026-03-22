@@ -41,18 +41,19 @@ namespace Piggino.Api.Domain.Categories.Services
             {
                 Name = createDto.Name,
                 Type = createDto.Type,
-                UserId = userId // Associa a categoria ao utilizador logado
+                Color = createDto.Color ?? "#6b7280",
+                UserId = userId
             };
 
             await _repository.AddAsync(newCategory);
             await _repository.SaveChangesAsync();
 
-            // Mapeia a entidade para o DTO de leitura para retornar ao controller
             return new CategoryReadDto
             {
                 Id = newCategory.Id,
                 Name = newCategory.Name,
                 Type = newCategory.Type,
+                Color = newCategory.Color,
                 UserId = newCategory.UserId
             };
         }
@@ -91,6 +92,7 @@ namespace Piggino.Api.Domain.Categories.Services
                 Id = c.Id,
                 Name = c.Name,
                 Type = c.Type,
+                Color = c.Color,
                 UserId = c.UserId
             });
         }
@@ -110,6 +112,7 @@ namespace Piggino.Api.Domain.Categories.Services
                 Id = category.Id,
                 Name = category.Name,
                 Type = category.Type,
+                Color = category.Color,
                 UserId = category.UserId
             };
         }
@@ -124,9 +127,9 @@ namespace Piggino.Api.Domain.Categories.Services
                 return false;
             }
 
-            // Atualiza as propriedades da entidade com os dados do DTO
             category.Name = updateDto.Name;
             category.Type = updateDto.Type;
+            category.Color = updateDto.Color ?? category.Color;
 
             _repository.Update(category);
             return await _repository.SaveChangesAsync();

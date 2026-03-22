@@ -95,7 +95,15 @@ export function CategoriesPage() {
                 {categories.length > 0 ? (
                   categories.map((cat) => (
                     <tr key={cat.id} className="border-b border-slate-700 last:border-b-0 hover:bg-slate-700/30">
-                      <td className="p-4">{cat.name}</td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="inline-block w-3 h-3 rounded-full shrink-0"
+                            style={{ backgroundColor: cat.color ?? '#6b7280' }}
+                          />
+                          {cat.name}
+                        </div>
+                      </td>
                       <td className="p-4">
                         <span className={`px-2 py-1 text-xs font-bold rounded-full ${
                           cat.type === 'Income' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'

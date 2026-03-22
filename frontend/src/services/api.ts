@@ -7,6 +7,7 @@ import {
   UserRegistrationData,
   UserLoginData,
   CategoryType,
+  CategoryData,
   FinancialSourceData,
   RecurrenceScope,
   Invoice,
@@ -67,14 +68,12 @@ export const getCategories = async (): Promise<Category[]> => {
   return response.data;
 };
 
-// ✅ NOVA FUNÇÃO
-export const createCategory = async (categoryData: { name: string, type: CategoryType }): Promise<Category> => {
+export const createCategory = async (categoryData: CategoryData): Promise<Category> => {
   const response = await apiClient.post('/Categories', categoryData);
   return response.data;
 };
 
-// ✅ NOVA FUNÇÃO
-export const updateCategory = async (id: number, categoryData: { name: string, type: CategoryType }): Promise<void> => {
+export const updateCategory = async (id: number, categoryData: CategoryData): Promise<void> => {
   await apiClient.put(`/Categories/${id}`, categoryData);
 };
 

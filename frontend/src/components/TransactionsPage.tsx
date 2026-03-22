@@ -7,6 +7,21 @@ import { getTransactions, deleteTransaction, deleteInstallmentsByScope, getCateg
 import { Transaction, Category, FinancialSource, RecurrenceScope } from '../types';
 import toast from 'react-hot-toast';
 
+const DEFAULT_CATEGORY_COLOR = '#6b7280';
+
+function CategoryBadge({ name, color, faded }: { name?: string | null; color?: string; faded?: boolean }) {
+    if (!name) return <span>-</span>;
+    return (
+        <span className={`inline-flex items-center gap-1.5 ${faded ? 'opacity-50' : ''}`}>
+            <span
+                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: color ?? DEFAULT_CATEGORY_COLOR }}
+            />
+            {name}
+        </span>
+    );
+}
+
 function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: { currentDate: Date; onPreviousMonth: () => void; onNextMonth: () => void; }) {
     const monthName = currentDate.toLocaleString('pt-BR', { month: 'long', timeZone: 'UTC' });
     const year = currentDate.getFullYear();
@@ -385,7 +400,15 @@ export function TransactionsPage() {
                                                             </button>
                                                         )}
                                                     </div>
-                                                    <p className={`text-sm ${item.isPaid ? 'line-through text-slate-500' : 'text-slate-400'}`}>{item.categoryName} • {item.financialSourceName}</p>
+                                                    <div className={`text-sm flex items-center gap-1 flex-wrap ${item.isPaid ? 'line-through text-slate-500' : 'text-slate-400'}`}>
+                                                        <CategoryBadge
+                                                            name={item.categoryName}
+                                                            color={categories.find(c => c.id === item.categoryId)?.color}
+                                                            faded={item.isPaid}
+                                                        />
+                                                        <span>•</span>
+                                                        <span>{item.financialSourceName}</span>
+                                                    </div>
                                                 </div>
                                                 <div className="text-right">
                                                     <p className={`font-bold text-lg ${item.isPaid ? 'opacity-50' : ''} ${item.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>
@@ -457,7 +480,13 @@ export function TransactionsPage() {
                                                             </div>
                                                         </td>
                                                         <td className={`p-4 font-bold ${item.isPaid ? 'opacity-50' : ''} ${item.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>{item.transactionType.toLowerCase() === 'income' ? '+' : '-'} R$ {Math.abs(item.displayAmount).toFixed(2)}</td>
-                                                        <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>{item.categoryName}</td>
+                                                        <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>
+                                                            <CategoryBadge
+                                                                name={item.categoryName}
+                                                                color={categories.find(c => c.id === item.categoryId)?.color}
+                                                                faded={item.isPaid}
+                                                            />
+                                                        </td>
                                                         <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>{item.financialSourceName}</td>
                                                         <td className="p-4 text-right">
                                                             <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-white p-2" title="Editar Transação Original"><Edit size={18} /></button>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -21,11 +21,13 @@ import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipCont
 import { LoaderCircle, TrendingUp, TrendingDown, Scale, AlertCircle } from 'lucide-react';
 import { TransactionModal } from './TransactionModal';
 import { useDashboard } from '../hooks/useDashboard';
-import { MonthlySummary, CategoryExpense, TopExpense } from '../types';
+import { getCategories } from '../services/api';
+import { Category, MonthlySummary, CategoryExpense, TopExpense } from '../types';
 
 const MONTH_COUNT = 6;
+const DEFAULT_CATEGORY_COLOR = '#6b7280';
 
-const CATEGORY_COLORS = [
+const FALLBACK_CATEGORY_COLORS = [
   '#22c55e',
   '#3b82f6',
   '#f59e0b',
@@ -123,9 +125,14 @@ function IncomeExpensesChart({ monthlySummaries }: IncomeExpensesChartProps) {
 
 interface CategoryPieChartProps {
   categories: CategoryExpense[];
+  categoryColorMap: Map<string, string>;
 }
 
-function CategoryPieChart({ categories }: CategoryPieChartProps) {
+function resolveCategoryColor(name: string, index: number, colorMap: Map<string, string>): string {
+  return colorMap.get(name) ?? FALLBACK_CATEGORY_COLORS[index % FALLBACK_CATEGORY_COLORS.length];
+}
+
+function CategoryPieChart({ categories, categoryColorMap }: CategoryPieChartProps) {
   if (categories.length === 0) {
     return (
       <div className="bg-slate-800 p-5 rounded-lg border border-slate-700 flex items-center justify-center h-52">
@@ -151,8 +158,11 @@ function CategoryPieChart({ categories }: CategoryPieChartProps) {
               dataKey="value"
               paddingAngle={2}
             >
-              {data.map((_entry, index) => (
-                <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+              {data.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={resolveCategoryColor(entry.name, index, categoryColorMap)}
+                />
               ))}
             </Pie>
             <Tooltip
@@ -168,7 +178,7 @@ function CategoryPieChart({ categories }: CategoryPieChartProps) {
             <li key={entry.name} className="flex items-center gap-2">
               <span
                 className="inline-block w-3 h-3 rounded-full shrink-0"
-                style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }}
+                style={{ backgroundColor: resolveCategoryColor(entry.name, index, categoryColorMap) }}
               />
               <span className="text-slate-300 truncate">{entry.name}</span>
               <span className="text-slate-400 ml-auto pl-2">{entry.percentage}%</span>
@@ -250,7 +260,19 @@ function TopExpensesList({ expenses }: TopExpensesListProps) {
 
 export function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [categoryColorMap, setCategoryColorMap] = useState<Map<string, string>>(new Map());
   const { summary, isLoading, error, refetch } = useDashboard(MONTH_COUNT);
+
+  useEffect(() => {
+    getCategories()
+      .then((cats: Category[]) => {
+        const map = new Map(cats.map(c => [c.name, c.color ?? DEFAULT_CATEGORY_COLOR]));
+        setCategoryColorMap(map);
+      })
+      .catch(() => {
+        // Non-critical: fallback palette will be used
+      });
+  }, []);
 
   if (isLoading) {
     return (
@@ -314,7 +336,7 @@ export function Dashboard() {
         {/* Charts row — bar + pie */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <IncomeExpensesChart monthlySummaries={summary.monthlySummaries} />
-          <CategoryPieChart categories={summary.expensesByCategory} />
+          <CategoryPieChart categories={summary.expensesByCategory} categoryColorMap={categoryColorMap} />
         </div>
 
         {/* Charts row — line + top expenses */}

@@ -29,6 +29,7 @@ export interface Category {
   id: number;
   name: string;
   type: CategoryType;
+  color?: string;
   userId: string;
 }
 
@@ -71,6 +72,7 @@ export interface UserLoginData {
 export interface CategoryData {
   name: string;
   type: CategoryType;
+  color?: string;
 }
 
 export interface FinancialSourceData {
