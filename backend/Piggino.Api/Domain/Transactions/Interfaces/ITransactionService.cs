@@ -16,5 +16,6 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         Task<bool> ToggleInstallmentPaidStatusAsync(int installmentId);
         Task<bool> ToggleTransactionPaidStatusAsync(int transactionId);
         Task<InvoiceReadDto?> GetInvoiceAsync(int financialSourceId, int year, int month);
+        Task<bool> PayInvoiceAsync(int financialSourceId, int year, int month);
     }
 }

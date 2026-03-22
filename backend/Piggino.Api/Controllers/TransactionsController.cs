@@ -143,6 +143,22 @@ namespace Piggino.Api.Controllers
             return NoContent();
         }
 
+        [HttpPost("invoices/pay")]
+        public async Task<IActionResult> PayInvoice(
+            [FromQuery] int financialSourceId,
+            [FromQuery] string month)
+        {
+            if (!DateOnly.TryParseExact(month, "yyyy-MM", out DateOnly parsedMonth))
+                return BadRequest(new { message = "Invalid month format. Use yyyy-MM." });
+
+            bool success = await _service.PayInvoiceAsync(financialSourceId, parsedMonth.Year, parsedMonth.Month);
+
+            if (!success)
+                return NotFound(new { message = "Financial source not found." });
+
+            return NoContent();
+        }
+
         [HttpGet("invoices")]
         public async Task<ActionResult<InvoiceReadDto>> GetInvoice(
             [FromQuery] int financialSourceId,

@@ -231,6 +231,23 @@ namespace Piggino.Api.Domain.Transactions.Services
             return await _transactionRepository.SaveChangesAsync();
         }
 
+        public async Task<bool> PayInvoiceAsync(int financialSourceId, int year, int month)
+        {
+            Guid userId = GetCurrentUserId();
+
+            FinancialSource? financialSource = await _financialSourceRepository.GetByIdAsync(financialSourceId, userId);
+            if (financialSource == null) return false;
+
+            IEnumerable<CardInstallment> installments = await _transactionRepository
+                .GetInstallmentsForInvoiceAsync(financialSourceId, year, month, userId);
+
+            foreach (CardInstallment installment in installments)
+                installment.IsPaid = true;
+
+            await _transactionRepository.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<InvoiceReadDto?> GetInvoiceAsync(int financialSourceId, int year, int month)
         {
             Guid userId = GetCurrentUserId();

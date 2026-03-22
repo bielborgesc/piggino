@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, LoaderCircle, CheckCircle, XCircle, CreditCard } from 'lucide-react';
-import { getFinancialSources } from '../services/api';
+import { getFinancialSources, payInvoice, toggleInstallmentPaidStatus } from '../services/api';
 import { useInvoice } from '../hooks/useInvoice';
 import { FinancialSource, InvoiceItem } from '../types';
 
@@ -78,13 +78,19 @@ function InstallmentBadge({ number, count }: { number: number; count: number }) 
   );
 }
 
-function InvoiceItemRow({ item }: { item: InvoiceItem }) {
+function InvoiceItemRow({ item, onTogglePaid }: { item: InvoiceItem; onTogglePaid: (id: number) => void }) {
   return (
     <tr className={`border-b border-slate-700 last:border-b-0 transition-colors ${item.isPaid ? 'bg-green-900/20 text-slate-500' : 'hover:bg-slate-700/30'}`}>
       <td className="p-4 text-center">
-        {item.isPaid
-          ? <CheckCircle className="text-green-400 inline-block" size={20} />
-          : <XCircle className="text-slate-500 inline-block" size={20} />}
+        <button
+          onClick={() => onTogglePaid(item.installmentId)}
+          className="inline-flex items-center justify-center rounded-full hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-green-500"
+          title={item.isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
+        >
+          {item.isPaid
+            ? <CheckCircle className="text-green-400" size={20} />
+            : <XCircle className="text-slate-500" size={20} />}
+        </button>
       </td>
       <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-100'}`}>
         <div className="flex items-center gap-2 flex-wrap">
@@ -105,15 +111,19 @@ function InvoiceItemRow({ item }: { item: InvoiceItem }) {
   );
 }
 
-function InvoiceItemCard({ item }: { item: InvoiceItem }) {
+function InvoiceItemCard({ item, onTogglePaid }: { item: InvoiceItem; onTogglePaid: (id: number) => void }) {
   return (
     <div className={`p-4 rounded-lg border transition-colors ${item.isPaid ? 'bg-green-900/20 border-green-800/20' : 'bg-slate-800 border-slate-700'}`}>
       <div className="flex gap-3 items-start">
-        <div className="mt-0.5">
+        <button
+          onClick={() => onTogglePaid(item.installmentId)}
+          className="mt-0.5 flex-shrink-0 rounded-full hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-green-500"
+          title={item.isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
+        >
           {item.isPaid
             ? <CheckCircle className="text-green-400" size={20} />
             : <XCircle className="text-slate-500" size={20} />}
-        </div>
+        </button>
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <p className={`font-semibold ${item.isPaid ? 'line-through text-slate-400' : 'text-white'}`}>
@@ -165,10 +175,11 @@ export function InvoicePage() {
   const [cardSources, setCardSources] = useState<FinancialSource[]>([]);
   const [selectedSourceId, setSelectedSourceId] = useState<number | null>(null);
   const [isLoadingSources, setIsLoadingSources] = useState(true);
+  const [isPayingInvoice, setIsPayingInvoice] = useState(false);
 
   const monthKey = useMemo(() => formatMonthKey(currentDate), [currentDate]);
 
-  const { invoice, isLoading: isLoadingInvoice, error } = useInvoice(selectedSourceId, monthKey);
+  const { invoice, isLoading: isLoadingInvoice, error, refetch } = useInvoice(selectedSourceId, monthKey);
 
   useEffect(() => {
     const loadCardSources = async () => {
@@ -202,12 +213,31 @@ export function InvoicePage() {
     setSelectedSourceId(value === '' ? null : Number(value));
   };
 
+  const handlePayInvoice = async () => {
+    if (selectedSourceId === null) return;
+    setIsPayingInvoice(true);
+    try {
+      await payInvoice(selectedSourceId, monthKey);
+      refetch();
+    } finally {
+      setIsPayingInvoice(false);
+    }
+  };
+
+  const handleToggleItemPaid = async (installmentId: number) => {
+    await toggleInstallmentPaidStatus(installmentId);
+    refetch();
+  };
+
   const invoiceSummary = useMemo(() => {
     if (!invoice) return null;
     const paidAmount = invoice.items.filter(i => i.isPaid).reduce((acc, i) => acc + i.amount, 0);
     const pendingAmount = invoice.items.filter(i => !i.isPaid).reduce((acc, i) => acc + i.amount, 0);
     return { paidAmount, pendingAmount };
   }, [invoice]);
+
+  const hasUnpaidItems = invoice?.items.some(i => !i.isPaid) ?? false;
+  const isFullyPaid = invoice !== null && invoice.items.length > 0 && !hasUnpaidItems;
 
   const isLoading = isLoadingSources || isLoadingInvoice;
 
@@ -218,6 +248,24 @@ export function InvoicePage() {
           <h2 className="text-2xl font-bold text-white">Fatura do Cartao</h2>
           <p className="text-slate-400">Veja os lancamentos da fatura do seu cartao de credito.</p>
         </div>
+        {isFullyPaid && (
+          <span className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-900/40 border border-green-700 text-green-300 font-semibold text-sm">
+            <CheckCircle size={16} />
+            Fatura paga
+          </span>
+        )}
+        {hasUnpaidItems && (
+          <button
+            onClick={handlePayInvoice}
+            disabled={isPayingInvoice}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
+          >
+            {isPayingInvoice
+              ? <LoaderCircle size={16} className="animate-spin" />
+              : <CheckCircle size={16} />}
+            Pagar fatura
+          </button>
+        )}
       </div>
 
       <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6 flex flex-col sm:flex-row gap-4 items-center flex-wrap">
@@ -272,7 +320,7 @@ export function InvoicePage() {
         <>
           <div className="space-y-4 md:hidden">
             {invoice.items.map(item => (
-              <InvoiceItemCard key={item.installmentId} item={item} />
+              <InvoiceItemCard key={item.installmentId} item={item} onTogglePaid={handleToggleItemPaid} />
             ))}
           </div>
 
@@ -289,7 +337,7 @@ export function InvoicePage() {
               </thead>
               <tbody>
                 {invoice.items.map(item => (
-                  <InvoiceItemRow key={item.installmentId} item={item} />
+                  <InvoiceItemRow key={item.installmentId} item={item} onTogglePaid={handleToggleItemPaid} />
                 ))}
               </tbody>
             </table>

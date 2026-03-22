@@ -145,4 +145,10 @@ export const getInvoice = async (financialSourceId: number, month: string): Prom
   return response.data;
 };
 
+export const payInvoice = async (financialSourceId: number, month: string): Promise<void> => {
+  await apiClient.post('/Transactions/invoices/pay', null, {
+    params: { financialSourceId, month },
+  });
+};
+
 export default apiClient;
