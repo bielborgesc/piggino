@@ -175,6 +175,13 @@ namespace Piggino.Api.Controllers
             return Ok(invoice);
         }
 
+        [HttpGet("summary")]
+        public async Task<ActionResult<DashboardSummaryDto>> GetDashboardSummary([FromQuery] int months = 6)
+        {
+            DashboardSummaryDto summary = await _service.GetDashboardSummaryAsync(months);
+            return Ok(summary);
+        }
+
         [HttpGet("fixed-bills")]
         public async Task<ActionResult<MonthlyFixedBillsReadDto>> GetFixedBills([FromQuery] string month)
         {

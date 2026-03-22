@@ -10,7 +10,8 @@ import {
   FinancialSourceData,
   RecurrenceScope,
   Invoice,
-  MonthlyFixedBills
+  MonthlyFixedBills,
+  DashboardSummary
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -167,6 +168,11 @@ export const unpayFixedBill = async (transactionId: number, month: string): Prom
   await apiClient.delete(`/Transactions/fixed-bills/${transactionId}/pay`, {
     params: { month },
   });
+};
+
+export const getDashboardSummary = async (months = 6): Promise<DashboardSummary> => {
+  const response = await apiClient.get('/Transactions/summary', { params: { months } });
+  return response.data;
 };
 
 export default apiClient;

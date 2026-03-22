@@ -149,5 +149,18 @@ namespace Piggino.Api.Infrastructure.Repositories
         {
             _context.FixedTransactionPayments.Remove(payment);
         }
+
+        public async Task<IEnumerable<CardInstallment>> GetUnpaidInstallmentsForMonthAsync(Guid userId, int year, int month)
+        {
+            return await _context.CardInstallments
+                .Include(i => i.Transaction)
+                .Where(i =>
+                    i.Transaction != null &&
+                    i.Transaction.UserId == userId &&
+                    i.DueDate.Year == year &&
+                    i.DueDate.Month == month &&
+                    !i.IsPaid)
+                .ToListAsync();
+        }
     }
 }

@@ -138,3 +138,33 @@ export interface MonthlyFixedBills {
   pendingAmount: number;
   items: FixedBill[];
 }
+
+export interface MonthlySummary {
+  month: string;
+  totalIncome: number;
+  totalExpenses: number;
+  balance: number;
+}
+
+export interface CategoryExpense {
+  categoryName: string;
+  total: number;
+  percentage: number;
+}
+
+export interface TopExpense {
+  description: string;
+  amount: number;
+  categoryName: string | null;
+}
+
+export interface DashboardSummary {
+  monthlySummaries: MonthlySummary[];
+  expensesByCategory: CategoryExpense[];
+  topExpenses: TopExpense[];
+  currentMonthIncome: number;
+  currentMonthExpenses: number;
+  currentMonthBalance: number;
+  pendingFixedBills: number;
+  pendingInvoiceAmount: number;
+}

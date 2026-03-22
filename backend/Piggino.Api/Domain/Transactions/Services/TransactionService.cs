@@ -340,6 +340,145 @@ namespace Piggino.Api.Domain.Transactions.Services
             return await _transactionRepository.SaveChangesAsync();
         }
 
+        public async Task<DashboardSummaryDto> GetDashboardSummaryAsync(int months)
+        {
+            IEnumerable<TransactionReadDto> allProjected = await GetAllAsync();
+
+            DateTime now = DateTime.UtcNow;
+            int currentYear = now.Year;
+            int currentMonth = now.Month;
+
+            IEnumerable<MonthlySummaryDto> monthlySummaries = BuildMonthlySummaries(allProjected, now, months);
+            IEnumerable<CategoryExpenseDto> expensesByCategory = BuildExpensesByCategory(allProjected, currentYear, currentMonth);
+            IEnumerable<TopExpenseDto> topExpenses = BuildTopExpenses(allProjected, currentYear, currentMonth);
+
+            decimal currentMonthIncome = SumByTypeForMonth(allProjected, TransactionType.Income, currentYear, currentMonth);
+            decimal currentMonthExpenses = SumByTypeForMonth(allProjected, TransactionType.Expense, currentYear, currentMonth);
+            decimal currentMonthBalance = currentMonthIncome - currentMonthExpenses;
+
+            int pendingFixedBills = await CountPendingFixedBillsAsync(currentYear, currentMonth);
+            decimal pendingInvoiceAmount = await SumPendingInvoiceAmountAsync(currentYear, currentMonth);
+
+            return new DashboardSummaryDto
+            {
+                MonthlySummaries = monthlySummaries,
+                ExpensesByCategory = expensesByCategory,
+                TopExpenses = topExpenses,
+                CurrentMonthIncome = currentMonthIncome,
+                CurrentMonthExpenses = currentMonthExpenses,
+                CurrentMonthBalance = currentMonthBalance,
+                PendingFixedBills = pendingFixedBills,
+                PendingInvoiceAmount = pendingInvoiceAmount
+            };
+        }
+
+        private static IEnumerable<MonthlySummaryDto> BuildMonthlySummaries(
+            IEnumerable<TransactionReadDto> transactions,
+            DateTime referenceDate,
+            int monthCount)
+        {
+            List<MonthlySummaryDto> summaries = new List<MonthlySummaryDto>();
+
+            for (int offset = monthCount - 1; offset >= 0; offset--)
+            {
+                DateTime targetMonth = referenceDate.AddMonths(-offset);
+                int year = targetMonth.Year;
+                int month = targetMonth.Month;
+
+                decimal income = SumByTypeForMonth(transactions, TransactionType.Income, year, month);
+                decimal expenses = SumByTypeForMonth(transactions, TransactionType.Expense, year, month);
+
+                summaries.Add(new MonthlySummaryDto
+                {
+                    Month = $"{year:D4}-{month:D2}",
+                    TotalIncome = income,
+                    TotalExpenses = expenses,
+                    Balance = income - expenses
+                });
+            }
+
+            return summaries;
+        }
+
+        private static decimal SumByTypeForMonth(
+            IEnumerable<TransactionReadDto> transactions,
+            TransactionType type,
+            int year,
+            int month)
+        {
+            return transactions
+                .Where(t =>
+                    t.TransactionType == type &&
+                    t.PurchaseDate.Year == year &&
+                    t.PurchaseDate.Month == month)
+                .Sum(t => t.TotalAmount);
+        }
+
+        private static IEnumerable<CategoryExpenseDto> BuildExpensesByCategory(
+            IEnumerable<TransactionReadDto> transactions,
+            int year,
+            int month)
+        {
+            IEnumerable<TransactionReadDto> monthlyExpenses = transactions
+                .Where(t =>
+                    t.TransactionType == TransactionType.Expense &&
+                    t.PurchaseDate.Year == year &&
+                    t.PurchaseDate.Month == month);
+
+            decimal totalExpenses = monthlyExpenses.Sum(t => t.TotalAmount);
+
+            if (totalExpenses == 0)
+                return Enumerable.Empty<CategoryExpenseDto>();
+
+            return monthlyExpenses
+                .GroupBy(t => t.CategoryName ?? "Sem categoria")
+                .Select(group => new CategoryExpenseDto
+                {
+                    CategoryName = group.Key,
+                    Total = group.Sum(t => t.TotalAmount),
+                    Percentage = Math.Round(group.Sum(t => t.TotalAmount) / totalExpenses * 100, 1)
+                })
+                .OrderByDescending(c => c.Total);
+        }
+
+        private static IEnumerable<TopExpenseDto> BuildTopExpenses(
+            IEnumerable<TransactionReadDto> transactions,
+            int year,
+            int month)
+        {
+            const int TopExpenseLimit = 5;
+
+            return transactions
+                .Where(t =>
+                    t.TransactionType == TransactionType.Expense &&
+                    t.PurchaseDate.Year == year &&
+                    t.PurchaseDate.Month == month)
+                .OrderByDescending(t => t.TotalAmount)
+                .Take(TopExpenseLimit)
+                .Select(t => new TopExpenseDto
+                {
+                    Description = t.Description,
+                    Amount = t.TotalAmount,
+                    CategoryName = t.CategoryName
+                });
+        }
+
+        private async Task<int> CountPendingFixedBillsAsync(int year, int month)
+        {
+            MonthlyFixedBillsReadDto fixedBills = await GetMonthlyFixedBillsAsync(year, month);
+            return fixedBills.Items.Count(b => !b.IsPaid);
+        }
+
+        private async Task<decimal> SumPendingInvoiceAmountAsync(int year, int month)
+        {
+            Guid userId = GetCurrentUserId();
+
+            IEnumerable<CardInstallment> unpaidInstallments = await _transactionRepository
+                .GetUnpaidInstallmentsForMonthAsync(userId, year, month);
+
+            return unpaidInstallments.Sum(i => i.Amount);
+        }
+
         public async Task<bool> UnmarkFixedBillAsPaidAsync(int transactionId, int year, int month)
         {
             Guid userId = GetCurrentUserId();
