@@ -8,7 +8,8 @@ import {
   UserLoginData,
   CategoryType,
   FinancialSourceData,
-  RecurrenceScope
+  RecurrenceScope,
+  Invoice
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -135,6 +136,13 @@ export const toggleInstallmentPaidStatus = async (installmentId: number): Promis
 
 export const toggleTransactionPaidStatus = async (transactionId: number): Promise<void> => {
   await apiClient.patch(`/Transactions/${transactionId}/toggle-paid`);
+};
+
+export const getInvoice = async (financialSourceId: number, month: string): Promise<Invoice> => {
+  const response = await apiClient.get('/Transactions/invoices', {
+    params: { financialSourceId, month },
+  });
+  return response.data;
 };
 
 export default apiClient;

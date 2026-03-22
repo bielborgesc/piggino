@@ -231,6 +231,71 @@ namespace Piggino.Api.Domain.Transactions.Services
             return await _transactionRepository.SaveChangesAsync();
         }
 
+        public async Task<InvoiceReadDto?> GetInvoiceAsync(int financialSourceId, int year, int month)
+        {
+            Guid userId = GetCurrentUserId();
+
+            FinancialSource? financialSource = await _financialSourceRepository.GetByIdAsync(financialSourceId, userId);
+            if (financialSource == null) return null;
+
+            IEnumerable<CardInstallment> installments = await _transactionRepository
+                .GetInstallmentsForInvoiceAsync(financialSourceId, year, month, userId);
+
+            int closingDay = financialSource.ClosingDay ?? 1;
+            int dueDay = financialSource.DueDay ?? 1;
+
+            DateTime closingDate = GetSafeDayInMonth(year, month, closingDay);
+            DateTime dueDate = ResolveDueDate(year, month, closingDay, dueDay);
+
+            IEnumerable<InvoiceItemDto> items = installments.Select(i => MapToInvoiceItemDto(i));
+            decimal totalAmount = items.Sum(i => i.Amount);
+
+            return new InvoiceReadDto
+            {
+                FinancialSourceId = financialSource.Id,
+                FinancialSourceName = financialSource.Name ?? string.Empty,
+                ClosingDay = closingDay,
+                DueDay = dueDay,
+                Month = $"{year:D4}-{month:D2}",
+                ClosingDate = closingDate,
+                DueDate = dueDate,
+                TotalAmount = totalAmount,
+                Items = items
+            };
+        }
+
+        private static DateTime ResolveDueDate(int year, int month, int closingDay, int dueDay)
+        {
+            DateTime dueDate = GetSafeDayInMonth(year, month, dueDay);
+
+            if (dueDay < closingDay)
+                dueDate = dueDate.AddMonths(1);
+
+            return dueDate;
+        }
+
+        private static InvoiceItemDto MapToInvoiceItemDto(CardInstallment installment)
+        {
+            Transaction transaction = installment.Transaction!;
+            bool hasMultipleInstallments = transaction.InstallmentCount > 1;
+            string description = hasMultipleInstallments
+                ? $"{transaction.Description} ({installment.InstallmentNumber}/{transaction.InstallmentCount})"
+                : transaction.Description ?? string.Empty;
+
+            return new InvoiceItemDto
+            {
+                TransactionId = transaction.Id,
+                InstallmentId = installment.Id,
+                Description = description,
+                Amount = installment.Amount,
+                PurchaseDate = transaction.PurchaseDate,
+                InstallmentNumber = installment.InstallmentNumber,
+                InstallmentCount = transaction.InstallmentCount ?? FallbackInstallmentCount,
+                IsPaid = installment.IsPaid,
+                CategoryName = transaction.Category?.Name
+            };
+        }
+
         // --- Recurrence ---
 
         private static bool AllInstallmentsArePaid(Transaction transaction)

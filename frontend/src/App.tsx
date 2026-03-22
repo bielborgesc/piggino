@@ -5,12 +5,12 @@ import { RegisterForm } from './components/RegisterForm';
 import { Dashboard } from './components/Dashboard';
 import { TransactionsPage } from './components/TransactionsPage';
 import { CategoriesPage } from './components/CategoriesPage';
-import { FinancialSourcesPage } from './components/FinancialSourcesPage'; // ✅ 1. Importa a nova página
+import { FinancialSourcesPage } from './components/FinancialSourcesPage';
+import { InvoicePage } from './components/InvoicePage';
 import { MainLayout } from './components/MainLayout';
 
 enum AuthView { Login, Register }
-// ✅ 2. Adiciona a nova página ao tipo
-type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources';
+type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('piggino_token'));
@@ -54,6 +54,7 @@ function App() {
           {currentPage === 'transactions' && <TransactionsPage />}
           {currentPage === 'categories' && <CategoriesPage />}
           {currentPage === 'financial-sources' && <FinancialSourcesPage />}
+          {currentPage === 'invoices' && <InvoicePage />}
         </MainLayout>
       </>
     );

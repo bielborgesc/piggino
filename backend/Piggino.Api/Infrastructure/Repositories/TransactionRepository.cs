@@ -93,5 +93,21 @@ namespace Piggino.Api.Infrastructure.Repositories
         {
             _context.CardInstallments.Remove(installment);
         }
+
+        public async Task<IEnumerable<CardInstallment>> GetInstallmentsForInvoiceAsync(int financialSourceId, int year, int month, Guid userId)
+        {
+            return await _context.CardInstallments
+                .Include(i => i.Transaction)
+                    .ThenInclude(t => t!.Category)
+                .Include(i => i.Transaction)
+                    .ThenInclude(t => t!.FinancialSource)
+                .Where(i =>
+                    i.Transaction != null &&
+                    i.Transaction.UserId == userId &&
+                    i.Transaction.FinancialSourceId == financialSourceId &&
+                    i.DueDate.Year == year &&
+                    i.DueDate.Month == month)
+                .ToListAsync();
+        }
     }
 }

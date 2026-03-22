@@ -94,3 +94,27 @@ export interface TokenPayload {
   id: string;
   email: string;
 }
+
+export interface InvoiceItem {
+  transactionId: number;
+  installmentId: number;
+  description: string;
+  amount: number;
+  purchaseDate: string;
+  installmentNumber: number;
+  installmentCount: number;
+  isPaid: boolean;
+  categoryName: string | null;
+}
+
+export interface Invoice {
+  financialSourceId: number;
+  financialSourceName: string;
+  closingDay: number;
+  dueDay: number;
+  month: string;
+  closingDate: string;
+  dueDate: string;
+  totalAmount: number;
+  items: InvoiceItem[];
+}

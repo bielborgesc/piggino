@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, ArrowRightLeft, Settings, LogOut, Menu, X, Shapes, Wallet } from 'lucide-react';
+import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../types';
 
-type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources';
+type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -54,12 +54,19 @@ function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNa
           <Shapes className="h-5 w-5" />
           Categorias
         </button>
-        <button 
+        <button
           onClick={() => handleNavigation('financial-sources')}
           className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'financial-sources' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
         >
           <Wallet className="h-5 w-5" />
           Fontes Financeiras
+        </button>
+        <button
+          onClick={() => handleNavigation('invoices')}
+          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'invoices' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
+        >
+          <Receipt className="h-5 w-5" />
+          Faturas
         </button>
       </nav>
     </aside>

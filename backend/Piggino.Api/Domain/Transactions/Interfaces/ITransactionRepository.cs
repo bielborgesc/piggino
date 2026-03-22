@@ -17,5 +17,6 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         Task<CardInstallment?> GetCardInstallmentByIdAsync(int installmentId);
         Task<IEnumerable<Transaction>> GetRecurrenceGroupAsync(Transaction anchor, Guid userId);
         void DeleteCardInstallment(CardInstallment installment);
+        Task<IEnumerable<CardInstallment>> GetInstallmentsForInvoiceAsync(int financialSourceId, int year, int month, Guid userId);
     }
 }
