@@ -19,6 +19,7 @@ namespace Piggino.Api.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<CardInstallment> CardInstallments { get; set; }
+        public DbSet<FixedTransactionPayment> FixedTransactionPayments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,6 +42,16 @@ namespace Piggino.Api.Data
             modelBuilder
                 .Entity<Transaction>()
                 .Ignore(t => t.CurrentInstallmentNumber);
+
+            modelBuilder.Entity<FixedTransactionPayment>()
+                .HasOne(p => p.Transaction)
+                .WithMany()
+                .HasForeignKey(p => p.TransactionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<FixedTransactionPayment>()
+                .HasIndex(p => new { p.TransactionId, p.Year, p.Month })
+                .IsUnique();
 
             modelBuilder
                 .Entity<Category>()

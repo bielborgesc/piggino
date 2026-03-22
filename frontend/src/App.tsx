@@ -7,10 +7,11 @@ import { TransactionsPage } from './components/TransactionsPage';
 import { CategoriesPage } from './components/CategoriesPage';
 import { FinancialSourcesPage } from './components/FinancialSourcesPage';
 import { InvoicePage } from './components/InvoicePage';
+import { FixedBillsPage } from './components/FixedBillsPage';
 import { MainLayout } from './components/MainLayout';
 
 enum AuthView { Login, Register }
-type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices';
+type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('piggino_token'));
@@ -55,6 +56,7 @@ function App() {
           {currentPage === 'categories' && <CategoriesPage />}
           {currentPage === 'financial-sources' && <FinancialSourcesPage />}
           {currentPage === 'invoices' && <InvoicePage />}
+          {currentPage === 'fixed-bills' && <FixedBillsPage />}
         </MainLayout>
       </>
     );

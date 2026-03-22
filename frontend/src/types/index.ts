@@ -118,3 +118,23 @@ export interface Invoice {
   totalAmount: number;
   items: InvoiceItem[];
 }
+
+export interface FixedBill {
+  transactionId: number;
+  description: string;
+  totalAmount: number;
+  categoryName: string | null;
+  financialSourceName: string | null;
+  dayOfMonth: number;
+  isPaid: boolean;
+  paymentId: number | null;
+}
+
+export interface MonthlyFixedBills {
+  year: number;
+  month: number;
+  totalAmount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  items: FixedBill[];
+}

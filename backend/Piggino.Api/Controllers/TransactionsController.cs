@@ -174,5 +174,43 @@ namespace Piggino.Api.Controllers
 
             return Ok(invoice);
         }
+
+        [HttpGet("fixed-bills")]
+        public async Task<ActionResult<MonthlyFixedBillsReadDto>> GetFixedBills([FromQuery] string month)
+        {
+            if (!DateOnly.TryParseExact(month, "yyyy-MM", out DateOnly parsedMonth))
+                return BadRequest(new { message = "Invalid month format. Use yyyy-MM." });
+
+            MonthlyFixedBillsReadDto result = await _service.GetMonthlyFixedBillsAsync(parsedMonth.Year, parsedMonth.Month);
+            return Ok(result);
+        }
+
+        [HttpPost("fixed-bills/{transactionId}/pay")]
+        public async Task<IActionResult> MarkFixedBillAsPaid(int transactionId, [FromQuery] string month)
+        {
+            if (!DateOnly.TryParseExact(month, "yyyy-MM", out DateOnly parsedMonth))
+                return BadRequest(new { message = "Invalid month format. Use yyyy-MM." });
+
+            bool success = await _service.MarkFixedBillAsPaidAsync(transactionId, parsedMonth.Year, parsedMonth.Month);
+
+            if (!success)
+                return NotFound(new { message = "Fixed transaction not found." });
+
+            return NoContent();
+        }
+
+        [HttpDelete("fixed-bills/{transactionId}/pay")]
+        public async Task<IActionResult> UnmarkFixedBillAsPaid(int transactionId, [FromQuery] string month)
+        {
+            if (!DateOnly.TryParseExact(month, "yyyy-MM", out DateOnly parsedMonth))
+                return BadRequest(new { message = "Invalid month format. Use yyyy-MM." });
+
+            bool success = await _service.UnmarkFixedBillAsPaidAsync(transactionId, parsedMonth.Year, parsedMonth.Month);
+
+            if (!success)
+                return NotFound(new { message = "Payment record not found." });
+
+            return NoContent();
+        }
     }
 }

@@ -109,5 +109,45 @@ namespace Piggino.Api.Infrastructure.Repositories
                     i.DueDate.Month == month)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Transaction>> GetFixedTransactionsAsync(Guid userId)
+        {
+            return await _context.Transactions
+                .Include(t => t.Category)
+                .Include(t => t.FinancialSource)
+                .Where(t => t.UserId == userId && t.IsFixed && t.DayOfMonth.HasValue)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<FixedTransactionPayment>> GetFixedPaymentsForMonthAsync(Guid userId, int year, int month)
+        {
+            return await _context.FixedTransactionPayments
+                .Include(p => p.Transaction)
+                .Where(p =>
+                    p.Transaction != null &&
+                    p.Transaction.UserId == userId &&
+                    p.Year == year &&
+                    p.Month == month)
+                .ToListAsync();
+        }
+
+        public async Task<FixedTransactionPayment?> GetFixedPaymentAsync(int transactionId, int year, int month)
+        {
+            return await _context.FixedTransactionPayments
+                .FirstOrDefaultAsync(p =>
+                    p.TransactionId == transactionId &&
+                    p.Year == year &&
+                    p.Month == month);
+        }
+
+        public async Task AddFixedPaymentAsync(FixedTransactionPayment payment)
+        {
+            await _context.FixedTransactionPayments.AddAsync(payment);
+        }
+
+        public void DeleteFixedPayment(FixedTransactionPayment payment)
+        {
+            _context.FixedTransactionPayments.Remove(payment);
+        }
     }
 }

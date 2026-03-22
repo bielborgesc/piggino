@@ -281,6 +281,96 @@ namespace Piggino.Api.Domain.Transactions.Services
             };
         }
 
+        public async Task<MonthlyFixedBillsReadDto> GetMonthlyFixedBillsAsync(int year, int month)
+        {
+            Guid userId = GetCurrentUserId();
+
+            IEnumerable<Transaction> fixedTransactions = await _transactionRepository.GetFixedTransactionsAsync(userId);
+            IEnumerable<FixedTransactionPayment> payments = await _transactionRepository.GetFixedPaymentsForMonthAsync(userId, year, month);
+
+            Dictionary<int, FixedTransactionPayment> paymentByTransactionId = payments
+                .ToDictionary(p => p.TransactionId);
+
+            List<FixedBillReadDto> items = fixedTransactions
+                .Select(t => MapToFixedBillReadDto(t, paymentByTransactionId))
+                .OrderBy(b => b.DayOfMonth)
+                .ToList();
+
+            decimal totalAmount = items.Sum(b => b.TotalAmount);
+            decimal paidAmount = items.Where(b => b.IsPaid).Sum(b => b.TotalAmount);
+            decimal pendingAmount = totalAmount - paidAmount;
+
+            return new MonthlyFixedBillsReadDto
+            {
+                Year = year,
+                Month = month,
+                TotalAmount = totalAmount,
+                PaidAmount = paidAmount,
+                PendingAmount = pendingAmount,
+                Items = items
+            };
+        }
+
+        public async Task<bool> MarkFixedBillAsPaidAsync(int transactionId, int year, int month)
+        {
+            Guid userId = GetCurrentUserId();
+
+            Transaction? transaction = await _transactionRepository.GetByIdAsync(transactionId, userId);
+            if (transaction == null || !transaction.IsFixed) return false;
+
+            FixedTransactionPayment? existing = await _transactionRepository.GetFixedPaymentAsync(transactionId, year, month);
+
+            if (existing != null)
+            {
+                existing.IsPaid = true;
+                existing.PaidAt = DateTime.UtcNow;
+            }
+            else
+            {
+                await _transactionRepository.AddFixedPaymentAsync(new FixedTransactionPayment
+                {
+                    TransactionId = transactionId,
+                    Year = year,
+                    Month = month,
+                    IsPaid = true,
+                    PaidAt = DateTime.UtcNow
+                });
+            }
+
+            return await _transactionRepository.SaveChangesAsync();
+        }
+
+        public async Task<bool> UnmarkFixedBillAsPaidAsync(int transactionId, int year, int month)
+        {
+            Guid userId = GetCurrentUserId();
+
+            Transaction? transaction = await _transactionRepository.GetByIdAsync(transactionId, userId);
+            if (transaction == null || !transaction.IsFixed) return false;
+
+            FixedTransactionPayment? existing = await _transactionRepository.GetFixedPaymentAsync(transactionId, year, month);
+            if (existing == null) return false;
+
+            _transactionRepository.DeleteFixedPayment(existing);
+            return await _transactionRepository.SaveChangesAsync();
+        }
+
+        private static FixedBillReadDto MapToFixedBillReadDto(Transaction transaction, Dictionary<int, FixedTransactionPayment> paymentMap)
+        {
+            paymentMap.TryGetValue(transaction.Id, out FixedTransactionPayment? payment);
+
+            return new FixedBillReadDto
+            {
+                TransactionId = transaction.Id,
+                Description = transaction.Description ?? string.Empty,
+                TotalAmount = transaction.TotalAmount,
+                CategoryName = transaction.Category?.Name,
+                FinancialSourceName = transaction.FinancialSource?.Name,
+                DayOfMonth = transaction.DayOfMonth ?? 1,
+                IsPaid = payment?.IsPaid ?? false,
+                PaymentId = payment?.Id
+            };
+        }
+
         private static DateTime ResolveDueDate(int year, int month, int closingDay, int dueDay)
         {
             DateTime dueDate = GetSafeDayInMonth(year, month, dueDay);

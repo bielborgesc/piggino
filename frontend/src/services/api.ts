@@ -9,7 +9,8 @@ import {
   CategoryType,
   FinancialSourceData,
   RecurrenceScope,
-  Invoice
+  Invoice,
+  MonthlyFixedBills
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -148,6 +149,23 @@ export const getInvoice = async (financialSourceId: number, month: string): Prom
 export const payInvoice = async (financialSourceId: number, month: string): Promise<void> => {
   await apiClient.post('/Transactions/invoices/pay', null, {
     params: { financialSourceId, month },
+  });
+};
+
+export const getFixedBills = async (month: string): Promise<MonthlyFixedBills> => {
+  const response = await apiClient.get('/Transactions/fixed-bills', { params: { month } });
+  return response.data;
+};
+
+export const payFixedBill = async (transactionId: number, month: string): Promise<void> => {
+  await apiClient.post(`/Transactions/fixed-bills/${transactionId}/pay`, null, {
+    params: { month },
+  });
+};
+
+export const unpayFixedBill = async (transactionId: number, month: string): Promise<void> => {
+  await apiClient.delete(`/Transactions/fixed-bills/${transactionId}/pay`, {
+    params: { month },
   });
 };
 

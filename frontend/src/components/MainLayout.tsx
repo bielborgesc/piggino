@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt } from 'lucide-react';
+import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../types';
 
-type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices';
+type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -67,6 +67,13 @@ function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNa
         >
           <Receipt className="h-5 w-5" />
           Faturas
+        </button>
+        <button
+          onClick={() => handleNavigation('fixed-bills')}
+          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'fixed-bills' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
+        >
+          <CalendarCheck className="h-5 w-5" />
+          Contas Fixas
         </button>
       </nav>
     </aside>

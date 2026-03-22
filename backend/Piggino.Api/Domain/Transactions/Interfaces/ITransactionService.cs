@@ -17,5 +17,8 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         Task<bool> ToggleTransactionPaidStatusAsync(int transactionId);
         Task<InvoiceReadDto?> GetInvoiceAsync(int financialSourceId, int year, int month);
         Task<bool> PayInvoiceAsync(int financialSourceId, int year, int month);
+        Task<MonthlyFixedBillsReadDto> GetMonthlyFixedBillsAsync(int year, int month);
+        Task<bool> MarkFixedBillAsPaidAsync(int transactionId, int year, int month);
+        Task<bool> UnmarkFixedBillAsPaidAsync(int transactionId, int year, int month);
     }
 }
