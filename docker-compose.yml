@@ -1,24 +1,40 @@
-# docker-compose.yml (Versão final para CI/CD)
+# docker-compose.yml
 version: '3.8'
 
 services:
+  piggino-postgres:
+    image: postgres:16-alpine
+    container_name: piggino-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=piggino
+      - POSTGRES_USER=piggino
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-piggino}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - piggino-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U piggino -d piggino"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   piggino-api:
     image: bielborgesc/piggino-api:latest
     container_name: piggino-api
     restart: unless-stopped
-    volumes:
-      - ./data:/app/data
+    depends_on:
+      piggino-postgres:
+        condition: service_healthy
     environment:
       - JwtSettings__Key=${JWT_KEY}
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Data Source=/app/data/piggino.db
-    command: >
-      sh -c "dotnet ef database update && dotnet Piggino.Api.dll"
+      - ConnectionStrings__piggino-db=Host=piggino-postgres;Port=5432;Database=piggino;Username=piggino;Password=${POSTGRES_PASSWORD:-piggino}
     networks:
       - piggino-net
 
   piggino-frontend:
-    # A imagem virá do Docker Hub
     image: bielborgesc/piggino-frontend:latest
     container_name: piggino-frontend
     restart: unless-stopped
@@ -40,7 +56,7 @@ services:
       - piggino-net
 
 volumes:
-  data:
+  postgres_data:
   caddy_data:
   caddy_config:
 

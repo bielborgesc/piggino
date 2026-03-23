@@ -1,11 +1,12 @@
 <Project Sdk="Aspire.AppHost.Sdk/13.1.0">
 
   <ItemGroup>
-    <ProjectReference Include="..\Piggino.API\Piggino.API.csproj" />
+    <ProjectReference Include="..\Piggino.Api\Piggino.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.NodeJs" Version="9.5.2" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="9.3.1" />
   </ItemGroup>
 
   <PropertyGroup>

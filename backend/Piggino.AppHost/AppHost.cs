@@ -1,9 +1,15 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var apiService = builder.AddProject<Projects.Piggino_API>("piggino-api");
+var postgres = builder.AddPostgres("piggino-postgres")
+    .WithPgAdmin()
+    .AddDatabase("piggino-db");
+
+var apiService = builder.AddProject<Projects.Piggino_Api>("piggino-api")
+    .WithReference(postgres)
+    .WaitFor(postgres);
 
 builder.AddNpmApp("piggino-frontend", "../../frontend", "dev")
-    .WithReference(apiService) 
+    .WithReference(apiService)
     .WithHttpEndpoint(env: "PORT")
     .WithExternalHttpEndpoints()
     .PublishAsDockerFile();
