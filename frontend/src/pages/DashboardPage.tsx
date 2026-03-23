@@ -26,7 +26,7 @@ import { useGoals } from '../hooks/useGoals';
 import { useHealthScore } from '../hooks/useHealthScore';
 import { useContextualTips } from '../hooks/useContextualTips';
 import { getCategories, getUserSettings } from '../services/api';
-import { Category, MonthlySummary, CategoryExpense, TopExpense, BudgetAnalysis, BucketCategoryBreakdown, Goal, HealthScore, ContextualTip } from '../types';
+import { Category, MonthlySummary, CategoryExpense, TopExpense, BudgetAnalysis, BucketCategoryBreakdown, Goal } from '../types';
 import { formatBRL } from '../utils/formatters';
 
 const MONTH_COUNT = 6;
@@ -77,16 +77,229 @@ interface KpiCardProps {
   value: string;
   icon: React.ReactNode;
   valueClassName: string;
+  trend?: {
+    percent: number;
+    positiveIsGood: boolean;
+  };
 }
 
-function KpiCard({ title, value, icon, valueClassName }: KpiCardProps) {
+function KpiCard({ title, value, icon, valueClassName, trend }: KpiCardProps) {
+  const trendColor = trend
+    ? trend.percent > 0
+      ? trend.positiveIsGood ? 'text-green-400' : 'text-red-400'
+      : trend.percent < 0
+        ? trend.positiveIsGood ? 'text-red-400' : 'text-green-400'
+        : 'text-slate-400'
+    : '';
+
+  const TrendIcon = trend && trend.percent > 0 ? TrendingUp : TrendingDown;
+  const trendLabel = trend
+    ? `${trend.percent > 0 ? '+' : ''}${trend.percent.toFixed(1)}%`
+    : null;
+
   return (
     <div className="bg-slate-800 p-5 rounded-lg border border-slate-700 flex items-start gap-4">
       <div className="mt-1 text-slate-400">{icon}</div>
       <div>
         <p className="text-slate-400 text-sm">{title}</p>
         <p className={`text-2xl font-bold mt-1 ${valueClassName}`}>{value}</p>
+        {trend && trend.percent !== 0 && (
+          <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${trendColor}`}>
+            <TrendIcon size={12} />
+            <span>{trendLabel} vs mes anterior</span>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+// --- Health Score Widget ---
+
+const HEALTH_SCORE_RING_RADIUS = 54;
+const HEALTH_SCORE_RING_CIRCUMFERENCE = 2 * Math.PI * HEALTH_SCORE_RING_RADIUS;
+
+function resolveHealthScoreColor(score: number): string {
+  if (score >= 80) return '#22c55e';
+  if (score >= 60) return '#eab308';
+  if (score >= 40) return '#f97316';
+  return '#ef4444';
+}
+
+function HealthScoreWidget() {
+  const { healthScore, isLoading } = useHealthScore();
+
+  if (isLoading || !healthScore) return null;
+
+  const ringOffset = HEALTH_SCORE_RING_CIRCUMFERENCE * (1 - healthScore.score / 100);
+  const ringColor = resolveHealthScoreColor(healthScore.score);
+
+  return (
+    <div className="bg-slate-800 p-5 rounded-lg border border-slate-700 space-y-5">
+      <h3 className="text-base font-semibold text-white">Score de Saude Financeira</h3>
+
+      <div className="flex flex-col sm:flex-row items-center gap-6">
+        <div className="shrink-0">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle
+              cx="70"
+              cy="70"
+              r={HEALTH_SCORE_RING_RADIUS}
+              fill="none"
+              stroke="#334155"
+              strokeWidth="12"
+            />
+            <circle
+              cx="70"
+              cy="70"
+              r={HEALTH_SCORE_RING_RADIUS}
+              fill="none"
+              stroke={ringColor}
+              strokeWidth="12"
+              strokeLinecap="round"
+              strokeDasharray={HEALTH_SCORE_RING_CIRCUMFERENCE}
+              strokeDashoffset={ringOffset}
+              transform="rotate(-90 70 70)"
+            />
+            <text x="70" y="64" textAnchor="middle" fill={ringColor} fontSize="28" fontWeight="bold" dominantBaseline="middle">
+              {healthScore.grade}
+            </text>
+            <text x="70" y="88" textAnchor="middle" fill="#94a3b8" fontSize="11" dominantBaseline="middle">
+              {healthScore.gradeLabel}
+            </text>
+            <text x="70" y="104" textAnchor="middle" fill="#64748b" fontSize="10" dominantBaseline="middle">
+              {healthScore.score}/100
+            </text>
+          </svg>
+        </div>
+
+        <div className="flex-1 w-full space-y-3">
+          {healthScore.components.map((component) => {
+            const pct = Math.round((component.score / component.maxScore) * 100);
+            const barColor = resolveHealthScoreColor(Math.round((component.score / component.maxScore) * 100));
+            return (
+              <div key={component.name} className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-300 font-medium">{component.name}</span>
+                  <span className="text-slate-400">{component.score}/{component.maxScore}</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded h-2">
+                  <div
+                    className="h-2 rounded transition-all duration-500"
+                    style={{ width: `${pct}%`, backgroundColor: barColor }}
+                  />
+                </div>
+                <p className="text-xs text-slate-500">{component.description}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {(healthScore.strengths.length > 0 || healthScore.warnings.length > 0) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-700">
+          {healthScore.strengths.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-green-400 uppercase tracking-wide">Pontos Fortes</p>
+              <ul className="space-y-1">
+                {healthScore.strengths.map((s, i) => (
+                  <li key={i} className="text-xs text-slate-300 flex items-start gap-1">
+                    <span className="shrink-0">✅</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {healthScore.warnings.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-amber-400 uppercase tracking-wide">Pontos de Atencao</p>
+              <ul className="space-y-1">
+                {healthScore.warnings.map((w, i) => (
+                  <li key={i} className="text-xs text-slate-300 flex items-start gap-1">
+                    <span className="shrink-0">⚠️</span>
+                    <span>{w}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Contextual Tips Widget ---
+
+const MAX_VISIBLE_TIPS = 4;
+
+const TIP_PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
+function resolveTipBorderColor(priority: string): string {
+  if (priority === 'high') return 'border-red-500';
+  if (priority === 'medium') return 'border-yellow-500';
+  return 'border-green-500';
+}
+
+function ContextualTipsWidget() {
+  const { tipsData, isLoading } = useContextualTips();
+  const [showAll, setShowAll] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+
+  if (isLoading || !tipsData || tipsData.tips.length === 0) return null;
+
+  const sorted = [...tipsData.tips].sort(
+    (a, b) => (TIP_PRIORITY_ORDER[a.priority] ?? 3) - (TIP_PRIORITY_ORDER[b.priority] ?? 3)
+  );
+
+  const hasHighPriority = sorted.some((t) => t.priority === 'high');
+
+  const visibleTips = showAll ? sorted : sorted.slice(0, MAX_VISIBLE_TIPS);
+  const hiddenCount = sorted.length - MAX_VISIBLE_TIPS;
+
+  return (
+    <div className="bg-slate-800 rounded-lg border border-slate-700">
+      <button
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full flex items-center justify-between p-5 text-left"
+      >
+        <h3 className="text-base font-semibold text-white">Dicas Personalizadas</h3>
+        <div className="flex items-center gap-2">
+          {hasHighPriority && (
+            <span className="bg-red-900/50 text-red-400 text-xs font-semibold px-2 py-0.5 rounded-full border border-red-800">
+              {sorted.filter((t) => t.priority === 'high').length} urgente(s)
+            </span>
+          )}
+          {isOpen ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="px-5 pb-5 space-y-3">
+          {visibleTips.map((tip, index) => (
+            <div
+              key={index}
+              className={`flex items-start gap-3 p-3 rounded-lg bg-slate-700/50 border-l-4 ${resolveTipBorderColor(tip.priority)}`}
+            >
+              <span className="text-xl shrink-0 mt-0.5">{tip.icon}</span>
+              <div>
+                <p className="text-sm font-semibold text-white">{tip.title}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{tip.message}</p>
+              </div>
+            </div>
+          ))}
+
+          {!showAll && hiddenCount > 0 && (
+            <button
+              onClick={() => setShowAll(true)}
+              className="w-full text-sm text-green-400 hover:text-green-300 font-medium py-1 transition-colors"
+            >
+              Ver mais {hiddenCount} dica(s)
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -668,12 +881,14 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: Das
             value={formatBRL(summary.currentMonthIncome)}
             icon={<TrendingUp size={20} />}
             valueClassName="text-green-400"
+            trend={{ percent: summary.incomeChangePercent, positiveIsGood: true }}
           />
           <KpiCard
             title="Gastos do Mes"
             value={formatBRL(summary.currentMonthExpenses)}
             icon={<TrendingDown size={20} />}
             valueClassName="text-red-400"
+            trend={{ percent: summary.expensesChangePercent, positiveIsGood: false }}
           />
           <KpiCard
             title="Saldo do Mes"
@@ -688,6 +903,8 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: Das
             valueClassName={summary.pendingFixedBills > 0 ? 'text-amber-400' : 'text-white'}
           />
         </div>
+
+        <HealthScoreWidget />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <IncomeExpensesChart monthlySummaries={summary.monthlySummaries} />
@@ -706,6 +923,8 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: Das
             onNavigateToCategories={onNavigateToCategories}
           />
         )}
+
+        <ContextualTipsWidget />
 
         <GoalsMiniWidget goals={goals} onNavigateToGoals={onNavigateToGoals} />
 
