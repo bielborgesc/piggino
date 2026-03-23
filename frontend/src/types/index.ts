@@ -2,6 +2,37 @@ export type CategoryType = 'Income' | 'Expense';
 export type FinancialSourceType = 'Card' | 'Account' | 'Cash';
 export type RecurrenceScope = 'OnlyThis' | 'ThisAndFuture' | 'ThisAndPast' | 'All';
 export type BudgetBucket = 'None' | 'Needs' | 'Wants' | 'Savings';
+export type GoalType = 'EmergencyFund' | 'Savings' | 'Investment' | 'Debt' | 'Travel' | 'Custom';
+
+export interface Goal {
+  id: number;
+  name: string;
+  description?: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate?: string;
+  color: string;
+  type: GoalType;
+  isCompleted: boolean;
+  createdAt: string;
+  userId: string;
+  progressPercentage: number;
+  monthsToGoal?: number;
+}
+
+export interface GoalData {
+  name: string;
+  description?: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate?: string;
+  color: string;
+  type: GoalType;
+}
+
+export interface AddContributionData {
+  amount: number;
+}
 
 // A interface Transaction agora corresponde ao TransactionReadDto do backend
 export interface Transaction {

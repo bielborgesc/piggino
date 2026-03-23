@@ -18,12 +18,13 @@ import {
   TooltipProps,
 } from 'recharts';
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
-import { LoaderCircle, TrendingUp, TrendingDown, Scale, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LoaderCircle, TrendingUp, TrendingDown, Scale, AlertCircle, ChevronLeft, ChevronRight, Target, X } from 'lucide-react';
 import { TransactionModal } from '../components/features/transactions/TransactionModal';
 import { useDashboard } from '../hooks/useDashboard';
 import { useBudgetAnalysis } from '../hooks/useBudgetAnalysis';
+import { useGoals } from '../hooks/useGoals';
 import { getCategories, getUserSettings } from '../services/api';
-import { Category, MonthlySummary, CategoryExpense, TopExpense, BudgetAnalysis, BucketCategoryBreakdown } from '../types';
+import { Category, MonthlySummary, CategoryExpense, TopExpense, BudgetAnalysis, BucketCategoryBreakdown, Goal } from '../types';
 import { formatBRL } from '../utils/formatters';
 
 const MONTH_COUNT = 6;
@@ -420,16 +421,190 @@ function BudgetAnalysisSection({ month, onMonthChange, onNavigateToCategories }:
   );
 }
 
-interface DashboardPageProps {
+const OVERSPENDING_WARNING_THRESHOLD = 90;
+
+interface BudgetBucketStatus {
+  label: string;
+  actual: number;
+  target: number;
+  usagePercentage: number;
+}
+
+function buildBucketStatuses(analysis: BudgetAnalysis): BudgetBucketStatus[] {
+  return [
+    { label: 'Necessidades (50%)', actual: analysis.needsActual, target: analysis.needsTarget, usagePercentage: analysis.needsTarget > 0 ? (analysis.needsActual / analysis.needsTarget) * 100 : 0 },
+    { label: 'Desejos (30%)', actual: analysis.wantsActual, target: analysis.wantsTarget, usagePercentage: analysis.wantsTarget > 0 ? (analysis.wantsActual / analysis.wantsTarget) * 100 : 0 },
+    { label: 'Reservas (20%)', actual: analysis.savingsActual, target: analysis.savingsTarget, usagePercentage: analysis.savingsTarget > 0 ? (analysis.savingsActual / analysis.savingsTarget) * 100 : 0 },
+  ];
+}
+
+interface OverspendingAlertsProps {
+  analysis: BudgetAnalysis;
   onNavigateToCategories: () => void;
 }
 
-export function DashboardPage({ onNavigateToCategories }: DashboardPageProps) {
+function OverspendingAlerts({ analysis, onNavigateToCategories }: OverspendingAlertsProps) {
+  const [dismissedBanners, setDismissedBanners] = useState<Set<string>>(new Set());
+
+  const dismiss = (key: string) => {
+    setDismissedBanners((prev) => new Set(prev).add(key));
+  };
+
+  const buckets = buildBucketStatuses(analysis);
+  const exceededBuckets = buckets.filter((b) => b.actual > b.target && b.target > 0);
+  const nearLimitBuckets = buckets.filter((b) => b.usagePercentage >= OVERSPENDING_WARNING_THRESHOLD && b.actual <= b.target && b.target > 0);
+  const hasUnclassified = analysis.unclassifiedActual > 0;
+
+  const visibleExceeded = exceededBuckets.filter((b) => !dismissedBanners.has(`exceeded-${b.label}`));
+  const visibleNearLimit = nearLimitBuckets.filter((b) => !dismissedBanners.has(`near-${b.label}`));
+  const showUnclassified = hasUnclassified && !dismissedBanners.has('unclassified');
+
+  if (visibleExceeded.length === 0 && visibleNearLimit.length === 0 && !showUnclassified) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-2">
+      {visibleExceeded.map((bucket) => (
+        <div key={bucket.label} className="flex items-start justify-between gap-3 bg-red-900/30 border border-red-700 rounded-lg px-4 py-3">
+          <span className="text-red-300 text-sm">
+            [!] Voce ultrapassou o orcamento em {bucket.label} — excedeu {formatBRL(bucket.actual - bucket.target)}
+          </span>
+          <button
+            onClick={() => dismiss(`exceeded-${bucket.label}`)}
+            className="shrink-0 text-red-400 hover:text-white transition-colors"
+            aria-label="Fechar alerta"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      ))}
+
+      {visibleNearLimit.map((bucket) => (
+        <div key={bucket.label} className="flex items-start justify-between gap-3 bg-amber-900/30 border border-amber-700 rounded-lg px-4 py-3">
+          <span className="text-amber-300 text-sm">
+            [/\] Voce esta proximo do limite em {bucket.label} — {Math.round(bucket.usagePercentage)}% usado
+          </span>
+          <button
+            onClick={() => dismiss(`near-${bucket.label}`)}
+            className="shrink-0 text-amber-400 hover:text-white transition-colors"
+            aria-label="Fechar alerta"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      ))}
+
+      {showUnclassified && (
+        <div className="flex items-start justify-between gap-3 bg-blue-900/30 border border-blue-700 rounded-lg px-4 py-3">
+          <span className="text-blue-300 text-sm">
+            [i] {formatBRL(analysis.unclassifiedActual)} em gastos nao classificados —{' '}
+            <button
+              onClick={onNavigateToCategories}
+              className="underline text-blue-200 hover:text-white"
+            >
+              classifique suas categorias
+            </button>{' '}
+            para uma analise completa.
+          </span>
+          <button
+            onClick={() => dismiss('unclassified')}
+            className="shrink-0 text-blue-400 hover:text-white transition-colors"
+            aria-label="Fechar alerta"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface BudgetAlertsBannerProps {
+  budgetMonth: string;
+  onNavigateToCategories: () => void;
+}
+
+function BudgetAlertsBanner({ budgetMonth, onNavigateToCategories }: BudgetAlertsBannerProps) {
+  const { analysis, isLoading } = useBudgetAnalysis(budgetMonth);
+
+  if (isLoading || !analysis) return null;
+
+  return (
+    <OverspendingAlerts
+      analysis={analysis}
+      onNavigateToCategories={onNavigateToCategories}
+    />
+  );
+}
+
+const MAX_GOALS_IN_WIDGET = 3;
+
+interface GoalsMiniWidgetProps {
+  goals: Goal[];
+  onNavigateToGoals: () => void;
+}
+
+function GoalsMiniWidget({ goals, onNavigateToGoals }: GoalsMiniWidgetProps) {
+  const activeGoals = goals.filter((g) => !g.isCompleted).slice(0, MAX_GOALS_IN_WIDGET);
+
+  return (
+    <div className="bg-slate-800 p-5 rounded-lg border border-slate-700 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Target className="text-green-400" size={18} />
+          <h3 className="text-base font-semibold text-white">Metas</h3>
+        </div>
+        <button
+          onClick={onNavigateToGoals}
+          className="text-green-400 hover:text-green-300 text-xs font-semibold transition-colors"
+        >
+          Ver todas
+        </button>
+      </div>
+
+      {activeGoals.length === 0 && (
+        <p className="text-slate-400 text-sm">Nenhuma meta ativa. Crie uma meta para comecar.</p>
+      )}
+
+      <ul className="space-y-3">
+        {activeGoals.map((goal) => (
+          <li key={goal.id} className="space-y-1">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className="inline-block w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: goal.color }}
+                />
+                <span className="text-white truncate">{goal.name}</span>
+              </div>
+              <span className="text-slate-400 text-xs shrink-0 ml-2">{goal.progressPercentage}%</span>
+            </div>
+            <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${goal.progressPercentage}%`, backgroundColor: goal.color }}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+interface DashboardPageProps {
+  onNavigateToCategories: () => void;
+  onNavigateToGoals: () => void;
+}
+
+export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: DashboardPageProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoryColorMap, setCategoryColorMap] = useState<Map<string, string>>(new Map());
   const [is503020Enabled, setIs503020Enabled] = useState(false);
   const [budgetMonth, setBudgetMonth] = useState<string>(getCurrentMonthKey());
   const { summary, isLoading, error, refetch } = useDashboard(MONTH_COUNT);
+  const { goals } = useGoals();
 
   useEffect(() => {
     getCategories()
@@ -479,6 +654,12 @@ export function DashboardPage({ onNavigateToCategories }: DashboardPageProps) {
   return (
     <>
       <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6">
+        {is503020Enabled && (
+          <BudgetAlertsBanner
+            budgetMonth={budgetMonth}
+            onNavigateToCategories={onNavigateToCategories}
+          />
+        )}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             title="Receitas do Mes"
@@ -523,6 +704,8 @@ export function DashboardPage({ onNavigateToCategories }: DashboardPageProps) {
             onNavigateToCategories={onNavigateToCategories}
           />
         )}
+
+        <GoalsMiniWidget goals={goals} onNavigateToGoals={onNavigateToGoals} />
 
         <div className="flex justify-end">
           <button

@@ -8,12 +8,13 @@ import { FinancialSourcesPage } from './pages/FinancialSourcesPage';
 import { InvoicePage } from './pages/InvoicePage';
 import { FixedBillsPage } from './pages/FixedBillsPage';
 import { SimulationPage } from './pages/SimulationPage';
+import { GoalsPage } from './pages/GoalsPage';
 import { MainLayout } from './components/layout/MainLayout';
 import { ChangePasswordModal } from './components/features/auth/ChangePasswordModal';
 import { UserSettingsModal } from './components/features/settings/UserSettingsModal';
 import { useAuth } from './hooks/useAuth';
 
-type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation';
+type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation' | 'goals';
 
 const TOAST_STYLES = { style: { background: '#334155', color: '#f1f5f9' } };
 
@@ -46,13 +47,14 @@ function App() {
           onChangePassword={() => setIsChangePasswordOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
         >
-          {currentPage === 'dashboard' && <DashboardPage onNavigateToCategories={() => setCurrentPage('categories')} />}
+          {currentPage === 'dashboard' && <DashboardPage onNavigateToCategories={() => setCurrentPage('categories')} onNavigateToGoals={() => setCurrentPage('goals')} />}
           {currentPage === 'transactions' && <TransactionsPage />}
           {currentPage === 'categories' && <CategoriesPage />}
           {currentPage === 'financial-sources' && <FinancialSourcesPage />}
           {currentPage === 'invoices' && <InvoicePage />}
           {currentPage === 'fixed-bills' && <FixedBillsPage />}
           {currentPage === 'simulation' && <SimulationPage />}
+          {currentPage === 'goals' && <GoalsPage />}
         </MainLayout>
       </>
     );

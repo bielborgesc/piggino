@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck, Calculator, KeyRound, Settings } from 'lucide-react';
+import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck, Calculator, KeyRound, Settings, Target } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../../types';
 import { getAccessToken } from '../../services/api';
 
-type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation';
+type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation' | 'goals';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -81,6 +81,13 @@ function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNa
         >
           <Calculator className="h-5 w-5" />
           Simulacao
+        </button>
+        <button
+          onClick={() => handleNavigation('goals')}
+          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'goals' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
+        >
+          <Target className="h-5 w-5" />
+          Metas
         </button>
       </nav>
     </aside>

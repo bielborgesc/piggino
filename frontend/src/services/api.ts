@@ -22,6 +22,9 @@ import {
   ResetPasswordData,
   UserSettings,
   BudgetAnalysis,
+  Goal,
+  GoalData,
+  AddContributionData,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -323,6 +326,36 @@ export const updateUserSettings = async (settings: UserSettings): Promise<UserSe
 
 export const getBudgetAnalysis = async (month: string): Promise<BudgetAnalysis> => {
   const response = await apiClient.get<BudgetAnalysis>('/Transactions/budget-analysis', { params: { month } });
+  return response.data;
+};
+
+// --- Goals API ---
+
+export const getGoals = async (): Promise<Goal[]> => {
+  const response = await apiClient.get<Goal[]>('/Goals');
+  return response.data;
+};
+
+export const getGoal = async (id: number): Promise<Goal> => {
+  const response = await apiClient.get<Goal>(`/Goals/${id}`);
+  return response.data;
+};
+
+export const createGoal = async (data: GoalData): Promise<Goal> => {
+  const response = await apiClient.post<Goal>('/Goals', data);
+  return response.data;
+};
+
+export const updateGoal = async (id: number, data: GoalData): Promise<void> => {
+  await apiClient.put(`/Goals/${id}`, data);
+};
+
+export const deleteGoal = async (id: number): Promise<void> => {
+  await apiClient.delete(`/Goals/${id}`);
+};
+
+export const addContribution = async (id: number, data: AddContributionData): Promise<Goal> => {
+  const response = await apiClient.post<Goal>(`/Goals/${id}/contribute`, data);
   return response.data;
 };
 

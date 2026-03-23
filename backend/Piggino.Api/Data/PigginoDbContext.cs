@@ -2,6 +2,7 @@
 using Piggino.Api.Domain.CardInstallments.Entities;
 using Piggino.Api.Domain.Categories.Entities;
 using Piggino.Api.Domain.FinancialSources.Entities;
+using Piggino.Api.Domain.Goals.Entities;
 using Piggino.Api.Domain.Transactions.Entities;
 using Piggino.Api.Domain.Users.Entities;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ namespace Piggino.Api.Data
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<CardInstallment> CardInstallments { get; set; }
         public DbSet<FixedTransactionPayment> FixedTransactionPayments { get; set; }
+        public DbSet<Goal> Goals { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -66,6 +68,11 @@ namespace Piggino.Api.Data
             modelBuilder
                 .Entity<FinancialSource>()
                 .Property(f => f.Type)
+                .HasConversion<string>();
+
+            modelBuilder
+                .Entity<Goal>()
+                .Property(g => g.Type)
                 .HasConversion<string>();
         }
     }

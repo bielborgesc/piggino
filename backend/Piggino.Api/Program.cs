@@ -9,6 +9,8 @@ using Piggino.Api.Domain.Categories.Interfaces;
 using Piggino.Api.Domain.Categories.Services;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
 using Piggino.Api.Domain.FinancialSources.Services;
+using Piggino.Api.Domain.Goals.Interfaces;
+using Piggino.Api.Domain.Goals.Services;
 using Piggino.Api.Domain.Transactions.Interfaces;
 using Piggino.Api.Domain.Transactions.Services;
 using Piggino.Api.Domain.Users.Interfaces;
@@ -140,6 +142,8 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IGoalRepository, GoalRepository>();
+builder.Services.AddScoped<IGoalService, GoalService>();
 builder.Services.AddHttpContextAccessor();
 
 

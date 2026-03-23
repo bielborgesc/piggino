@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Piggino.Api.Domain.Categories.Entities;
 using Piggino.Api.Domain.FinancialSources.Entities;
+using Piggino.Api.Domain.Goals.Entities;
 using Piggino.Api.Domain.Transactions.Entities;
 
 namespace Piggino.Api.Domain.Users.Entities
@@ -41,5 +42,6 @@ namespace Piggino.Api.Domain.Users.Entities
         public ICollection<FinancialSource>? FinancialSources { get; set; }
         public ICollection<Category>? Categories { get; set; }
         public ICollection<Transaction>? Transactions { get; set; }
+        public ICollection<Goal>? Goals { get; set; }
     }
 }
