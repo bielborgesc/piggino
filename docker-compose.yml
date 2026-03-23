@@ -31,6 +31,7 @@ services:
       - JwtSettings__Key=${JWT_KEY}
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__piggino-db=Host=piggino-postgres;Port=5432;Database=piggino;Username=piggino;Password=${POSTGRES_PASSWORD:-piggino}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
     networks:
       - piggino-net
 
@@ -55,10 +56,40 @@ services:
     networks:
       - piggino-net
 
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./grafana/tempo.yaml:/etc/tempo.yaml
+      - tempo_data:/var/tempo
+    networks:
+      - piggino-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - tempo
+    networks:
+      - piggino-net
+
 volumes:
   postgres_data:
   caddy_data:
   caddy_config:
+  tempo_data:
+  grafana_data:
 
 networks:
   piggino-net:

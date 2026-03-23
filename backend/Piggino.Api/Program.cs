@@ -196,6 +196,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapDefaultEndpoints();
+app.MapHealthChecks("/api/health");
 
 app.Run();
 

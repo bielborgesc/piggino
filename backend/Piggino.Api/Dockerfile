@@ -1,26 +1,24 @@
-# Estágio 1: Build da aplicação
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# Stage 1: Build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copia os arquivos de projeto necessários para a restauração.
+# Copy project files first to leverage Docker layer caching for restore.
 COPY ["Piggino.sln", "."]
 COPY ["Piggino.Api/Piggino.Api.csproj", "Piggino.Api/"]
 COPY ["Piggino.ServiceDefaults/Piggino.ServiceDefaults.csproj", "Piggino.ServiceDefaults/"]
 
-# Restaura as dependências APENAS para o projeto da API.
-# Isso ignora os projetos de teste ou AppHost definidos na solução.
+# Restore only the API project to skip test/AppHost dependencies.
 RUN dotnet restore "Piggino.Api/Piggino.Api.csproj"
 
-# Copia o resto do código-fonte.
+# Copy all remaining source files.
 COPY . .
 
-# Publica a API. O --no-restore agora funciona porque já restauramos o que era preciso.
+# Publish in Release mode, reusing the already-restored packages.
 WORKDIR "/src/Piggino.Api"
 RUN dotnet publish "Piggino.Api.csproj" -c Release -o /app/publish --no-restore
 
-# Estágio 2: Imagem final de runtime
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+# Stage 2: Runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-RUN mkdir /app/data
 ENTRYPOINT ["dotnet", "Piggino.Api.dll"]
