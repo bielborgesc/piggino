@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { X } from 'lucide-react';
-import { Category, CategoryData } from '../types';
-import { createCategory, updateCategory } from '../services/api';
+import { Category, CategoryData } from '../../../types';
+import { createCategory, updateCategory } from '../../../services/api';
 import { CategoryForm } from './CategoryForm';
 
 interface CategoryModalProps {
@@ -35,18 +35,18 @@ export function CategoryModal({ isOpen, onClose, onSaveSuccess, categoryToEdit }
       onClose();
     } catch (error) {
       console.error('Falha ao salvar categoria:', error);
-      toast.error('Não foi possível salvar a categoria.', { id: toastId });
+      toast.error('Nao foi possivel salvar a categoria.', { id: toastId });
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/75 flex justify-center items-center z-50 p-4"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md border border-slate-700 p-6 sm:p-8 relative"
         onClick={(e) => e.stopPropagation()}
       >
@@ -54,7 +54,7 @@ export function CategoryModal({ isOpen, onClose, onSaveSuccess, categoryToEdit }
           <h2 className="text-xl font-bold text-white">
             {categoryToEdit ? 'Editar Categoria' : 'Nova Categoria'}
           </h2>
-          <button 
+          <button
             onClick={onClose}
             className="text-slate-400 hover:text-white transition-colors"
           >
@@ -62,7 +62,7 @@ export function CategoryModal({ isOpen, onClose, onSaveSuccess, categoryToEdit }
           </button>
         </div>
 
-        <CategoryForm 
+        <CategoryForm
           onSave={handleSave}
           onCancel={onClose}
           initialData={categoryToEdit}

@@ -3,24 +3,22 @@ import { PlusCircle, LoaderCircle, Trash2, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getCategories, deleteCategory } from '../services/api';
 import { Category } from '../types';
-import { CategoryModal } from './CategoryModal'; // ✅ Importa o Modal
+import { CategoryModal } from '../components/features/categories/CategoryModal';
+import { extractErrorMessage } from '../utils/errors';
 
 export function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // ✅ Estados para controlar o modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const fetchCategories = useCallback(async () => {
     try {
-      // Não precisa do setIsLoading aqui, pois o onSaveSuccess pode chamar sem mostrar o spinner da página
       const data = await getCategories();
       setCategories(data);
     } catch (error) {
-      console.error("Falha ao buscar categorias:", error);
-      toast.error("Não foi possível carregar as categorias.");
+      console.error('Falha ao buscar categorias:', error);
+      toast.error('Nao foi possivel carregar as categorias.');
     } finally {
       setIsLoading(false);
     }
@@ -40,23 +38,17 @@ export function CategoriesPage() {
     setIsModalOpen(true);
   };
 
- const handleDelete = async (id: number) => {
-    if (window.confirm('Tem certeza que deseja excluir esta categoria?')) {
-        const toastId = toast.loading('Excluindo...');
-        try {
-            await deleteCategory(id);
-            toast.success('Categoria excluída!', { id: toastId });
-            fetchCategories(); // Atualiza a lista
-        } catch (error: any) { // ✅ Capturar o erro
-            console.error('Falha ao excluir categoria:', error);
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta categoria?')) return;
 
-            // ✅ Mostrar a mensagem de erro vinda da API
-            if (error.response && error.response.data && error.response.data.message) {
-                toast.error(error.response.data.message, { id: toastId });
-            } else {
-                toast.error('Não foi possível excluir a categoria.', { id: toastId });
-            }
-        }
+    const toastId = toast.loading('Excluindo...');
+    try {
+      await deleteCategory(id);
+      toast.success('Categoria excluida!', { id: toastId });
+      fetchCategories();
+    } catch (error: unknown) {
+      const message = extractErrorMessage(error, 'Nao foi possivel excluir a categoria.');
+      toast.error(message, { id: toastId });
     }
   };
 
@@ -68,8 +60,8 @@ export function CategoriesPage() {
             <h2 className="text-2xl font-bold text-white">Minhas Categorias</h2>
             <p className="text-slate-400">Gerencie suas categorias de receitas e despesas.</p>
           </div>
-          <button 
-            onClick={handleOpenCreateModal} // ✅ Ação para abrir o modal de criação
+          <button
+            onClick={handleOpenCreateModal}
             className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-all"
           >
             <PlusCircle size={20} />
@@ -88,7 +80,7 @@ export function CategoriesPage() {
                 <tr>
                   <th className="p-4 font-semibold">Nome</th>
                   <th className="p-4 font-semibold">Tipo</th>
-                  <th className="p-4 font-semibold text-right">Ações</th>
+                  <th className="p-4 font-semibold text-right">Acoes</th>
                 </tr>
               </thead>
               <tbody>
@@ -124,7 +116,7 @@ export function CategoriesPage() {
                 ) : (
                   <tr>
                     <td colSpan={3} className="text-center p-8 text-slate-400">
-                      Nenhuma categoria encontrada. Clique em "Nova Categoria" para começar.
+                      Nenhuma categoria encontrada. Clique em "Nova Categoria" para comecar.
                     </td>
                   </tr>
                 )}
@@ -133,9 +125,8 @@ export function CategoriesPage() {
           </div>
         )}
       </div>
-      
-      {/* ✅ Renderiza o Modal */}
-      <CategoryModal 
+
+      <CategoryModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSaveSuccess={fetchCategories}

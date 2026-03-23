@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Category, CategoryData, CategoryType, BudgetBucket } from '../types';
+import { Category, CategoryData, CategoryType, BudgetBucket } from '../../../types';
 
 const DEFAULT_COLOR = '#6b7280';
 const DEFAULT_BUDGET_BUCKET: BudgetBucket = 'None';

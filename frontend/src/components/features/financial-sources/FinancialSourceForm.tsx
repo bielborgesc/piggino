@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FinancialSource, FinancialSourceData, FinancialSourceType } from '../types';
+import { FinancialSource, FinancialSourceData, FinancialSourceType } from '../../../types';
 
 interface FinancialSourceFormProps {
   onSave: (data: FinancialSourceData) => void;
@@ -15,7 +15,7 @@ export function FinancialSourceForm({ onSave, onCancel, initialData, isSaving }:
   const [dueDay, setDueDay] = useState<number | undefined>();
 
   useEffect(() => {
-  if (initialData) {
+    if (initialData) {
       setName(initialData.name);
       setType(initialData.type);
       setClosingDay(initialData.closingDay ?? undefined);
@@ -30,8 +30,8 @@ export function FinancialSourceForm({ onSave, onCancel, initialData, isSaving }:
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    const data: FinancialSourceData = { 
-      name, 
+    const data: FinancialSourceData = {
+      name,
       type,
       closingDay: type === 'Card' ? closingDay : null,
       dueDay: type === 'Card' ? dueDay : null,
@@ -51,7 +51,7 @@ export function FinancialSourceForm({ onSave, onCancel, initialData, isSaving }:
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full bg-slate-700 border-slate-600 rounded-md p-3 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-green-500 transition"
-          placeholder="Ex: Cartão Nubank"
+          placeholder="Ex: Cartao Nubank"
           required
           disabled={isSaving}
         />
@@ -69,7 +69,7 @@ export function FinancialSourceForm({ onSave, onCancel, initialData, isSaving }:
           disabled={isSaving}
         >
           <option value="Account">Conta Corrente</option>
-          <option value="Card">Cartão de Crédito</option>
+          <option value="Card">Cartao de Credito</option>
           <option value="Cash">Dinheiro</option>
         </select>
       </div>
@@ -86,7 +86,8 @@ export function FinancialSourceForm({ onSave, onCancel, initialData, isSaving }:
               value={closingDay || ''}
               onChange={(e) => setClosingDay(e.target.value ? parseInt(e.target.value) : undefined)}
               className="w-full bg-slate-700 border-slate-600 rounded-md p-3"
-              min="1" max="31"
+              min="1"
+              max="31"
             />
           </div>
           <div>
@@ -99,17 +100,27 @@ export function FinancialSourceForm({ onSave, onCancel, initialData, isSaving }:
               value={dueDay || ''}
               onChange={(e) => setDueDay(e.target.value ? parseInt(e.target.value) : undefined)}
               className="w-full bg-slate-700 border-slate-600 rounded-md p-3"
-              min="1" max="31"
+              min="1"
+              max="31"
             />
           </div>
         </div>
       )}
 
       <div className="flex justify-end gap-4 pt-4">
-        <button type="button" onClick={onCancel} disabled={isSaving} className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded-lg font-semibold transition">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isSaving}
+          className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded-lg font-semibold transition"
+        >
           Cancelar
         </button>
-        <button type="submit" disabled={isSaving} className="px-6 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition flex items-center disabled:bg-slate-500">
+        <button
+          type="submit"
+          disabled={isSaving}
+          className="px-6 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition flex items-center disabled:bg-slate-500"
+        >
           {isSaving ? 'Salvando...' : 'Salvar'}
         </button>
       </div>

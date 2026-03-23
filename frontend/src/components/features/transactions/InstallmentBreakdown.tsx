@@ -1,5 +1,5 @@
-import { CardInstallment } from '../types';
-import { formatBRL } from '../utils/formatters';
+import { CardInstallment } from '../../../types';
+import { formatBRL } from '../../../utils/formatters';
 
 interface InstallmentBreakdownProps {
   installments: CardInstallment[];

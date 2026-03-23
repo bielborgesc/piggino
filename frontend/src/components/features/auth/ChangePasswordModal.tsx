@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
-import { changePassword } from '../services/api';
-import { ChangePasswordData } from '../types';
+import { changePassword } from '../../../services/api';
+import { ChangePasswordData } from '../../../types';
 import toast from 'react-hot-toast';
-import { extractErrorMessage } from '../utils/errors';
+import { extractErrorMessage } from '../../../utils/errors';
 
 interface ChangePasswordModalProps {
   onClose: () => void;
@@ -27,7 +27,7 @@ function measurePasswordStrength(password: string): PasswordStrength {
 
 const STRENGTH_LABEL: Record<PasswordStrength, string> = {
   weak: 'Fraca',
-  medium: 'Média',
+  medium: 'Media',
   strong: 'Forte',
 };
 
@@ -56,7 +56,7 @@ function StrengthIndicator({ password }: { password: string }) {
         />
       </div>
       <p className={`text-xs mt-1 ${STRENGTH_COLOR[strength].replace('bg-', 'text-')}`}>
-        Força da senha: {STRENGTH_LABEL[strength]}
+        Forca da senha: {STRENGTH_LABEL[strength]}
       </p>
     </div>
   );
@@ -138,7 +138,7 @@ export function ChangePasswordModal({ onClose, onLogout }: ChangePasswordModalPr
     event.preventDefault();
 
     if (newPassword !== confirmNewPassword) {
-      toast.error('As senhas não coincidem.');
+      toast.error('As senhas nao coincidem.');
       return;
     }
 
@@ -189,7 +189,7 @@ export function ChangePasswordModal({ onClose, onLogout }: ChangePasswordModalPr
             label="Nova senha"
             value={newPassword}
             onChange={setNewPassword}
-            placeholder="Mínimo 8 caracteres, 1 maiúscula, 1 número"
+            placeholder="Minimo 8 caracteres, 1 maiuscula, 1 numero"
             disabled={isLoading}
             showStrength
           />
@@ -204,7 +204,7 @@ export function ChangePasswordModal({ onClose, onLogout }: ChangePasswordModalPr
             hasError={passwordsDoNotMatch}
           />
           {passwordsDoNotMatch && (
-            <p className="text-red-400 text-xs -mt-3">As senhas não coincidem.</p>
+            <p className="text-red-400 text-xs -mt-3">As senhas nao coincidem.</p>
           )}
 
           <div className="flex gap-3 pt-2">

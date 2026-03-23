@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { TransactionForm } from './TransactionForm';
-import { Transaction, TransactionData, RecurrenceScope } from '../types';
-import { createTransaction, updateTransaction, updateInstallmentsByScope } from '../services/api';
-import { extractErrorMessage } from '../utils/errors';
+import { Transaction, TransactionData, RecurrenceScope } from '../../../types';
+import { createTransaction, updateTransaction, updateInstallmentsByScope } from '../../../services/api';
+import { extractErrorMessage } from '../../../utils/errors';
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -33,7 +33,7 @@ export function TransactionModal({
 
   const handleSave = async (data: TransactionData, id?: number) => {
     setIsSaving(true);
-    const toastId = toast.loading(id ? 'Atualizando transação...' : 'Salvando transação...');
+    const toastId = toast.loading(id ? 'Atualizando transacao...' : 'Salvando transacao...');
 
     try {
       if (id && isInstallmentEdit) {
@@ -42,14 +42,14 @@ export function TransactionModal({
       } else if (id) {
         const dataWithScope: TransactionData = { ...data, recurrenceScope };
         await updateTransaction(id, dataWithScope);
-        toast.success('Transação atualizada!', { id: toastId });
+        toast.success('Transacao atualizada!', { id: toastId });
       } else {
         await createTransaction(data);
-        toast.success('Transação salva!', { id: toastId });
+        toast.success('Transacao salva!', { id: toastId });
       }
       onClose();
     } catch (error) {
-      const message = extractErrorMessage(error, 'Falha ao salvar a transação. Tente novamente.');
+      const message = extractErrorMessage(error, 'Falha ao salvar a transacao. Tente novamente.');
       toast.error(message, { id: toastId });
     } finally {
       setIsSaving(false);
@@ -58,20 +58,20 @@ export function TransactionModal({
 
   return (
     <div className="fixed inset-0 bg-black/75 flex justify-center items-center z-50 p-4" onClick={onClose}>
-      <div 
+      <div
         className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md border border-slate-700 p-6 sm:p-8 relative"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white">
-            {transactionToEdit ? 'Editar Transação' : 'Adicionar Transação'}
+            {transactionToEdit ? 'Editar Transacao' : 'Adicionar Transacao'}
           </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
             <X size={24} />
           </button>
         </div>
 
-        <TransactionForm 
+        <TransactionForm
           onSave={handleSave}
           onCancel={onClose}
           initialData={transactionToEdit}

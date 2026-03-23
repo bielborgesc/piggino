@@ -4,10 +4,7 @@ import { settleInstallments } from '../services/api';
 import { useSimulation } from '../hooks/useSimulation';
 import { SimulationItem } from '../types';
 import toast from 'react-hot-toast';
-
-function formatCurrency(amount: number): string {
-  return amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
+import { formatBRL } from '../utils/formatters';
 
 function formatDate(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
@@ -76,11 +73,11 @@ function SimulationItemCard({
           <div className="grid grid-cols-2 gap-3 mt-3">
             <div>
               <p className="text-xs text-slate-400">Parcela mensal</p>
-              <p className="font-semibold text-slate-100">{formatCurrency(item.monthlyAmount)}</p>
+              <p className="font-semibold text-slate-100">{formatBRL(item.monthlyAmount)}</p>
             </div>
             <div>
               <p className="text-xs text-slate-400">Total a quitar</p>
-              <p className="font-semibold text-red-400">{formatCurrency(item.remainingAmount)}</p>
+              <p className="font-semibold text-red-400">{formatBRL(item.remainingAmount)}</p>
             </div>
           </div>
         </div>
@@ -160,12 +157,12 @@ export function SimulationPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <SummaryCard
               label="Total a quitar"
-              value={formatCurrency(simulation.totalRemainingAmount)}
+              value={formatBRL(simulation.totalRemainingAmount)}
               highlight="red"
             />
             <SummaryCard
               label="Compromisso mensal"
-              value={formatCurrency(simulation.totalMonthlyCommitment)}
+              value={formatBRL(simulation.totalMonthlyCommitment)}
               highlight="blue"
             />
           </div>

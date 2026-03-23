@@ -1,39 +1,32 @@
 import { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
-import { LoginForm } from './components/LoginForm';
-import { RegisterForm } from './components/RegisterForm';
-import { Dashboard } from './components/Dashboard';
-import { TransactionsPage } from './components/TransactionsPage';
-import { CategoriesPage } from './components/CategoriesPage';
-import { FinancialSourcesPage } from './components/FinancialSourcesPage';
-import { InvoicePage } from './components/InvoicePage';
-import { FixedBillsPage } from './components/FixedBillsPage';
-import { SimulationPage } from './components/SimulationPage';
-import { MainLayout } from './components/MainLayout';
-import { ChangePasswordModal } from './components/ChangePasswordModal';
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { TransactionsPage } from './pages/TransactionsPage';
+import { CategoriesPage } from './pages/CategoriesPage';
+import { FinancialSourcesPage } from './pages/FinancialSourcesPage';
+import { InvoicePage } from './pages/InvoicePage';
+import { FixedBillsPage } from './pages/FixedBillsPage';
+import { SimulationPage } from './pages/SimulationPage';
+import { MainLayout } from './components/layout/MainLayout';
+import { ChangePasswordModal } from './components/features/auth/ChangePasswordModal';
+import { UserSettingsModal } from './components/features/settings/UserSettingsModal';
 import { useAuth } from './hooks/useAuth';
-import { UserSettingsModal } from './components/UserSettingsModal';
 
-enum AuthView { Login, Register }
 type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation';
 
-const toastStyles = { style: { background: '#334155', color: '#f1f5f9' } };
+const TOAST_STYLES = { style: { background: '#334155', color: '#f1f5f9' } };
 
 function App() {
   const { isAuthenticated, onLoginSuccess, onLogout } = useAuth();
-  const [authView, setAuthView] = useState<AuthView>(AuthView.Login);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
-  const handleLoginSuccess = () => {
-    setCurrentPage('dashboard');
-  };
-
   if (isAuthenticated) {
     return (
       <>
-        <Toaster position="top-right" toastOptions={toastStyles} />
+        <Toaster position="top-right" toastOptions={TOAST_STYLES} />
         {isChangePasswordOpen && (
           <ChangePasswordModal
             onClose={() => setIsChangePasswordOpen(false)}
@@ -53,7 +46,7 @@ function App() {
           onChangePassword={() => setIsChangePasswordOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
         >
-          {currentPage === 'dashboard' && <Dashboard onNavigateToCategories={() => setCurrentPage('categories')} />}
+          {currentPage === 'dashboard' && <DashboardPage onNavigateToCategories={() => setCurrentPage('categories')} />}
           {currentPage === 'transactions' && <TransactionsPage />}
           {currentPage === 'categories' && <CategoriesPage />}
           {currentPage === 'financial-sources' && <FinancialSourcesPage />}
@@ -66,22 +59,10 @@ function App() {
   }
 
   return (
-    <div className="bg-slate-900 min-h-screen flex items-center justify-center p-4 font-sans">
-      <Toaster position="top-right" toastOptions={toastStyles} />
-      {authView === AuthView.Login ? (
-        <LoginForm
-          onLoginSuccess={(tokens) => {
-            onLoginSuccess(tokens);
-            handleLoginSuccess();
-          }}
-          onNavigateToRegister={() => setAuthView(AuthView.Register)}
-        />
-      ) : (
-        <RegisterForm
-          onNavigateToLogin={() => setAuthView(AuthView.Login)}
-        />
-      )}
-    </div>
+    <>
+      <Toaster position="top-right" toastOptions={TOAST_STYLES} />
+      <LoginPage onLoginSuccess={onLoginSuccess} />
+    </>
   );
 }
 

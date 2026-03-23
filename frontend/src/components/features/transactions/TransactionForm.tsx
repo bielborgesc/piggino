@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getCategories, getFinancialSources } from '../services/api';
-import { Category, FinancialSource, CategoryType, TransactionData, Transaction } from '../types';
+import { getCategories, getFinancialSources } from '../../../services/api';
+import { Category, FinancialSource, CategoryType, TransactionData, Transaction } from '../../../types';
 import { InlineCreateForm } from './InlineCreateForm';
 
 interface TransactionFormProps {
@@ -186,7 +186,6 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
           </div>
         </div>
 
-        {/* Financial Source field with inline create */}
         <div>
           <div className="flex items-center justify-between mb-1">
             <label htmlFor="financialSource" className="block text-sm font-medium text-gray-400">
@@ -223,7 +222,6 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
           )}
         </div>
 
-        {/* Category field with inline create */}
         <div>
           <div className="flex items-center justify-between mb-1">
             <label htmlFor="category" className="block text-sm font-medium text-gray-400">

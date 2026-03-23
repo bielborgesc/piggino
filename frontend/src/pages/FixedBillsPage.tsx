@@ -1,8 +1,11 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, LoaderCircle, CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import { useFixedBills } from '../hooks/useFixedBills';
 import { FixedBill } from '../types';
 import { formatBRL } from '../utils/formatters';
+import { MonthNavigator } from '../components/ui/MonthNavigator';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { EmptyState } from '../components/ui/EmptyState';
 
 const MONTH_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric', timeZone: 'UTC' };
 
@@ -10,26 +13,6 @@ function formatMonthKey(date: Date): string {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, '0');
   return `${year}-${month}`;
-}
-
-
-function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: {
-  currentDate: Date;
-  onPreviousMonth: () => void;
-  onNextMonth: () => void;
-}) {
-  const label = currentDate.toLocaleString('pt-BR', MONTH_FORMAT_OPTIONS);
-  return (
-    <div className="flex items-center justify-center gap-2 sm:gap-4 bg-slate-700/50 p-2 rounded-lg">
-      <button onClick={onPreviousMonth} className="p-2 rounded-md hover:bg-slate-600 transition-colors">
-        <ChevronLeft size={20} />
-      </button>
-      <span className="text-base sm:text-lg font-semibold w-44 text-center capitalize">{label}</span>
-      <button onClick={onNextMonth} className="p-2 rounded-md hover:bg-slate-600 transition-colors">
-        <ChevronRight size={20} />
-      </button>
-    </div>
-  );
 }
 
 function SummaryCards({ totalAmount, paidAmount, pendingAmount }: {
@@ -126,22 +109,6 @@ function FixedBillRow({ bill, onTogglePaid }: {
   );
 }
 
-function LoadingSkeleton() {
-  return (
-    <div className="flex justify-center items-center p-10">
-      <LoaderCircle className="animate-spin text-green-500" size={40} />
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">
-      Nenhuma conta fixa cadastrada. Crie uma transacao com "Fixa" ativado.
-    </div>
-  );
-}
-
 export function FixedBillsPage() {
   const [currentDate, setCurrentDate] = useState(() => {
     const now = new Date();
@@ -172,6 +139,7 @@ export function FixedBillsPage() {
           currentDate={currentDate}
           onPreviousMonth={handlePreviousMonth}
           onNextMonth={handleNextMonth}
+          formatOptions={MONTH_FORMAT_OPTIONS}
         />
       </div>
 
@@ -189,9 +157,11 @@ export function FixedBillsPage() {
         />
       )}
 
-      {isLoading && <LoadingSkeleton />}
+      {isLoading && <LoadingSpinner />}
 
-      {!isLoading && data && data.items.length === 0 && <EmptyState />}
+      {!isLoading && data && data.items.length === 0 && (
+        <EmptyState message="Nenhuma conta fixa cadastrada. Crie uma transacao com Fixa ativado." />
+      )}
 
       {!isLoading && data && data.items.length > 0 && (
         <>

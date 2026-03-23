@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { getUserSettings, updateUserSettings } from '../services/api';
-import { UserSettings } from '../types';
+import { getUserSettings, updateUserSettings } from '../../../services/api';
+import { UserSettings } from '../../../types';
 import toast from 'react-hot-toast';
-import { extractErrorMessage } from '../utils/errors';
+import { extractErrorMessage } from '../../../utils/errors';
 
 interface UserSettingsModalProps {
   onClose: () => void;

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Copy, Check } from 'lucide-react';
-import { loginUser, forgotPassword, resetPassword } from '../services/api';
-import { AuthTokens, UserLoginData } from '../types';
+import { loginUser, forgotPassword, resetPassword } from '../../../services/api';
+import { AuthTokens, UserLoginData } from '../../../types';
 import toast from 'react-hot-toast';
-import { extractErrorMessage } from '../utils/errors';
+import { extractErrorMessage } from '../../../utils/errors';
 
 type LoginView = 'login' | 'forgot-step-1' | 'forgot-step-2';
 
@@ -97,7 +97,7 @@ function LoginPanel({
       toast.success('Login realizado com sucesso!');
       onLoginSuccess(tokens);
     } catch (apiError: unknown) {
-      const message = extractErrorMessage(apiError, 'E-mail ou senha inválidos.');
+      const message = extractErrorMessage(apiError, 'E-mail ou senha invalidos.');
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -178,7 +178,7 @@ function ForgotStepOne({ onTokenReceived }: { onTokenReceived: (token: string) =
       const response = await forgotPassword({ email });
       onTokenReceived(response.token);
     } catch (apiError: unknown) {
-      const message = extractErrorMessage(apiError, 'Erro ao solicitar redefinição de senha.');
+      const message = extractErrorMessage(apiError, 'Erro ao solicitar redefinicao de senha.');
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -188,7 +188,7 @@ function ForgotStepOne({ onTokenReceived }: { onTokenReceived: (token: string) =
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <p className="text-slate-400 text-sm">
-        Informe o e-mail da sua conta. Um token de redefinição será gerado e exibido aqui.
+        Informe o e-mail da sua conta. Um token de redefinicao sera gerado e exibido aqui.
       </p>
       <div>
         <label htmlFor="forgot-email" className="block text-sm font-medium text-slate-300 mb-2">
@@ -264,7 +264,7 @@ function ForgotStepTwo({
     event.preventDefault();
 
     if (newPassword !== confirmNewPassword) {
-      toast.error('As senhas não coincidem.');
+      toast.error('As senhas nao coincidem.');
       return;
     }
 
@@ -272,7 +272,7 @@ function ForgotStepTwo({
 
     try {
       await resetPassword({ token, newPassword, confirmNewPassword });
-      toast.success('Senha redefinida com sucesso! Faça login.');
+      toast.success('Senha redefinida com sucesso! Faca login.');
       onSuccess();
     } catch (apiError: unknown) {
       const message = extractErrorMessage(apiError, 'Erro ao redefinir senha.');
@@ -309,7 +309,7 @@ function ForgotStepTwo({
           id="reset-new-password"
           value={newPassword}
           onChange={setNewPassword}
-          placeholder="Mínimo 8 caracteres, 1 maiúscula, 1 número"
+          placeholder="Minimo 8 caracteres, 1 maiuscula, 1 numero"
           disabled={isLoading}
           show={showNewPassword}
           onToggleShow={() => setShowNewPassword((prev) => !prev)}
@@ -329,7 +329,7 @@ function ForgotStepTwo({
           onToggleShow={() => setShowConfirmPassword((prev) => !prev)}
         />
         {passwordsDoNotMatch && (
-          <p className="text-red-400 text-xs mt-1">As senhas não coincidem.</p>
+          <p className="text-red-400 text-xs mt-1">As senhas nao coincidem.</p>
         )}
       </div>
       <button

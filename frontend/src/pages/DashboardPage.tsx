@@ -19,7 +19,7 @@ import {
 } from 'recharts';
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { LoaderCircle, TrendingUp, TrendingDown, Scale, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { TransactionModal } from './TransactionModal';
+import { TransactionModal } from '../components/features/transactions/TransactionModal';
 import { useDashboard } from '../hooks/useDashboard';
 import { useBudgetAnalysis } from '../hooks/useBudgetAnalysis';
 import { getCategories, getUserSettings } from '../services/api';
@@ -63,14 +63,11 @@ const FALLBACK_CATEGORY_COLORS = [
   '#ec4899',
 ];
 
-
 function formatMonthLabel(monthKey: string): string {
   const [year, month] = monthKey.split('-');
   const date = new Date(Number(year), Number(month) - 1, 1);
   return date.toLocaleString('pt-BR', { month: 'short' });
 }
-
-// --- KPI Card ---
 
 interface KpiCardProps {
   title: string;
@@ -91,8 +88,6 @@ function KpiCard({ title, value, icon, valueClassName }: KpiCardProps) {
   );
 }
 
-// --- Custom BRL Tooltip for Recharts ---
-
 function BrlTooltip({ active, payload, label }: TooltipProps<ValueType, NameType>) {
   if (!active || !payload || payload.length === 0) return null;
 
@@ -107,8 +102,6 @@ function BrlTooltip({ active, payload, label }: TooltipProps<ValueType, NameType
     </div>
   );
 }
-
-// --- Income vs Expenses Bar Chart ---
 
 interface IncomeExpensesChartProps {
   monthlySummaries: MonthlySummary[];
@@ -137,8 +130,6 @@ function IncomeExpensesChart({ monthlySummaries }: IncomeExpensesChartProps) {
     </div>
   );
 }
-
-// --- Expenses by Category Pie Chart ---
 
 interface CategoryPieChartProps {
   categories: CategoryExpense[];
@@ -207,8 +198,6 @@ function CategoryPieChart({ categories, categoryColorMap }: CategoryPieChartProp
   );
 }
 
-// --- Balance Trend Line Chart ---
-
 interface BalanceTrendChartProps {
   monthlySummaries: MonthlySummary[];
 }
@@ -235,8 +224,6 @@ function BalanceTrendChart({ monthlySummaries }: BalanceTrendChartProps) {
     </div>
   );
 }
-
-// --- Top Expenses List ---
 
 interface TopExpensesListProps {
   expenses: TopExpense[];
@@ -272,8 +259,6 @@ function TopExpensesList({ expenses }: TopExpensesListProps) {
     </div>
   );
 }
-
-// --- Budget Analysis Section ---
 
 interface BucketBarProps {
   label: string;
@@ -435,13 +420,11 @@ function BudgetAnalysisSection({ month, onMonthChange, onNavigateToCategories }:
   );
 }
 
-// --- Dashboard (main export) ---
-
-interface DashboardProps {
+interface DashboardPageProps {
   onNavigateToCategories: () => void;
 }
 
-export function Dashboard({ onNavigateToCategories }: DashboardProps) {
+export function DashboardPage({ onNavigateToCategories }: DashboardPageProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoryColorMap, setCategoryColorMap] = useState<Map<string, string>>(new Map());
   const [is503020Enabled, setIs503020Enabled] = useState(false);
@@ -496,7 +479,6 @@ export function Dashboard({ onNavigateToCategories }: DashboardProps) {
   return (
     <>
       <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6">
-        {/* KPI row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             title="Receitas do Mes"
@@ -524,19 +506,16 @@ export function Dashboard({ onNavigateToCategories }: DashboardProps) {
           />
         </div>
 
-        {/* Charts row — bar + pie */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <IncomeExpensesChart monthlySummaries={summary.monthlySummaries} />
           <CategoryPieChart categories={summary.expensesByCategory} categoryColorMap={categoryColorMap} />
         </div>
 
-        {/* Charts row — line + top expenses */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <BalanceTrendChart monthlySummaries={summary.monthlySummaries} />
           <TopExpensesList expenses={summary.topExpenses} />
         </div>
 
-        {/* 50/30/20 Budget Analysis */}
         {is503020Enabled && (
           <BudgetAnalysisSection
             month={budgetMonth}
@@ -545,7 +524,6 @@ export function Dashboard({ onNavigateToCategories }: DashboardProps) {
           />
         )}
 
-        {/* Quick action */}
         <div className="flex justify-end">
           <button
             onClick={() => setIsModalOpen(true)}

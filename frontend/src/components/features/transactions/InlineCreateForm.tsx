@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { createCategory, createFinancialSource } from '../services/api';
-import { Category, CategoryType, FinancialSource, FinancialSourceType } from '../types';
+import { createCategory, createFinancialSource } from '../../../services/api';
+import { Category, CategoryType, FinancialSource, FinancialSourceType } from '../../../types';
 
 const DEFAULT_CATEGORY_COLOR = '#6b7280';
 

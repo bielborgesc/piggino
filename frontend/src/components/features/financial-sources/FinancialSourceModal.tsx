@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { X } from 'lucide-react';
-import { FinancialSource, FinancialSourceData } from '../types';
-import { createFinancialSource, updateFinancialSource } from '../services/api';
+import { FinancialSource, FinancialSourceData } from '../../../types';
+import { createFinancialSource, updateFinancialSource } from '../../../services/api';
 import { FinancialSourceForm } from './FinancialSourceForm';
 
 interface FinancialSourceModalProps {
@@ -33,7 +33,7 @@ export function FinancialSourceModal({ isOpen, onClose, onSaveSuccess, sourceToE
       onClose();
     } catch (error) {
       console.error('Falha ao salvar fonte financeira:', error);
-      toast.error('Não foi possível salvar a fonte financeira.', { id: toastId });
+      toast.error('Nao foi possivel salvar a fonte financeira.', { id: toastId });
     } finally {
       setIsSaving(false);
     }
@@ -41,7 +41,7 @@ export function FinancialSourceModal({ isOpen, onClose, onSaveSuccess, sourceToE
 
   return (
     <div className="fixed inset-0 bg-black/75 flex justify-center items-center z-50 p-4" onClick={onClose}>
-      <div 
+      <div
         className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md border border-slate-700 p-6 sm:p-8 relative"
         onClick={(e) => e.stopPropagation()}
       >
@@ -53,7 +53,7 @@ export function FinancialSourceModal({ isOpen, onClose, onSaveSuccess, sourceToE
             <X size={24} />
           </button>
         </div>
-        <FinancialSourceForm 
+        <FinancialSourceForm
           onSave={handleSave}
           onCancel={onClose}
           initialData={sourceToEdit}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { RecurrenceScope } from '../types';
+import { RecurrenceScope } from '../../../types';
 
 interface ScopeOption {
   value: RecurrenceScope;
@@ -12,22 +12,22 @@ const SCOPE_OPTIONS: ScopeOption[] = [
   {
     value: 'OnlyThis',
     label: 'Somente esta',
-    description: 'Apenas esta ocorrência será afetada.',
+    description: 'Apenas esta ocorrencia sera afetada.',
   },
   {
     value: 'ThisAndFuture',
     label: 'Esta e as futuras',
-    description: 'Esta e todas as ocorrências posteriores serão afetadas.',
+    description: 'Esta e todas as ocorrencias posteriores serao afetadas.',
   },
   {
     value: 'ThisAndPast',
     label: 'Esta e as passadas',
-    description: 'Esta e todas as ocorrências anteriores serão afetadas.',
+    description: 'Esta e todas as ocorrencias anteriores serao afetadas.',
   },
   {
     value: 'All',
     label: 'Todas',
-    description: 'Todas as ocorrências desta recorrência serão afetadas.',
+    description: 'Todas as ocorrencias desta recorrencia serao afetadas.',
   },
 ];
 
@@ -43,18 +43,18 @@ interface RecurrenceScopeModalProps {
 
 const TITLES: Record<ModalVariant, Record<'edit' | 'delete', string>> = {
   recurrence: {
-    edit: 'Editar transação recorrente',
-    delete: 'Excluir transação recorrente',
+    edit: 'Editar transacao recorrente',
+    delete: 'Excluir transacao recorrente',
   },
   installment: {
-    edit: 'Editar transação parcelada',
-    delete: 'Excluir transação parcelada',
+    edit: 'Editar transacao parcelada',
+    delete: 'Excluir transacao parcelada',
   },
 };
 
 const DESCRIPTIONS: Record<ModalVariant, string> = {
-  recurrence: 'Esta é uma transação recorrente. Selecione quais ocorrências devem ser afetadas:',
-  installment: 'Esta é uma transação parcelada. Selecione quais parcelas devem ser afetadas:',
+  recurrence: 'Esta e uma transacao recorrente. Selecione quais ocorrencias devem ser afetadas:',
+  installment: 'Esta e uma transacao parcelada. Selecione quais parcelas devem ser afetadas:',
 };
 
 export function RecurrenceScopeModal({ isOpen, action, variant = 'recurrence', onConfirm, onCancel }: RecurrenceScopeModalProps) {
@@ -64,7 +64,7 @@ export function RecurrenceScopeModal({ isOpen, action, variant = 'recurrence', o
 
   const title = TITLES[variant][action];
   const description = DESCRIPTIONS[variant];
-  const confirmLabel = action === 'edit' ? 'Confirmar edição' : 'Confirmar exclusão';
+  const confirmLabel = action === 'edit' ? 'Confirmar edicao' : 'Confirmar exclusao';
   const confirmClass = action === 'delete'
     ? 'bg-red-600 hover:bg-red-700'
     : 'bg-green-600 hover:bg-green-700';
@@ -85,9 +85,7 @@ export function RecurrenceScopeModal({ isOpen, action, variant = 'recurrence', o
           </button>
         </div>
 
-        <p className="text-slate-400 text-sm mb-4">
-          {description}
-        </p>
+        <p className="text-slate-400 text-sm mb-4">{description}</p>
 
         <div className="space-y-3 mb-6">
           {SCOPE_OPTIONS.map((option) => (

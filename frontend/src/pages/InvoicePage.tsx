@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, LoaderCircle, CheckCircle, XCircle, CreditCard } from 'lucide-react';
+import { LoaderCircle, CheckCircle, XCircle, CreditCard } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getFinancialSources, payInvoice, toggleInstallmentPaidStatus } from '../services/api';
 import { useInvoice } from '../hooks/useInvoice';
 import { FinancialSource, InvoiceItem } from '../types';
 import { formatBRL } from '../utils/formatters';
 import { extractErrorMessage } from '../utils/errors';
+import { MonthNavigator } from '../components/ui/MonthNavigator';
 
 const MONTH_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric', timeZone: 'UTC' };
 
@@ -17,26 +18,6 @@ function formatMonthKey(date: Date): string {
 
 function formatDisplayDate(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-}
-
-
-function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: {
-  currentDate: Date;
-  onPreviousMonth: () => void;
-  onNextMonth: () => void;
-}) {
-  const label = currentDate.toLocaleString('pt-BR', MONTH_FORMAT_OPTIONS);
-  return (
-    <div className="flex items-center justify-center gap-2 sm:gap-4 bg-slate-700/50 p-2 rounded-lg">
-      <button onClick={onPreviousMonth} className="p-2 rounded-md hover:bg-slate-600 transition-colors">
-        <ChevronLeft size={20} />
-      </button>
-      <span className="text-base sm:text-lg font-semibold w-44 text-center capitalize">{label}</span>
-      <button onClick={onNextMonth} className="p-2 rounded-md hover:bg-slate-600 transition-colors">
-        <ChevronRight size={20} />
-      </button>
-    </div>
-  );
 }
 
 function InvoiceSummaryCards({ totalAmount, paidAmount, pendingAmount, closingDate, dueDate }: {
@@ -143,30 +124,6 @@ function InvoiceItemCard({ item, onTogglePaid }: { item: InvoiceItem; onTogglePa
   );
 }
 
-function LoadingSkeleton() {
-  return (
-    <div className="flex justify-center items-center p-10">
-      <LoaderCircle className="animate-spin text-green-500" size={40} />
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">
-      Nenhum lançamento encontrado nesta fatura.
-    </div>
-  );
-}
-
-function NoCardSelected() {
-  return (
-    <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">
-      Selecione um cartao de credito para ver a fatura.
-    </div>
-  );
-}
-
 export function InvoicePage() {
   const [currentDate, setCurrentDate] = useState(() => {
     const now = new Date();
@@ -191,7 +148,7 @@ export function InvoicePage() {
           setSelectedSourceId(cards[0].id);
         }
       } catch (sourceError) {
-        const message = extractErrorMessage(sourceError, 'Não foi possível carregar os cartões de crédito.');
+        const message = extractErrorMessage(sourceError, 'Nao foi possivel carregar os cartoes de credito.');
         toast.error(message);
       } finally {
         setIsLoadingSources(false);
@@ -225,7 +182,7 @@ export function InvoicePage() {
       toast.success('Fatura paga com sucesso.', { id: toastId });
       refetch();
     } catch (payError) {
-      const message = extractErrorMessage(payError, 'Não foi possível pagar a fatura. Tente novamente.');
+      const message = extractErrorMessage(payError, 'Nao foi possivel pagar a fatura. Tente novamente.');
       toast.error(message, { id: toastId });
     } finally {
       setIsPayingInvoice(false);
@@ -239,7 +196,7 @@ export function InvoicePage() {
       toast.success('Status atualizado.', { id: toastId });
       refetch();
     } catch (toggleError) {
-      const message = extractErrorMessage(toggleError, 'Não foi possível atualizar o status do item.');
+      const message = extractErrorMessage(toggleError, 'Nao foi possivel atualizar o status do item.');
       toast.error(message, { id: toastId });
     }
   };
@@ -288,6 +245,7 @@ export function InvoicePage() {
           currentDate={currentDate}
           onPreviousMonth={handlePreviousMonth}
           onNextMonth={handleNextMonth}
+          formatOptions={MONTH_FORMAT_OPTIONS}
         />
 
         {isLoadingSources ? (
@@ -325,11 +283,23 @@ export function InvoicePage() {
         />
       )}
 
-      {isLoading && <LoadingSkeleton />}
+      {isLoading && (
+        <div className="flex justify-center items-center p-10">
+          <LoaderCircle className="animate-spin text-green-500" size={40} />
+        </div>
+      )}
 
-      {!isLoading && selectedSourceId === null && <NoCardSelected />}
+      {!isLoading && selectedSourceId === null && (
+        <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">
+          Selecione um cartao de credito para ver a fatura.
+        </div>
+      )}
 
-      {!isLoading && selectedSourceId !== null && invoice && invoice.items.length === 0 && <EmptyState />}
+      {!isLoading && selectedSourceId !== null && invoice && invoice.items.length === 0 && (
+        <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">
+          Nenhum lancamento encontrado nesta fatura.
+        </div>
+      )}
 
       {!isLoading && invoice && invoice.items.length > 0 && (
         <>
