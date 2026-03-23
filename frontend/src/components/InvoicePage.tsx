@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, LoaderCircle, CheckCircle, XCircle, CreditCard } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { getFinancialSources, payInvoice, toggleInstallmentPaidStatus } from '../services/api';
 import { useInvoice } from '../hooks/useInvoice';
 import { FinancialSource, InvoiceItem } from '../types';
+import { formatBRL } from '../utils/formatters';
+import { extractErrorMessage } from '../utils/errors';
 
 const MONTH_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric', timeZone: 'UTC' };
 
@@ -16,9 +19,6 @@ function formatDisplayDate(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
 
-function formatCurrency(amount: number): string {
-  return amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
 
 function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: {
   currentDate: Date;
@@ -50,15 +50,15 @@ function InvoiceSummaryCards({ totalAmount, paidAmount, pendingAmount, closingDa
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
         <h4 className="text-slate-400 text-sm">Total da Fatura</h4>
-        <p className="text-2xl font-bold text-white mt-1">{formatCurrency(totalAmount)}</p>
+        <p className="text-2xl font-bold text-white mt-1">{formatBRL(totalAmount)}</p>
       </div>
       <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
         <h4 className="text-slate-400 text-sm">Pago</h4>
-        <p className="text-2xl font-bold text-green-400 mt-1">{formatCurrency(paidAmount)}</p>
+        <p className="text-2xl font-bold text-green-400 mt-1">{formatBRL(paidAmount)}</p>
       </div>
       <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
         <h4 className="text-slate-400 text-sm">Pendente</h4>
-        <p className="text-2xl font-bold text-red-400 mt-1">{formatCurrency(pendingAmount)}</p>
+        <p className="text-2xl font-bold text-red-400 mt-1">{formatBRL(pendingAmount)}</p>
       </div>
       <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 space-y-1">
         <p className="text-slate-400 text-sm">Fechamento: <span className="text-slate-200 font-medium">{formatDisplayDate(closingDate)}</span></p>
@@ -105,7 +105,7 @@ function InvoiceItemRow({ item, onTogglePaid }: { item: InvoiceItem; onTogglePai
         {item.categoryName ?? '-'}
       </td>
       <td className={`p-4 font-bold text-right text-red-400 ${item.isPaid ? 'opacity-50' : ''}`}>
-        {formatCurrency(item.amount)}
+        {formatBRL(item.amount)}
       </td>
     </tr>
   );
@@ -136,7 +136,7 @@ function InvoiceItemCard({ item, onTogglePaid }: { item: InvoiceItem; onTogglePa
           </p>
         </div>
         <p className={`font-bold text-red-400 ${item.isPaid ? 'opacity-50' : ''}`}>
-          {formatCurrency(item.amount)}
+          {formatBRL(item.amount)}
         </p>
       </div>
     </div>
@@ -190,8 +190,9 @@ export function InvoicePage() {
         if (cards.length > 0) {
           setSelectedSourceId(cards[0].id);
         }
-      } catch {
-        // Sources failed to load; user will see the empty selector
+      } catch (sourceError) {
+        const message = extractErrorMessage(sourceError, 'Não foi possível carregar os cartões de crédito.');
+        toast.error(message);
       } finally {
         setIsLoadingSources(false);
       }
@@ -215,18 +216,32 @@ export function InvoicePage() {
 
   const handlePayInvoice = async () => {
     if (selectedSourceId === null) return;
+
+    const toastId = toast.loading('Pagando fatura...');
     setIsPayingInvoice(true);
+
     try {
       await payInvoice(selectedSourceId, monthKey);
+      toast.success('Fatura paga com sucesso.', { id: toastId });
       refetch();
+    } catch (payError) {
+      const message = extractErrorMessage(payError, 'Não foi possível pagar a fatura. Tente novamente.');
+      toast.error(message, { id: toastId });
     } finally {
       setIsPayingInvoice(false);
     }
   };
 
   const handleToggleItemPaid = async (installmentId: number) => {
-    await toggleInstallmentPaidStatus(installmentId);
-    refetch();
+    const toastId = toast.loading('Atualizando status...');
+    try {
+      await toggleInstallmentPaidStatus(installmentId);
+      toast.success('Status atualizado.', { id: toastId });
+      refetch();
+    } catch (toggleError) {
+      const message = extractErrorMessage(toggleError, 'Não foi possível atualizar o status do item.');
+      toast.error(message, { id: toastId });
+    }
   };
 
   const invoiceSummary = useMemo(() => {

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { loginUser } from '../services/api';
 import { AuthTokens, UserLoginData } from '../types';
 import toast from 'react-hot-toast';
+import { extractErrorMessage } from '../utils/errors';
 
 interface LoginFormProps {
   onNavigateToRegister: () => void;
@@ -12,6 +14,7 @@ export function LoginForm({ onNavigateToRegister, onLoginSuccess }: LoginFormPro
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -24,9 +27,7 @@ export function LoginForm({ onNavigateToRegister, onLoginSuccess }: LoginFormPro
       toast.success('Login successful!');
       onLoginSuccess(tokens);
     } catch (apiError: unknown) {
-      console.error('Login error:', apiError);
-      const message =
-        apiError instanceof Error ? apiError.message : 'Invalid credentials or server error.';
+      const message = extractErrorMessage(apiError, 'E-mail ou senha inválidos.');
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -64,16 +65,27 @@ export function LoginForm({ onNavigateToRegister, onLoginSuccess }: LoginFormPro
           <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
             Password
           </label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-slate-700 border-slate-600 rounded-md p-3 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
-            placeholder="••••••••"
-            required
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-slate-700 border-slate-600 rounded-md p-3 pr-11 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+              placeholder="••••••••"
+              required
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(prev => !prev)}
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-200 transition-colors"
+              tabIndex={-1}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </div>
         <div>
           <button

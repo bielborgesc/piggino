@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, LoaderCircle, CheckCircle, XCircle } from 'lucide-react';
 import { useFixedBills } from '../hooks/useFixedBills';
 import { FixedBill } from '../types';
+import { formatBRL } from '../utils/formatters';
 
 const MONTH_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric', timeZone: 'UTC' };
 
@@ -11,9 +12,6 @@ function formatMonthKey(date: Date): string {
   return `${year}-${month}`;
 }
 
-function formatCurrency(amount: number): string {
-  return amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
 
 function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: {
   currentDate: Date;
@@ -43,15 +41,15 @@ function SummaryCards({ totalAmount, paidAmount, pendingAmount }: {
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
       <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
         <h4 className="text-slate-400 text-sm">Total Fixo</h4>
-        <p className="text-2xl font-bold text-white mt-1">{formatCurrency(totalAmount)}</p>
+        <p className="text-2xl font-bold text-white mt-1">{formatBRL(totalAmount)}</p>
       </div>
       <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
         <h4 className="text-slate-400 text-sm">Pago</h4>
-        <p className="text-2xl font-bold text-green-400 mt-1">{formatCurrency(paidAmount)}</p>
+        <p className="text-2xl font-bold text-green-400 mt-1">{formatBRL(paidAmount)}</p>
       </div>
       <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
         <h4 className="text-slate-400 text-sm">Pendente</h4>
-        <p className="text-2xl font-bold text-red-400 mt-1">{formatCurrency(pendingAmount)}</p>
+        <p className="text-2xl font-bold text-red-400 mt-1">{formatBRL(pendingAmount)}</p>
       </div>
     </div>
   );
@@ -85,7 +83,7 @@ function FixedBillCard({ bill, onTogglePaid }: {
           </p>
         </div>
         <p className={`font-bold text-red-400 ${bill.isPaid ? 'opacity-50' : ''}`}>
-          {formatCurrency(bill.totalAmount)}
+          {formatBRL(bill.totalAmount)}
         </p>
       </div>
     </div>
@@ -122,7 +120,7 @@ function FixedBillRow({ bill, onTogglePaid }: {
         Dia {bill.dayOfMonth}
       </td>
       <td className={`p-4 font-bold text-right text-red-400 ${bill.isPaid ? 'opacity-50' : ''}`}>
-        {formatCurrency(bill.totalAmount)}
+        {formatBRL(bill.totalAmount)}
       </td>
     </tr>
   );

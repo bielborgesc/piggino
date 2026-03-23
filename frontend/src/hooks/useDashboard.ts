@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDashboardSummary } from '../services/api';
 import { DashboardSummary } from '../types';
+import { extractErrorMessage } from '../utils/errors';
 
 interface UseDashboardResult {
   summary: DashboardSummary | null;
@@ -21,8 +22,9 @@ export function useDashboard(months = 6): UseDashboardResult {
     try {
       const data = await getDashboardSummary(months);
       setSummary(data);
-    } catch {
-      setError('Failed to load dashboard data. Please try again.');
+    } catch (fetchError) {
+      const message = extractErrorMessage(fetchError, 'Não foi possível carregar o painel. Tente novamente.');
+      setError(message);
       setSummary(null);
     } finally {
       setIsLoading(false);

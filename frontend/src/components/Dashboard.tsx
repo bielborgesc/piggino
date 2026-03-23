@@ -23,6 +23,7 @@ import { TransactionModal } from './TransactionModal';
 import { useDashboard } from '../hooks/useDashboard';
 import { getCategories } from '../services/api';
 import { Category, MonthlySummary, CategoryExpense, TopExpense } from '../types';
+import { formatBRL } from '../utils/formatters';
 
 const MONTH_COUNT = 6;
 const DEFAULT_CATEGORY_COLOR = '#6b7280';
@@ -38,14 +39,6 @@ const FALLBACK_CATEGORY_COLORS = [
   '#ec4899',
 ];
 
-const BRL_FORMATTER = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-});
-
-function formatBrl(value: number): string {
-  return BRL_FORMATTER.format(value);
-}
 
 function formatMonthLabel(monthKey: string): string {
   const [year, month] = monthKey.split('-');
@@ -84,7 +77,7 @@ function BrlTooltip({ active, payload, label }: TooltipProps<ValueType, NameType
       <p className="text-slate-300 font-semibold mb-1">{label}</p>
       {payload.map((entry) => (
         <p key={entry.name} style={{ color: entry.color }}>
-          {entry.name}: {formatBrl(Number(entry.value))}
+          {entry.name}: {formatBRL(Number(entry.value))}
         </p>
       ))}
     </div>
@@ -166,7 +159,7 @@ function CategoryPieChart({ categories, categoryColorMap }: CategoryPieChartProp
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: ValueType) => [formatBrl(Number(value)), '']}
+              formatter={(value: ValueType) => [formatBRL(Number(value)), '']}
               contentStyle={{ backgroundColor: '#334155', border: '1px solid #475569', borderRadius: 8, fontSize: 12 }}
               labelStyle={{ color: '#f1f5f9' }}
               itemStyle={{ color: '#f1f5f9' }}
@@ -248,7 +241,7 @@ function TopExpensesList({ expenses }: TopExpensesListProps) {
                 <p className="text-slate-400 text-xs">{expense.categoryName}</p>
               )}
             </div>
-            <span className="text-red-400 font-semibold text-sm shrink-0">{formatBrl(expense.amount)}</span>
+            <span className="text-red-400 font-semibold text-sm shrink-0">{formatBRL(expense.amount)}</span>
           </li>
         ))}
       </ol>
@@ -309,19 +302,19 @@ export function Dashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             title="Receitas do Mes"
-            value={formatBrl(summary.currentMonthIncome)}
+            value={formatBRL(summary.currentMonthIncome)}
             icon={<TrendingUp size={20} />}
             valueClassName="text-green-400"
           />
           <KpiCard
             title="Gastos do Mes"
-            value={formatBrl(summary.currentMonthExpenses)}
+            value={formatBRL(summary.currentMonthExpenses)}
             icon={<TrendingDown size={20} />}
             valueClassName="text-red-400"
           />
           <KpiCard
             title="Saldo do Mes"
-            value={formatBrl(summary.currentMonthBalance)}
+            value={formatBRL(summary.currentMonthBalance)}
             icon={<Scale size={20} />}
             valueClassName={summary.currentMonthBalance >= 0 ? 'text-white' : 'text-red-400'}
           />

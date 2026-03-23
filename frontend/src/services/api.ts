@@ -15,6 +15,7 @@ import {
   DashboardSummary,
   AuthTokens,
   RefreshTokenData,
+  Simulation,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -235,6 +236,15 @@ export const unpayFixedBill = async (transactionId: number, month: string): Prom
 
 export const getDashboardSummary = async (months = 6): Promise<DashboardSummary> => {
   const response = await apiClient.get<DashboardSummary>('/Transactions/summary', { params: { months } });
+  return response.data;
+};
+
+export const settleInstallments = async (transactionId: number): Promise<void> => {
+  await apiClient.post(`/Transactions/${transactionId}/settle`);
+};
+
+export const getSimulation = async (): Promise<Simulation> => {
+  const response = await apiClient.get<Simulation>('/Transactions/simulation');
   return response.data;
 };
 

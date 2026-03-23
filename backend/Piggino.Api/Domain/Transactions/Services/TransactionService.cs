@@ -493,6 +493,84 @@ namespace Piggino.Api.Domain.Transactions.Services
             return await _transactionRepository.SaveChangesAsync();
         }
 
+        public async Task<bool> SettleInstallmentsAsync(int transactionId)
+        {
+            Guid userId = GetCurrentUserId();
+
+            Transaction? transaction = await _transactionRepository.GetByIdWithInstallmentsAsync(transactionId, userId);
+
+            if (transaction == null) return false;
+            if (transaction.CardInstallments == null || !transaction.CardInstallments.Any()) return false;
+
+            bool hasUnpaidInstallments = transaction.CardInstallments.Any(i => !i.IsPaid);
+            if (!hasUnpaidInstallments) return false;
+
+            foreach (CardInstallment installment in transaction.CardInstallments.Where(i => !i.IsPaid))
+                installment.IsPaid = true;
+
+            transaction.IsPaid = true;
+
+            return await _transactionRepository.SaveChangesAsync();
+        }
+
+        public async Task<SimulationReadDto> GetSimulationAsync()
+        {
+            Guid userId = GetCurrentUserId();
+
+            IEnumerable<Transaction> activeTransactions = await _transactionRepository
+                .GetActiveInstallmentTransactionsAsync(userId);
+
+            List<SimulationItemDto> items = activeTransactions
+                .Select(MapToSimulationItemDto)
+                .OrderBy(i => i.NextDueDate)
+                .ToList();
+
+            decimal totalRemainingAmount = items.Sum(i => i.RemainingAmount);
+            decimal totalMonthlyCommitment = items.Sum(i => i.MonthlyAmount);
+
+            return new SimulationReadDto
+            {
+                Items = items,
+                TotalRemainingAmount = totalRemainingAmount,
+                TotalMonthlyCommitment = totalMonthlyCommitment
+            };
+        }
+
+        private static SimulationItemDto MapToSimulationItemDto(Transaction transaction)
+        {
+            ICollection<CardInstallment> installments = transaction.CardInstallments!;
+
+            int paidCount = installments.Count(i => i.IsPaid);
+            int totalCount = transaction.InstallmentCount ?? installments.Count;
+            int remainingCount = totalCount - paidCount;
+
+            decimal monthlyAmount = totalCount > 0
+                ? transaction.TotalAmount / totalCount
+                : transaction.TotalAmount;
+
+            decimal remainingAmount = monthlyAmount * remainingCount;
+
+            DateTime nextDueDate = installments
+                .Where(i => !i.IsPaid)
+                .OrderBy(i => i.DueDate)
+                .Select(i => i.DueDate)
+                .FirstOrDefault();
+
+            return new SimulationItemDto
+            {
+                TransactionId = transaction.Id,
+                Description = transaction.Description ?? string.Empty,
+                FinancialSourceName = transaction.FinancialSource?.Name ?? string.Empty,
+                TotalAmount = transaction.TotalAmount,
+                InstallmentCount = totalCount,
+                PaidInstallments = paidCount,
+                RemainingInstallments = remainingCount,
+                RemainingAmount = remainingAmount,
+                MonthlyAmount = monthlyAmount,
+                NextDueDate = nextDueDate
+            };
+        }
+
         private static FixedBillReadDto MapToFixedBillReadDto(Transaction transaction, Dictionary<int, FixedTransactionPayment> paymentMap)
         {
             paymentMap.TryGetValue(transaction.Id, out FixedTransactionPayment? payment);

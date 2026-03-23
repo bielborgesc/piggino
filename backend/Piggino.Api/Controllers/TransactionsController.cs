@@ -219,5 +219,23 @@ namespace Piggino.Api.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("{id}/settle")]
+        public async Task<IActionResult> SettleInstallments(int id)
+        {
+            bool success = await _service.SettleInstallmentsAsync(id);
+
+            if (!success)
+                return NotFound(new { message = "Transaction not found or has no unpaid installments." });
+
+            return NoContent();
+        }
+
+        [HttpGet("simulation")]
+        public async Task<ActionResult<SimulationReadDto>> GetSimulation()
+        {
+            SimulationReadDto simulation = await _service.GetSimulationAsync();
+            return Ok(simulation);
+        }
     }
 }

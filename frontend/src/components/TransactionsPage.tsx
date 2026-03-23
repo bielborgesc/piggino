@@ -3,9 +3,11 @@ import { PlusCircle, Search, ChevronLeft, ChevronRight, LoaderCircle, Edit, Tras
 import { TransactionModal } from './TransactionModal';
 import { InstallmentBreakdown } from './InstallmentBreakdown';
 import { RecurrenceScopeModal } from './RecurrenceScopeModal';
-import { getTransactions, deleteTransaction, deleteInstallmentsByScope, getCategories, getFinancialSources, toggleInstallmentPaidStatus, toggleTransactionPaidStatus } from '../services/api';
+import { getTransactions, deleteTransaction, deleteInstallmentsByScope, getCategories, getFinancialSources, toggleInstallmentPaidStatus, toggleTransactionPaidStatus, settleInstallments } from '../services/api';
 import { Transaction, Category, FinancialSource, RecurrenceScope } from '../types';
+import { formatBRL } from '../utils/formatters';
 import toast from 'react-hot-toast';
+import { extractErrorMessage } from '../utils/errors';
 
 const DEFAULT_CATEGORY_COLOR = '#6b7280';
 
@@ -34,6 +36,32 @@ function MonthNavigator({ currentDate, onPreviousMonth, onNextMonth }: { current
     );
 }
 
+function resolveInstallmentAmount(item: Transaction): number {
+    if (item.isInstallment && item.installmentCount && item.installmentCount > 0) {
+        return item.totalAmount / item.installmentCount;
+    }
+    return item.totalAmount;
+}
+
+function renderAmountCell(item: Transaction & { displayAmount: number }): React.ReactNode {
+    const sign = item.transactionType.toLowerCase() === 'income' ? '+' : '-';
+    const amount = resolveInstallmentAmount(item);
+    const formattedAmount = formatBRL(Math.abs(amount));
+
+    if (item.isInstallment && item.currentInstallmentNumber !== undefined && item.installmentCount) {
+        return (
+            <>
+                {sign} {formattedAmount}{' '}
+                <span className="text-xs font-normal opacity-70">
+                    ({item.currentInstallmentNumber}/{item.installmentCount})
+                </span>
+            </>
+        );
+    }
+
+    return <>{sign} {formattedAmount}</>;
+}
+
 export function TransactionsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -54,6 +82,8 @@ export function TransactionsPage() {
     const [pendingInstallmentItem, setPendingInstallmentItem] = useState<Transaction | null>(null);
     const [pendingInstallmentEditScope, setPendingInstallmentEditScope] = useState<RecurrenceScope | undefined>(undefined);
     const [pendingInstallmentNumber, setPendingInstallmentNumber] = useState<number | undefined>(undefined);
+
+    const [settlingId, setSettlingId] = useState<number | null>(null);
 
     // ✅ 2. Estados para os novos filtros e para guardar as opções
     const [categories, setCategories] = useState<Category[]>([]);
@@ -292,6 +322,26 @@ export function TransactionsPage() {
         setExpandedInstallmentRowId(prev => (prev === rowId ? null : rowId));
     };
 
+    const handleSettle = async (transactionId: number) => {
+        setSettlingId(transactionId);
+        const toastId = toast.loading('Quitando parcelas...');
+        try {
+            await settleInstallments(transactionId);
+            toast.success('Parcelas quitadas com sucesso!', { id: toastId });
+            fetchPageData();
+        } catch {
+            toast.error('Nao foi possivel quitar as parcelas.', { id: toastId });
+        } finally {
+            setSettlingId(null);
+        }
+    };
+
+    const hasUnpaidInstallments = (item: Transaction): boolean => {
+        return item.isInstallment &&
+            item.cardInstallments != null &&
+            item.cardInstallments.some(i => !i.isPaid);
+    };
+
     return (
         <>
             <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
@@ -309,15 +359,15 @@ export function TransactionsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
                         <h4 className="text-slate-400 text-sm">Total de Despesas do Mês</h4>
-                        <p className="text-2xl font-bold text-white mt-1">R$ {summary.totalAmount.toFixed(2)}</p>
+                        <p className="text-2xl font-bold text-white mt-1">{formatBRL(summary.totalAmount)}</p>
                     </div>
                     <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
                         <h4 className="text-slate-400 text-sm">Pago</h4>
-                        <p className="text-2xl font-bold text-green-400 mt-1">R$ {summary.paidAmount.toFixed(2)}</p>
+                        <p className="text-2xl font-bold text-green-400 mt-1">{formatBRL(summary.paidAmount)}</p>
                     </div>
                     <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
                         <h4 className="text-slate-400 text-sm">Pendente</h4>
-                        <p className="text-2xl font-bold text-red-400 mt-1">R$ {summary.pendingAmount.toFixed(2)}</p>
+                        <p className="text-2xl font-bold text-red-400 mt-1">{formatBRL(summary.pendingAmount)}</p>
                     </div>
                 </div>
 
@@ -412,9 +462,19 @@ export function TransactionsPage() {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className={`font-bold text-lg ${item.isPaid ? 'opacity-50' : ''} ${item.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                                                        {item.transactionType.toLowerCase() === 'income' ? '+' : '-'} R$ {Math.abs(item.displayAmount).toFixed(2)}
+                                                        {renderAmountCell(item)}
                                                     </p>
-                                                    <div className="flex gap-2 justify-end mt-1">
+                                                    <div className="flex gap-2 justify-end mt-1 flex-wrap">
+                                                        {hasUnpaidInstallments(item) && (
+                                                            <button
+                                                                onClick={() => handleSettle(item.id)}
+                                                                disabled={settlingId === item.id}
+                                                                className="text-xs text-green-400 hover:text-green-300 disabled:opacity-50 disabled:cursor-not-allowed border border-green-700 px-2 py-0.5 rounded transition-colors"
+                                                                title="Quitar todas as parcelas"
+                                                            >
+                                                                {settlingId === item.id ? '...' : 'Quitar'}
+                                                            </button>
+                                                        )}
                                                         <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-white"><Edit size={16} /></button>
                                                         <button onClick={() => handleDelete(item)} className="text-slate-400 hover:text-red-400"><Trash2 size={16} /></button>
                                                     </div>
@@ -479,7 +539,7 @@ export function TransactionsPage() {
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className={`p-4 font-bold ${item.isPaid ? 'opacity-50' : ''} ${item.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>{item.transactionType.toLowerCase() === 'income' ? '+' : '-'} R$ {Math.abs(item.displayAmount).toFixed(2)}</td>
+                                                        <td className={`p-4 font-bold ${item.isPaid ? 'opacity-50' : ''} ${item.transactionType.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'}`}>{renderAmountCell(item)}</td>
                                                         <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>
                                                             <CategoryBadge
                                                                 name={item.categoryName}
@@ -489,6 +549,16 @@ export function TransactionsPage() {
                                                         </td>
                                                         <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-400'}`}>{item.financialSourceName}</td>
                                                         <td className="p-4 text-right">
+                                                            {hasUnpaidInstallments(item) && (
+                                                                <button
+                                                                    onClick={() => handleSettle(item.id)}
+                                                                    disabled={settlingId === item.id}
+                                                                    className="text-xs text-green-400 hover:text-green-300 disabled:opacity-50 disabled:cursor-not-allowed border border-green-700 px-2 py-1 rounded mr-1 transition-colors"
+                                                                    title="Quitar todas as parcelas"
+                                                                >
+                                                                    {settlingId === item.id ? '...' : 'Quitar'}
+                                                                </button>
+                                                            )}
                                                             <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-white p-2" title="Editar Transação Original"><Edit size={18} /></button>
                                                             <button onClick={() => handleDelete(item)} className="text-slate-400 hover:text-red-400 p-2" title="Excluir Transação Original"><Trash2 size={18} /></button>
                                                         </td>

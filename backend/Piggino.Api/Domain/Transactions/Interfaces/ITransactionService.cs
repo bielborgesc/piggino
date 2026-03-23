@@ -21,5 +21,7 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         Task<bool> MarkFixedBillAsPaidAsync(int transactionId, int year, int month);
         Task<bool> UnmarkFixedBillAsPaidAsync(int transactionId, int year, int month);
         Task<DashboardSummaryDto> GetDashboardSummaryAsync(int months);
+        Task<bool> SettleInstallmentsAsync(int transactionId);
+        Task<SimulationReadDto> GetSimulationAsync();
     }
 }

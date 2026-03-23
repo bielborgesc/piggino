@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { getFixedBills, payFixedBill, unpayFixedBill } from '../services/api';
 import { MonthlyFixedBills } from '../types';
+import { extractErrorMessage } from '../utils/errors';
 
 interface UseFixedBillsResult {
   data: MonthlyFixedBills | null;
@@ -22,8 +24,9 @@ export function useFixedBills(month: string): UseFixedBillsResult {
     try {
       const result = await getFixedBills(month);
       setData(result);
-    } catch {
-      setError('Failed to load fixed bills. Please try again.');
+    } catch (fetchError) {
+      const message = extractErrorMessage(fetchError, 'Não foi possível carregar as contas fixas. Tente novamente.');
+      setError(message);
       setData(null);
     } finally {
       setIsLoading(false);
@@ -35,15 +38,23 @@ export function useFixedBills(month: string): UseFixedBillsResult {
   }, [fetchFixedBills]);
 
   const togglePaid = useCallback(async (transactionId: number, currentlyPaid: boolean) => {
+    const toastId = toast.loading('Atualizando status...');
     try {
       if (currentlyPaid) {
         await unpayFixedBill(transactionId, month);
       } else {
         await payFixedBill(transactionId, month);
+        toast.success('Conta marcada como paga.', { id: toastId });
       }
+
+      if (currentlyPaid) {
+        toast.success('Status atualizado.', { id: toastId });
+      }
+
       await fetchFixedBills();
-    } catch {
-      setError('Failed to update payment status. Please try again.');
+    } catch (toggleError) {
+      const message = extractErrorMessage(toggleError, 'Não foi possível atualizar o status do pagamento.');
+      toast.error(message, { id: toastId });
     }
   }, [month, fetchFixedBills]);
 

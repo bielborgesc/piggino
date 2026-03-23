@@ -162,5 +162,18 @@ namespace Piggino.Api.Infrastructure.Repositories
                     !i.IsPaid)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Transaction>> GetActiveInstallmentTransactionsAsync(Guid userId)
+        {
+            return await _context.Transactions
+                .Include(t => t.CardInstallments)
+                .Include(t => t.FinancialSource)
+                .Where(t =>
+                    t.UserId == userId &&
+                    t.IsInstallment &&
+                    t.CardInstallments != null &&
+                    t.CardInstallments.Any(i => !i.IsPaid))
+                .ToListAsync();
+        }
     }
 }

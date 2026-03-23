@@ -8,11 +8,12 @@ import { CategoriesPage } from './components/CategoriesPage';
 import { FinancialSourcesPage } from './components/FinancialSourcesPage';
 import { InvoicePage } from './components/InvoicePage';
 import { FixedBillsPage } from './components/FixedBillsPage';
+import { SimulationPage } from './components/SimulationPage';
 import { MainLayout } from './components/MainLayout';
 import { useAuth } from './hooks/useAuth';
 
 enum AuthView { Login, Register }
-type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills';
+type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation';
 
 const toastStyles = { style: { background: '#334155', color: '#f1f5f9' } };
 
@@ -40,6 +41,7 @@ function App() {
           {currentPage === 'financial-sources' && <FinancialSourcesPage />}
           {currentPage === 'invoices' && <InvoicePage />}
           {currentPage === 'fixed-bills' && <FixedBillsPage />}
+          {currentPage === 'simulation' && <SimulationPage />}
         </MainLayout>
       </>
     );

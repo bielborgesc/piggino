@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { TransactionForm } from './TransactionForm';
 import { Transaction, TransactionData, RecurrenceScope } from '../types';
 import { createTransaction, updateTransaction, updateInstallmentsByScope } from '../services/api';
+import { extractErrorMessage } from '../utils/errors';
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -48,8 +49,8 @@ export function TransactionModal({
       }
       onClose();
     } catch (error) {
-      console.error("Erro ao salvar transação:", error);
-      toast.error('Falha ao salvar a transação.', { id: toastId });
+      const message = extractErrorMessage(error, 'Falha ao salvar a transação. Tente novamente.');
+      toast.error(message, { id: toastId });
     } finally {
       setIsSaving(false);
     }

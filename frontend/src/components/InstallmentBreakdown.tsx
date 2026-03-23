@@ -1,4 +1,5 @@
 import { CardInstallment } from '../types';
+import { formatBRL } from '../utils/formatters';
 
 interface InstallmentBreakdownProps {
   installments: CardInstallment[];
@@ -30,7 +31,7 @@ export function InstallmentBreakdown({ installments }: InstallmentBreakdownProps
           <span>{installment.installmentNumber}x</span>
           <span>{formatDate(installment.dueDate)}</span>
           <span className={installment.isPaid ? 'line-through' : ''}>
-            R$ {installment.amount.toFixed(2)}
+            {formatBRL(installment.amount)}
           </span>
           <span className={installment.isPaid ? 'text-green-500' : 'text-yellow-500'}>
             {installment.isPaid ? 'Pago' : 'Pendente'}
