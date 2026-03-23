@@ -30,6 +30,26 @@ import { Category, MonthlySummary, CategoryExpense, TopExpense, BudgetAnalysis, 
 import { formatBRL } from '../utils/formatters';
 
 const MONTH_COUNT = 6;
+
+const STORAGE_KEY_HEALTH_SCORE_COLLAPSED = 'piggino_dashboard_health_score_collapsed';
+const STORAGE_KEY_BUDGET_ANALYSIS_COLLAPSED = 'piggino_dashboard_budget_analysis_collapsed';
+
+function usePersistedCollapsed(storageKey: string, defaultValue = false): [boolean, () => void] {
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    const stored = localStorage.getItem(storageKey);
+    return stored !== null ? stored === 'true' : defaultValue;
+  });
+
+  const toggle = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem(storageKey, String(next));
+      return next;
+    });
+  };
+
+  return [isCollapsed, toggle];
+}
 const DEFAULT_CATEGORY_COLOR = '#6b7280';
 
 const BUCKET_NEEDS_COLOR = '#3b82f6';
@@ -128,6 +148,7 @@ function resolveHealthScoreColor(score: number): string {
 
 function HealthScoreWidget() {
   const { healthScore, isLoading } = useHealthScore();
+  const [isCollapsed, toggleCollapsed] = usePersistedCollapsed(STORAGE_KEY_HEALTH_SCORE_COLLAPSED);
 
   if (isLoading || !healthScore) return null;
 
@@ -135,9 +156,18 @@ function HealthScoreWidget() {
   const ringColor = resolveHealthScoreColor(healthScore.score);
 
   return (
-    <div className="bg-slate-800 p-5 rounded-lg border border-slate-700 space-y-5">
-      <h3 className="text-base font-semibold text-white">Score de Saude Financeira</h3>
+    <div className="bg-slate-800 rounded-lg border border-slate-700">
+      <button
+        onClick={toggleCollapsed}
+        className="w-full flex items-center justify-between p-5 text-left"
+        aria-expanded={!isCollapsed}
+      >
+        <h3 className="text-base font-semibold text-white">Score de Saude Financeira</h3>
+        {isCollapsed ? <ChevronDown size={18} className="text-slate-400" /> : <ChevronUp size={18} className="text-slate-400" />}
+      </button>
 
+      {!isCollapsed && (
+      <div className="px-5 pb-5 space-y-5">
       <div className="flex flex-col sm:flex-row items-center gap-6">
         <div className="shrink-0">
           <svg width="140" height="140" viewBox="0 0 140 140">
@@ -225,6 +255,8 @@ function HealthScoreWidget() {
             </div>
           )}
         </div>
+      )}
+      </div>
       )}
     </div>
   );
@@ -534,13 +566,22 @@ interface BudgetAnalysisSectionProps {
 
 function BudgetAnalysisSection({ month, onMonthChange, onNavigateToCategories }: BudgetAnalysisSectionProps) {
   const { analysis, isLoading, error } = useBudgetAnalysis(month);
+  const [isCollapsed, toggleCollapsed] = usePersistedCollapsed(STORAGE_KEY_BUDGET_ANALYSIS_COLLAPSED);
 
   const hasMissingIncome = analysis !== null && analysis.monthlyIncome <= 0;
 
   return (
-    <div className="bg-slate-800 p-5 rounded-lg border border-slate-700 space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-white">Analise 50/30/20</h3>
+    <div className="bg-slate-800 rounded-lg border border-slate-700">
+      <div className="flex items-center justify-between p-5">
+        <button
+          onClick={toggleCollapsed}
+          className="flex items-center gap-2 text-left"
+          aria-expanded={!isCollapsed}
+        >
+          <h3 className="text-base font-semibold text-white">Analise 50/30/20</h3>
+          {isCollapsed ? <ChevronDown size={18} className="text-slate-400" /> : <ChevronUp size={18} className="text-slate-400" />}
+        </button>
+        {!isCollapsed && (
         <div className="flex items-center gap-2">
           <button
             onClick={() => onMonthChange(shiftMonth(month, -1))}
@@ -560,7 +601,11 @@ function BudgetAnalysisSection({ month, onMonthChange, onNavigateToCategories }:
             <ChevronRight size={18} />
           </button>
         </div>
+        )}
       </div>
+
+      {!isCollapsed && (
+      <div className="px-5 pb-5 space-y-6">
 
       {isLoading && (
         <div className="flex justify-center py-6">
@@ -631,6 +676,8 @@ function BudgetAnalysisSection({ month, onMonthChange, onNavigateToCategories }:
             </ul>
           )}
         </>
+      )}
+      </div>
       )}
     </div>
   );
@@ -811,9 +858,10 @@ function GoalsMiniWidget({ goals, onNavigateToGoals }: GoalsMiniWidgetProps) {
 interface DashboardPageProps {
   onNavigateToCategories: () => void;
   onNavigateToGoals: () => void;
+  onNavigateToOnboarding: () => void;
 }
 
-export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: DashboardPageProps) {
+export function DashboardPage({ onNavigateToCategories, onNavigateToGoals, onNavigateToOnboarding }: DashboardPageProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoryColorMap, setCategoryColorMap] = useState<Map<string, string>>(new Map());
   const [is503020Enabled, setIs503020Enabled] = useState(false);
@@ -866,9 +914,29 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: Das
     refetch();
   };
 
+  const hasNoActivity = summary.monthlySummaries.every(
+    (s) => s.totalIncome === 0 && s.totalExpenses === 0
+  );
+
   return (
     <>
       <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6">
+        {hasNoActivity && (
+          <div className="flex items-center justify-between gap-4 bg-green-900/30 border border-green-700 rounded-xl p-4">
+            <div>
+              <p className="text-green-300 font-semibold text-sm">Welcome to Piggino!</p>
+              <p className="text-green-400 text-xs mt-0.5">
+                You have no transactions yet. Follow the setup wizard to configure your account.
+              </p>
+            </div>
+            <button
+              onClick={onNavigateToOnboarding}
+              className="shrink-0 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition-colors"
+            >
+              Start Setup
+            </button>
+          </div>
+        )}
         {is503020Enabled && (
           <BudgetAlertsBanner
             budgetMonth={budgetMonth}

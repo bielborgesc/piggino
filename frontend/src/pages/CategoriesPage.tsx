@@ -1,16 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { PlusCircle, LoaderCircle, Trash2, Edit } from 'lucide-react';
+import { PlusCircle, LoaderCircle, Trash2, Edit, Shapes } from 'lucide-react';
+import { EmptyState } from '../components/ui/EmptyState';
 import toast from 'react-hot-toast';
 import { getCategories, deleteCategory } from '../services/api';
 import { Category } from '../types';
 import { CategoryModal } from '../components/features/categories/CategoryModal';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { extractErrorMessage } from '../utils/errors';
+
+interface DeleteConfirmState {
+  id: number;
+  name: string;
+}
 
 export function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState | null>(null);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -38,8 +46,14 @@ export function CategoriesPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta categoria?')) return;
+  const handleDeleteRequest = (category: Category) => {
+    setDeleteConfirm({ id: category.id, name: category.name });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return;
+    const { id } = deleteConfirm;
+    setDeleteConfirm(null);
 
     const toastId = toast.loading('Excluindo...');
     try {
@@ -107,7 +121,7 @@ export function CategoriesPage() {
                         <button onClick={() => handleOpenEditModal(cat)} className="text-slate-400 hover:text-white p-2" title="Editar">
                           <Edit size={18} />
                         </button>
-                        <button onClick={() => handleDelete(cat.id)} className="text-slate-400 hover:text-red-400 p-2" title="Excluir">
+                        <button onClick={() => handleDeleteRequest(cat)} className="text-slate-400 hover:text-red-400 p-2" title="Excluir">
                           <Trash2 size={18} />
                         </button>
                       </td>
@@ -115,8 +129,13 @@ export function CategoriesPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="text-center p-8 text-slate-400">
-                      Nenhuma categoria encontrada. Clique em "Nova Categoria" para comecar.
+                    <td colSpan={3}>
+                      <EmptyState
+                        icon={<Shapes size={40} />}
+                        title="No categories yet"
+                        description="Categories help you organize your income and expenses. Create your first one to get started."
+                        action={{ label: 'Create Category', onClick: handleOpenCreateModal }}
+                      />
                     </td>
                   </tr>
                 )}
@@ -131,6 +150,15 @@ export function CategoriesPage() {
         onClose={() => setIsModalOpen(false)}
         onSaveSuccess={fetchCategories}
         categoryToEdit={editingCategory}
+      />
+      <ConfirmModal
+        isOpen={deleteConfirm !== null}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${deleteConfirm?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteConfirm(null)}
       />
     </>
   );

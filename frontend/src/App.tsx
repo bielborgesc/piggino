@@ -11,12 +11,13 @@ import { SimulationPage } from './pages/SimulationPage';
 import { GoalsPage } from './pages/GoalsPage';
 import { WealthProjectionPage } from './pages/WealthProjectionPage';
 import { DebtPlanningPage } from './pages/DebtPlanningPage';
+import { OnboardingPage } from './pages/OnboardingPage';
 import { MainLayout } from './components/layout/MainLayout';
 import { ChangePasswordModal } from './components/features/auth/ChangePasswordModal';
 import { UserSettingsModal } from './components/features/settings/UserSettingsModal';
 import { useAuth } from './hooks/useAuth';
 
-type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation' | 'goals' | 'projection' | 'debts';
+type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation' | 'goals' | 'projection' | 'debts' | 'onboarding';
 
 const TOAST_STYLES = { style: { background: '#334155', color: '#f1f5f9' } };
 
@@ -49,7 +50,7 @@ function App() {
           onChangePassword={() => setIsChangePasswordOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
         >
-          {currentPage === 'dashboard' && <DashboardPage onNavigateToCategories={() => setCurrentPage('categories')} onNavigateToGoals={() => setCurrentPage('goals')} />}
+          {currentPage === 'dashboard' && <DashboardPage onNavigateToCategories={() => setCurrentPage('categories')} onNavigateToGoals={() => setCurrentPage('goals')} onNavigateToOnboarding={() => setCurrentPage('onboarding')} />}
           {currentPage === 'transactions' && <TransactionsPage />}
           {currentPage === 'categories' && <CategoriesPage />}
           {currentPage === 'financial-sources' && <FinancialSourcesPage />}
@@ -59,6 +60,7 @@ function App() {
           {currentPage === 'goals' && <GoalsPage />}
           {currentPage === 'projection' && <WealthProjectionPage />}
           {currentPage === 'debts' && <DebtPlanningPage />}
+          {currentPage === 'onboarding' && <OnboardingPage onFinish={() => setCurrentPage('dashboard')} />}
         </MainLayout>
       </>
     );

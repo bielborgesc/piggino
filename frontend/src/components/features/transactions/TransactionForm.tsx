@@ -5,6 +5,17 @@ import { getCategories, getFinancialSources } from '../../../services/api';
 import { Category, FinancialSource, CategoryType, TransactionData, Transaction } from '../../../types';
 import { InlineCreateForm } from './InlineCreateForm';
 
+function toLocalDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateInputToISOString(value: string): string {
+  return new Date(`${value}T12:00:00`).toISOString();
+}
+
 interface TransactionFormProps {
   onSave: (data: TransactionData, id?: number) => void;
   onCancel: () => void;
@@ -53,7 +64,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
     if (initialData) {
       setDescription(initialData.description);
       setAmount(String(initialData.totalAmount));
-      setPurchaseDate(new Date(initialData.purchaseDate).toISOString().split('T')[0]);
+      setPurchaseDate(toLocalDateInputValue(new Date(initialData.purchaseDate)));
       setSourceId(String(initialData.financialSourceId));
       setCategoryId(String(initialData.categoryId));
       setTransactionType(initialData.transactionType);
@@ -65,7 +76,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
     } else {
       setDescription('');
       setAmount('');
-      setPurchaseDate(new Date().toISOString().split('T')[0]);
+      setPurchaseDate(toLocalDateInputValue(new Date()));
       setSourceId('');
       setCategoryId('');
       setTransactionType('Expense');
@@ -112,7 +123,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       categoryId: parseInt(categoryId),
       isInstallment,
       installmentCount: isInstallment ? parseInt(installmentCount) : undefined,
-      purchaseDate: new Date(purchaseDate).toISOString(),
+      purchaseDate: parseDateInputToISOString(purchaseDate),
       isFixed,
       dayOfMonth: isFixed ? parseInt(dayOfMonth) : undefined,
       isRecurring: isInstallment ? isRecurring : false,

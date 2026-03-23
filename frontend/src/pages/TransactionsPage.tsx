@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { PlusCircle, Search, LoaderCircle, Edit, Trash2, CheckCircle, XCircle, RefreshCw, CreditCard } from 'lucide-react';
+import { PlusCircle, Search, LoaderCircle, Edit, Trash2, CheckCircle, XCircle, RefreshCw, CreditCard, ArrowRightLeft } from 'lucide-react';
+import { EmptyState } from '../components/ui/EmptyState';
 import { TransactionModal } from '../components/features/transactions/TransactionModal';
 import { InstallmentBreakdown } from '../components/features/transactions/InstallmentBreakdown';
 import { RecurrenceScopeModal } from '../components/features/transactions/RecurrenceScopeModal';
@@ -468,7 +469,12 @@ export function TransactionsPage() {
                   );
                 })
               ) : (
-                <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">Nenhuma transacao encontrada.</div>
+                <EmptyState
+                  icon={<ArrowRightLeft size={40} />}
+                  title="No transactions found"
+                  description="No transactions match your current filters. Try adjusting the filters or add a new transaction."
+                  action={{ label: 'Add Transaction', onClick: () => handleOpenModal(null) }}
+                />
               )}
             </div>
 
@@ -554,7 +560,16 @@ export function TransactionsPage() {
                       );
                     })
                   ) : (
-                    <tr><td colSpan={6} className="text-center p-8 text-slate-400">Nenhuma transacao encontrada para os filtros selecionados.</td></tr>
+                    <tr>
+                      <td colSpan={6}>
+                        <EmptyState
+                          icon={<ArrowRightLeft size={40} />}
+                          title="No transactions found"
+                          description="No transactions match your current filters. Try adjusting the filters or add a new transaction."
+                          action={{ label: 'Add Transaction', onClick: () => handleOpenModal(null) }}
+                        />
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>

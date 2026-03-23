@@ -4,7 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../../types';
 import { getAccessToken } from '../../services/api';
 
-type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation' | 'goals' | 'projection' | 'debts';
+type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation' | 'goals' | 'projection' | 'debts' | 'onboarding';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -15,94 +15,100 @@ interface MainLayoutProps {
   onOpenSettings: () => void;
 }
 
-function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNavigate: (page: PageType) => void; onClose: () => void; }) {
+interface NavItem {
+  page: PageType;
+  label: string;
+  icon: React.ReactNode;
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+const NAV_SECTIONS: NavSection[] = [
+  {
+    label: 'Core',
+    items: [
+      { page: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+      { page: 'transactions', label: 'Transactions', icon: <ArrowRightLeft className="h-5 w-5" /> },
+      { page: 'invoices', label: 'Invoices', icon: <Receipt className="h-5 w-5" /> },
+      { page: 'fixed-bills', label: 'Fixed Bills', icon: <CalendarCheck className="h-5 w-5" /> },
+    ],
+  },
+  {
+    label: 'Planning',
+    items: [
+      { page: 'goals', label: 'Goals', icon: <Target className="h-5 w-5" /> },
+      { page: 'debts', label: 'Debt Planning', icon: <CreditCard className="h-5 w-5" /> },
+      { page: 'projection', label: 'Wealth Projection', icon: <TrendingUp className="h-5 w-5" /> },
+    ],
+  },
+  {
+    label: 'Analysis',
+    items: [
+      { page: 'simulation', label: 'Simulation', icon: <Calculator className="h-5 w-5" /> },
+    ],
+  },
+  {
+    label: 'Settings',
+    items: [
+      { page: 'categories', label: 'Categories', icon: <Shapes className="h-5 w-5" /> },
+      { page: 'financial-sources', label: 'Financial Sources', icon: <Wallet className="h-5 w-5" /> },
+    ],
+  },
+];
+
+function NavButton({ item, isActive, onNavigate }: { item: NavItem; isActive: boolean; onNavigate: (page: PageType) => void }) {
+  return (
+    <button
+      onClick={() => onNavigate(item.page)}
+      className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${
+        isActive ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'
+      }`}
+    >
+      {item.icon}
+      {item.label}
+    </button>
+  );
+}
+
+function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNavigate: (page: PageType) => void; onClose: () => void }) {
   const handleNavigation = (page: PageType) => {
     onNavigate(page);
     onClose();
   };
 
   return (
-    <aside className="w-64 bg-slate-800 p-6 flex-col flex z-40 h-full">
+    <aside className="w-64 bg-slate-800 p-6 flex-col flex z-40 h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-3">
-            <img src="/piggino-logo.jpg" alt="Piggino Logo" className="w-10 h-10 rounded-lg" />
-            <span className="text-2xl font-bold text-white">Piggino</span>
+          <img src="/piggino-logo.jpg" alt="Piggino Logo" className="w-10 h-10 rounded-lg" />
+          <span className="text-2xl font-bold text-white">Piggino</span>
         </div>
         <button onClick={onClose} className="md:hidden text-slate-400 hover:text-white">
-            <X size={24} />
+          <X size={24} />
         </button>
       </div>
-      <nav className="flex flex-col gap-2">
-        <button
-          onClick={() => handleNavigation('dashboard')}
-          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'dashboard' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-        >
-          <LayoutDashboard className="h-5 w-5" />
-          Dashboard
-        </button>
-        <button
-          onClick={() => handleNavigation('transactions')}
-          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'transactions' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-        >
-          <ArrowRightLeft className="h-5 w-5" />
-          Transacoes
-        </button>
-        <button
-          onClick={() => handleNavigation('categories')}
-          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'categories' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-        >
-          <Shapes className="h-5 w-5" />
-          Categorias
-        </button>
-        <button
-          onClick={() => handleNavigation('financial-sources')}
-          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'financial-sources' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-        >
-          <Wallet className="h-5 w-5" />
-          Fontes Financeiras
-        </button>
-        <button
-          onClick={() => handleNavigation('invoices')}
-          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'invoices' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-        >
-          <Receipt className="h-5 w-5" />
-          Faturas
-        </button>
-        <button
-          onClick={() => handleNavigation('fixed-bills')}
-          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'fixed-bills' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-        >
-          <CalendarCheck className="h-5 w-5" />
-          Contas Fixas
-        </button>
-        <button
-          onClick={() => handleNavigation('simulation')}
-          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'simulation' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-        >
-          <Calculator className="h-5 w-5" />
-          Simulacao
-        </button>
-        <button
-          onClick={() => handleNavigation('goals')}
-          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'goals' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-        >
-          <Target className="h-5 w-5" />
-          Metas
-        </button>
-        <button
-          onClick={() => handleNavigation('projection')}
-          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'projection' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-        >
-          <TrendingUp className="h-5 w-5" />
-          Projecao
-        </button>
-        <button
-          onClick={() => handleNavigation('debts')}
-          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'debts' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-        >
-          <CreditCard className="h-5 w-5" />
-          Dividas
-        </button>
+
+      <nav className="flex flex-col gap-6">
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.label}>
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500 px-4 mb-2">
+              {section.label}
+            </p>
+            <div className="flex flex-col gap-1">
+              {section.items.map((item) => (
+                <NavButton
+                  key={item.page}
+                  item={item}
+                  isActive={activePage === item.page}
+                  onNavigate={handleNavigation}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
       </nav>
     </aside>
   );
@@ -188,7 +194,7 @@ export function MainLayout({ children, activePage, onNavigate, onLogout, onChang
         <Sidebar activePage={activePage} onNavigate={onNavigate} onClose={() => {}} />
       </div>
 
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col overflow-hidden">
         <Header
           onOpenSidebar={() => setIsSidebarOpen(true)}
           onLogout={onLogout}
