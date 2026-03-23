@@ -19,6 +19,8 @@ namespace Piggino.Api.Domain.Transactions.Dtos
         public int? DayOfMonth { get; set; }
         public bool IsRecurring { get; set; }
         public string? CategoryName { get; set; }
+        public string? CategoryColor { get; set; }
+        public BudgetBucket CategoryBudgetBucket { get; set; } = BudgetBucket.None;
         public int FinancialSourceId { get; set; }
         public string? FinancialSourceName { get; set; }
         public Guid UserId { get; set; }

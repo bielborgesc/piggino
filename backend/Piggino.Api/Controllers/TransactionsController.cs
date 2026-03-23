@@ -237,5 +237,15 @@ namespace Piggino.Api.Controllers
             SimulationReadDto simulation = await _service.GetSimulationAsync();
             return Ok(simulation);
         }
+
+        [HttpGet("budget-analysis")]
+        public async Task<ActionResult<BudgetAnalysisDto>> GetBudgetAnalysis([FromQuery] string month)
+        {
+            if (!DateOnly.TryParseExact(month, "yyyy-MM", out DateOnly parsedMonth))
+                return BadRequest(new { message = "Invalid month format. Use yyyy-MM." });
+
+            BudgetAnalysisDto analysis = await _service.GetBudgetAnalysisAsync(parsedMonth.Year, parsedMonth.Month);
+            return Ok(analysis);
+        }
     }
 }

@@ -59,6 +59,11 @@ namespace Piggino.Api.Data
                 .HasConversion<string>();
 
             modelBuilder
+                .Entity<Category>()
+                .Property(c => c.BudgetBucket)
+                .HasConversion<string>();
+
+            modelBuilder
                 .Entity<FinancialSource>()
                 .Property(f => f.Type)
                 .HasConversion<string>();

@@ -42,6 +42,7 @@ namespace Piggino.Api.Domain.Categories.Services
                 Name = createDto.Name,
                 Type = createDto.Type,
                 Color = createDto.Color ?? "#6b7280",
+                BudgetBucket = createDto.BudgetBucket,
                 UserId = userId
             };
 
@@ -54,6 +55,7 @@ namespace Piggino.Api.Domain.Categories.Services
                 Name = newCategory.Name,
                 Type = newCategory.Type,
                 Color = newCategory.Color,
+                BudgetBucket = newCategory.BudgetBucket,
                 UserId = newCategory.UserId
             };
         }
@@ -86,13 +88,13 @@ namespace Piggino.Api.Domain.Categories.Services
             Guid userId = GetCurrentUserId();
             IEnumerable<Category> categories = await _repository.GetAllAsync(userId);
 
-            // Usa LINQ para mapear a lista de entidades para uma lista de DTOs
             return categories.Select(c => new CategoryReadDto
             {
                 Id = c.Id,
                 Name = c.Name,
                 Type = c.Type,
                 Color = c.Color,
+                BudgetBucket = c.BudgetBucket,
                 UserId = c.UserId
             });
         }
@@ -113,6 +115,7 @@ namespace Piggino.Api.Domain.Categories.Services
                 Name = category.Name,
                 Type = category.Type,
                 Color = category.Color,
+                BudgetBucket = category.BudgetBucket,
                 UserId = category.UserId
             };
         }
@@ -130,6 +133,7 @@ namespace Piggino.Api.Domain.Categories.Services
             category.Name = updateDto.Name;
             category.Type = updateDto.Type;
             category.Color = updateDto.Color ?? category.Color;
+            category.BudgetBucket = updateDto.BudgetBucket;
 
             _repository.Update(category);
             return await _repository.SaveChangesAsync();

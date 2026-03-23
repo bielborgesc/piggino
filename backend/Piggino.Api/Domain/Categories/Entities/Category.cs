@@ -23,6 +23,8 @@ namespace Piggino.Api.Domain.Categories.Entities
         [MaxLength(7)]
         public string Color { get; set; } = "#6b7280";
 
+        public BudgetBucket BudgetBucket { get; set; } = BudgetBucket.None;
+
         public ICollection<Transaction>? Transactions { get; set; }
     }
 }

@@ -162,5 +162,26 @@ namespace Piggino.Api.Domain.Users.Services
             await _repository.UpdateUserAsync(user);
             return (true, null);
         }
+
+        public async Task<UserSettingsDto?> GetSettingsAsync(Guid userId)
+        {
+            User? user = await _repository.GetUserByIdAsync(userId);
+            if (user == null)
+                return null;
+
+            return new UserSettingsDto { Is503020Enabled = user.Is503020Enabled };
+        }
+
+        public async Task<UserSettingsDto?> UpdateSettingsAsync(Guid userId, UserSettingsDto dto)
+        {
+            User? user = await _repository.GetUserByIdAsync(userId);
+            if (user == null)
+                return null;
+
+            user.Is503020Enabled = dto.Is503020Enabled;
+            await _repository.UpdateUserAsync(user);
+
+            return new UserSettingsDto { Is503020Enabled = user.Is503020Enabled };
+        }
     }
 }

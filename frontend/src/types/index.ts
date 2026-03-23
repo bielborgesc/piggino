@@ -1,6 +1,7 @@
 export type CategoryType = 'Income' | 'Expense';
 export type FinancialSourceType = 'Card' | 'Account' | 'Cash';
 export type RecurrenceScope = 'OnlyThis' | 'ThisAndFuture' | 'ThisAndPast' | 'All';
+export type BudgetBucket = 'None' | 'Needs' | 'Wants' | 'Savings';
 
 // A interface Transaction agora corresponde ao TransactionReadDto do backend
 export interface Transaction {
@@ -31,6 +32,7 @@ export interface Category {
   type: CategoryType;
   color?: string;
   userId: string;
+  budgetBucket?: BudgetBucket;
 }
 
 // ✅ CORREÇÃO: Adicione as propriedades opcionais aqui
@@ -104,6 +106,7 @@ export interface CategoryData {
   name: string;
   type: CategoryType;
   color?: string;
+  budgetBucket?: BudgetBucket;
 }
 
 export interface FinancialSourceData {
@@ -219,4 +222,31 @@ export interface DashboardSummary {
   currentMonthBalance: number;
   pendingFixedBills: number;
   pendingInvoiceAmount: number;
+}
+
+export interface UserSettings {
+  is503020Enabled: boolean;
+}
+
+export interface BucketCategoryBreakdown {
+  categoryName: string;
+  categoryColor: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface BudgetAnalysis {
+  month: string;
+  monthlyIncome: number;
+  needsTarget: number;
+  wantsTarget: number;
+  savingsTarget: number;
+  needsActual: number;
+  wantsActual: number;
+  savingsActual: number;
+  unclassifiedActual: number;
+  needsCategories: BucketCategoryBreakdown[];
+  wantsCategories: BucketCategoryBreakdown[];
+  savingsCategories: BucketCategoryBreakdown[];
+  insights: string[];
 }

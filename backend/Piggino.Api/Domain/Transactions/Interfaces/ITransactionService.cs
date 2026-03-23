@@ -23,5 +23,6 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         Task<DashboardSummaryDto> GetDashboardSummaryAsync(int months);
         Task<bool> SettleInstallmentsAsync(int transactionId);
         Task<SimulationReadDto> GetSimulationAsync();
+        Task<BudgetAnalysisDto> GetBudgetAnalysisAsync(int year, int month);
     }
 }

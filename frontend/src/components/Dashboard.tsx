@@ -18,15 +18,39 @@ import {
   TooltipProps,
 } from 'recharts';
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
-import { LoaderCircle, TrendingUp, TrendingDown, Scale, AlertCircle } from 'lucide-react';
+import { LoaderCircle, TrendingUp, TrendingDown, Scale, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TransactionModal } from './TransactionModal';
 import { useDashboard } from '../hooks/useDashboard';
-import { getCategories } from '../services/api';
-import { Category, MonthlySummary, CategoryExpense, TopExpense } from '../types';
+import { useBudgetAnalysis } from '../hooks/useBudgetAnalysis';
+import { getCategories, getUserSettings } from '../services/api';
+import { Category, MonthlySummary, CategoryExpense, TopExpense, BudgetAnalysis, BucketCategoryBreakdown } from '../types';
 import { formatBRL } from '../utils/formatters';
 
 const MONTH_COUNT = 6;
 const DEFAULT_CATEGORY_COLOR = '#6b7280';
+
+const BUCKET_NEEDS_COLOR = '#3b82f6';
+const BUCKET_WANTS_COLOR = '#a855f7';
+const BUCKET_SAVINGS_COLOR = '#22c55e';
+
+function getCurrentMonthKey(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
+function shiftMonth(monthKey: string, delta: number): string {
+  const [year, month] = monthKey.split('-').map(Number);
+  const date = new Date(year, month - 1 + delta, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatMonthKeyLabel(monthKey: string): string {
+  const [year, month] = monthKey.split('-');
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  return date.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+}
 
 const FALLBACK_CATEGORY_COLORS = [
   '#22c55e',
@@ -249,11 +273,179 @@ function TopExpensesList({ expenses }: TopExpensesListProps) {
   );
 }
 
+// --- Budget Analysis Section ---
+
+interface BucketBarProps {
+  label: string;
+  actual: number;
+  target: number;
+  color: string;
+  categories: BucketCategoryBreakdown[];
+}
+
+function BucketBar({ label, actual, target, color, categories }: BucketBarProps) {
+  const percentage = target > 0 ? Math.min((actual / target) * 100, 100) : 0;
+  const isOverTarget = actual > target;
+  const surplus = target - actual;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-white font-semibold">{label}</span>
+        <span className={isOverTarget ? 'text-red-400 font-semibold' : 'text-slate-300'}>
+          {formatBRL(actual)} / {formatBRL(target)}
+          <span className={`ml-2 text-xs ${isOverTarget ? 'text-red-400' : 'text-slate-400'}`}>
+            ({isOverTarget ? `+${formatBRL(Math.abs(surplus))}` : `-${formatBRL(Math.abs(surplus))}`})
+          </span>
+        </span>
+      </div>
+      <div className="h-4 bg-slate-700 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{
+            width: `${percentage}%`,
+            backgroundColor: isOverTarget ? '#ef4444' : color,
+          }}
+        />
+      </div>
+      {categories.length > 0 && (
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+          {categories.map((cat) => (
+            <li key={cat.categoryName} className="flex items-center gap-1 text-xs text-slate-400">
+              <span
+                className="inline-block w-2 h-2 rounded-full shrink-0"
+                style={{ backgroundColor: cat.categoryColor }}
+              />
+              {cat.categoryName}: {formatBRL(cat.amount)}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+interface BudgetAnalysisSectionProps {
+  month: string;
+  onMonthChange: (month: string) => void;
+  onNavigateToCategories: () => void;
+}
+
+function BudgetAnalysisSection({ month, onMonthChange, onNavigateToCategories }: BudgetAnalysisSectionProps) {
+  const { analysis, isLoading, error } = useBudgetAnalysis(month);
+
+  const hasMissingIncome = analysis !== null && analysis.monthlyIncome <= 0;
+
+  return (
+    <div className="bg-slate-800 p-5 rounded-lg border border-slate-700 space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-semibold text-white">Analise 50/30/20</h3>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onMonthChange(shiftMonth(month, -1))}
+            className="text-slate-400 hover:text-white transition-colors"
+            aria-label="Mes anterior"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <span className="text-slate-300 text-sm font-medium w-36 text-center capitalize">
+            {formatMonthKeyLabel(month)}
+          </span>
+          <button
+            onClick={() => onMonthChange(shiftMonth(month, 1))}
+            className="text-slate-400 hover:text-white transition-colors"
+            aria-label="Proximo mes"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
+
+      {isLoading && (
+        <div className="flex justify-center py-6">
+          <LoaderCircle className="animate-spin text-green-500" size={28} />
+        </div>
+      )}
+
+      {!isLoading && error && (
+        <p className="text-red-400 text-sm">{error}</p>
+      )}
+
+      {!isLoading && !error && analysis && (
+        <>
+          {hasMissingIncome && (
+            <div className="bg-amber-900/30 border border-amber-700 rounded-lg p-3 text-amber-300 text-sm">
+              Nenhuma receita registrada neste mes. Adicione receitas para ver a analise.
+            </div>
+          )}
+
+          {analysis.unclassifiedActual > 0 && (
+            <div className="bg-amber-900/30 border border-amber-700 rounded-lg p-3 text-amber-300 text-sm flex items-start justify-between gap-3">
+              <span>
+                {formatBRL(analysis.unclassifiedActual)} em despesas sem classificacao 50/30/20.
+              </span>
+              <button
+                onClick={onNavigateToCategories}
+                className="text-amber-200 underline hover:text-white shrink-0 text-xs"
+              >
+                Classificar categorias
+              </button>
+            </div>
+          )}
+
+          <div className="space-y-5">
+            <BucketBar
+              label="Necessidades (50%)"
+              actual={analysis.needsActual}
+              target={analysis.needsTarget}
+              color={BUCKET_NEEDS_COLOR}
+              categories={analysis.needsCategories}
+            />
+            <BucketBar
+              label="Desejos (30%)"
+              actual={analysis.wantsActual}
+              target={analysis.wantsTarget}
+              color={BUCKET_WANTS_COLOR}
+              categories={analysis.wantsCategories}
+            />
+            <BucketBar
+              label="Reservas (20%)"
+              actual={analysis.savingsActual}
+              target={analysis.savingsTarget}
+              color={BUCKET_SAVINGS_COLOR}
+              categories={analysis.savingsCategories}
+            />
+          </div>
+
+          {analysis.insights.length > 0 && (
+            <ul className="space-y-2 pt-2 border-t border-slate-700">
+              {analysis.insights.map((insight, index) => (
+                <li key={index} className="text-sm text-slate-300 flex items-start gap-2">
+                  <span className="shrink-0 mt-0.5">
+                    {insight.includes('Dentro') ? '✅' : insight.includes('Excedendo') || insight.includes('reduza') || insight.includes('Abaixo') ? '⚠️' : '💡'}
+                  </span>
+                  {insight}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 // --- Dashboard (main export) ---
 
-export function Dashboard() {
+interface DashboardProps {
+  onNavigateToCategories: () => void;
+}
+
+export function Dashboard({ onNavigateToCategories }: DashboardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoryColorMap, setCategoryColorMap] = useState<Map<string, string>>(new Map());
+  const [is503020Enabled, setIs503020Enabled] = useState(false);
+  const [budgetMonth, setBudgetMonth] = useState<string>(getCurrentMonthKey());
   const { summary, isLoading, error, refetch } = useDashboard(MONTH_COUNT);
 
   useEffect(() => {
@@ -264,6 +456,12 @@ export function Dashboard() {
       })
       .catch(() => {
         // Non-critical: fallback palette will be used
+      });
+
+    getUserSettings()
+      .then((s) => setIs503020Enabled(s.is503020Enabled))
+      .catch(() => {
+        // Non-critical: feature stays hidden
       });
   }, []);
 
@@ -337,6 +535,15 @@ export function Dashboard() {
           <BalanceTrendChart monthlySummaries={summary.monthlySummaries} />
           <TopExpensesList expenses={summary.topExpenses} />
         </div>
+
+        {/* 50/30/20 Budget Analysis */}
+        {is503020Enabled && (
+          <BudgetAnalysisSection
+            month={budgetMonth}
+            onMonthChange={setBudgetMonth}
+            onNavigateToCategories={onNavigateToCategories}
+          />
+        )}
 
         {/* Quick action */}
         <div className="flex justify-end">

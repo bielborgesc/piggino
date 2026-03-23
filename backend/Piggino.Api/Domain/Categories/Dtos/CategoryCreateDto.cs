@@ -15,5 +15,8 @@ namespace Piggino.Api.Domain.Categories.Dtos
 
         [MaxLength(7)]
         public string? Color { get; set; }
+
+        [EnumDataType(typeof(BudgetBucket), ErrorMessage = "InvalidBudgetBucket")]
+        public BudgetBucket BudgetBucket { get; set; } = BudgetBucket.None;
     }
 }

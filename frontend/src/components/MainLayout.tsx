@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck, Calculator, KeyRound } from 'lucide-react';
+import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck, Calculator, KeyRound, Settings } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../types';
 import { getAccessToken } from '../services/api';
@@ -12,6 +12,7 @@ interface MainLayoutProps {
   onNavigate: (page: PageType) => void;
   onLogout: () => Promise<void>;
   onChangePassword: () => void;
+  onOpenSettings: () => void;
 }
 // Sidebar permanece o mesmo, mas agora fecha ao navegar
 function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNavigate: (page: PageType) => void; onClose: () => void; }) {
@@ -93,10 +94,12 @@ function Header({
   onOpenSidebar,
   onLogout,
   onChangePassword,
+  onOpenSettings,
 }: {
   onOpenSidebar: () => void;
   onLogout: () => Promise<void>;
   onChangePassword: () => void;
+  onOpenSettings: () => void;
 }) {
     const [userName, setUserName] = useState('Usuário');
 
@@ -126,6 +129,14 @@ function Header({
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <button
+              onClick={onOpenSettings}
+              className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors"
+              aria-label="Configuracoes"
+            >
+              <Settings className="h-5 w-5" />
+              <span className="hidden sm:inline">Configuracoes</span>
+            </button>
+            <button
               onClick={onChangePassword}
               className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors"
               aria-label="Alterar senha"
@@ -142,7 +153,7 @@ function Header({
       );
 }
 
-export function MainLayout({ children, activePage, onNavigate, onLogout, onChangePassword }: MainLayoutProps) {
+export function MainLayout({ children, activePage, onNavigate, onLogout, onChangePassword, onOpenSettings }: MainLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -160,6 +171,7 @@ export function MainLayout({ children, activePage, onNavigate, onLogout, onChang
           onOpenSidebar={() => setIsSidebarOpen(true)}
           onLogout={onLogout}
           onChangePassword={onChangePassword}
+          onOpenSettings={onOpenSettings}
         />
         {children}
       </main>

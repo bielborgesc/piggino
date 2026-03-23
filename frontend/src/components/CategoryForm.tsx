@@ -1,7 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Category, CategoryData, CategoryType } from '../types';
+import { Category, CategoryData, CategoryType, BudgetBucket } from '../types';
 
 const DEFAULT_COLOR = '#6b7280';
+const DEFAULT_BUDGET_BUCKET: BudgetBucket = 'None';
+
+interface BudgetBucketOption {
+  value: BudgetBucket;
+  label: string;
+  activeClassName: string;
+}
+
+const BUDGET_BUCKET_OPTIONS: BudgetBucketOption[] = [
+  { value: 'None', label: 'Nenhum', activeClassName: 'bg-slate-500 text-white' },
+  { value: 'Needs', label: 'Necessidades (50%)', activeClassName: 'bg-blue-500 text-white' },
+  { value: 'Wants', label: 'Desejos (30%)', activeClassName: 'bg-purple-500 text-white' },
+  { value: 'Savings', label: 'Reservas (20%)', activeClassName: 'bg-green-500 text-white' },
+];
 
 interface CategoryFormProps {
   onSave: (data: CategoryData) => void;
@@ -14,22 +28,25 @@ export function CategoryForm({ onSave, onCancel, initialData, isSaving }: Catego
   const [name, setName] = useState('');
   const [type, setType] = useState<CategoryType>('Expense');
   const [color, setColor] = useState(DEFAULT_COLOR);
+  const [budgetBucket, setBudgetBucket] = useState<BudgetBucket>(DEFAULT_BUDGET_BUCKET);
 
   useEffect(() => {
     if (initialData) {
       setName(initialData.name);
       setType(initialData.type);
       setColor(initialData.color ?? DEFAULT_COLOR);
+      setBudgetBucket(initialData.budgetBucket ?? DEFAULT_BUDGET_BUCKET);
     } else {
       setName('');
       setType('Expense');
       setColor(DEFAULT_COLOR);
+      setBudgetBucket(DEFAULT_BUDGET_BUCKET);
     }
   }, [initialData]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    onSave({ name, type, color });
+    onSave({ name, type, color, budgetBucket });
   };
 
   return (
@@ -71,6 +88,32 @@ export function CategoryForm({ onSave, onCancel, initialData, isSaving }: Catego
           >
             Receita
           </button>
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <label className="block text-sm font-medium text-slate-300">
+            Metodo 50/30/20
+          </label>
+          <span className="text-xs text-slate-500 italic">Usado pelo metodo 50/30/20</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {BUDGET_BUCKET_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setBudgetBucket(option.value)}
+              disabled={isSaving}
+              className={`p-2 rounded-md font-semibold transition-colors text-sm border ${
+                budgetBucket === option.value
+                  ? `${option.activeClassName} border-transparent`
+                  : 'border-slate-600 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
       </div>
 

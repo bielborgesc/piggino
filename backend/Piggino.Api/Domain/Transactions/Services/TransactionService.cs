@@ -513,6 +513,141 @@ namespace Piggino.Api.Domain.Transactions.Services
             return await _transactionRepository.SaveChangesAsync();
         }
 
+        public async Task<BudgetAnalysisDto> GetBudgetAnalysisAsync(int year, int month)
+        {
+            IEnumerable<TransactionReadDto> allProjected = await GetAllAsync();
+
+            decimal monthlyIncome = SumByTypeForMonth(allProjected, TransactionType.Income, year, month);
+
+            IEnumerable<TransactionReadDto> monthlyExpenses = allProjected
+                .Where(t =>
+                    t.TransactionType == TransactionType.Expense &&
+                    t.PurchaseDate.Year == year &&
+                    t.PurchaseDate.Month == month);
+
+            decimal needsActual = monthlyExpenses
+                .Where(t => t.CategoryBudgetBucket == Piggino.Api.Enum.BudgetBucket.Needs)
+                .Sum(t => t.TotalAmount);
+
+            decimal wantsActual = monthlyExpenses
+                .Where(t => t.CategoryBudgetBucket == Piggino.Api.Enum.BudgetBucket.Wants)
+                .Sum(t => t.TotalAmount);
+
+            decimal savingsActual = monthlyExpenses
+                .Where(t => t.CategoryBudgetBucket == Piggino.Api.Enum.BudgetBucket.Savings)
+                .Sum(t => t.TotalAmount);
+
+            decimal unclassifiedActual = monthlyExpenses
+                .Where(t => t.CategoryBudgetBucket == Piggino.Api.Enum.BudgetBucket.None)
+                .Sum(t => t.TotalAmount);
+
+            decimal needsTarget = monthlyIncome * 0.50m;
+            decimal wantsTarget = monthlyIncome * 0.30m;
+            decimal savingsTarget = monthlyIncome * 0.20m;
+
+            List<BucketCategoryBreakdown> needsCategories = BuildBucketBreakdown(
+                monthlyExpenses, Piggino.Api.Enum.BudgetBucket.Needs, monthlyIncome);
+
+            List<BucketCategoryBreakdown> wantsCategories = BuildBucketBreakdown(
+                monthlyExpenses, Piggino.Api.Enum.BudgetBucket.Wants, monthlyIncome);
+
+            List<BucketCategoryBreakdown> savingsCategories = BuildBucketBreakdown(
+                monthlyExpenses, Piggino.Api.Enum.BudgetBucket.Savings, monthlyIncome);
+
+            List<string> insights = GenerateBudgetInsights(
+                monthlyIncome,
+                needsActual, needsTarget,
+                wantsActual, wantsTarget,
+                savingsActual, savingsTarget,
+                unclassifiedActual,
+                wantsCategories);
+
+            return new BudgetAnalysisDto
+            {
+                Month = $"{year:D4}-{month:D2}",
+                MonthlyIncome = monthlyIncome,
+                NeedsTarget = needsTarget,
+                WantsTarget = wantsTarget,
+                SavingsTarget = savingsTarget,
+                NeedsActual = needsActual,
+                WantsActual = wantsActual,
+                SavingsActual = savingsActual,
+                UnclassifiedActual = unclassifiedActual,
+                NeedsCategories = needsCategories,
+                WantsCategories = wantsCategories,
+                SavingsCategories = savingsCategories,
+                Insights = insights
+            };
+        }
+
+        private static List<BucketCategoryBreakdown> BuildBucketBreakdown(
+            IEnumerable<TransactionReadDto> expenses,
+            Piggino.Api.Enum.BudgetBucket bucket,
+            decimal monthlyIncome)
+        {
+            return expenses
+                .Where(t => t.CategoryBudgetBucket == bucket)
+                .GroupBy(t => new { t.CategoryName, t.CategoryColor })
+                .Select(group => new BucketCategoryBreakdown
+                {
+                    CategoryName = group.Key.CategoryName ?? "Sem categoria",
+                    CategoryColor = group.Key.CategoryColor ?? "#6b7280",
+                    Amount = group.Sum(t => t.TotalAmount),
+                    Percentage = monthlyIncome > 0
+                        ? Math.Round(group.Sum(t => t.TotalAmount) / monthlyIncome * 100, 1)
+                        : 0
+                })
+                .OrderByDescending(c => c.Amount)
+                .ToList();
+        }
+
+        private static List<string> GenerateBudgetInsights(
+            decimal income,
+            decimal needsActual, decimal needsTarget,
+            decimal wantsActual, decimal wantsTarget,
+            decimal savingsActual, decimal savingsTarget,
+            decimal unclassifiedActual,
+            List<BucketCategoryBreakdown> wantsCategories)
+        {
+            const string CurrencyFormat = "C2";
+
+            var insights = new List<string>();
+
+            if (income <= 0)
+            {
+                insights.Add("Sem receitas registradas neste mes para calcular o metodo 50/30/20.");
+                return insights;
+            }
+
+            decimal needsPercent = Math.Round(needsActual / income * 100, 1);
+            decimal wantsPercent = Math.Round(wantsActual / income * 100, 1);
+            decimal savingsPercent = Math.Round(savingsActual / income * 100, 1);
+
+            if (needsActual <= needsTarget)
+                insights.Add($"Voce esta gastando {needsPercent}% em Necessidades (meta: 50%). Dentro da meta.");
+            else
+                insights.Add($"Voce esta gastando {needsPercent}% em Necessidades (meta: 50%). Excedendo em {(needsActual - needsTarget).ToString(CurrencyFormat)}.");
+
+            if (wantsActual <= wantsTarget)
+                insights.Add($"Voce esta gastando {wantsPercent}% em Desejos (meta: 30%). Dentro da meta.");
+            else
+                insights.Add($"Voce esta gastando {wantsPercent}% em Desejos (meta: 30%). Excedendo em {(wantsActual - wantsTarget).ToString(CurrencyFormat)}. Para se encaixar no metodo, reduza {(wantsActual - wantsTarget).ToString(CurrencyFormat)} em Desejos.");
+
+            if (savingsActual >= savingsTarget)
+                insights.Add($"Voce esta guardando {savingsPercent}% (meta: 20%). Dentro da meta.");
+            else
+                insights.Add($"Voce esta guardando {savingsPercent}% (meta: 20%). Abaixo da meta em {(savingsTarget - savingsActual).ToString(CurrencyFormat)}.");
+
+            IEnumerable<string> topWantsNames = wantsCategories.Take(2).Select(c => c.CategoryName);
+            if (topWantsNames.Any())
+                insights.Add($"Suas maiores despesas em Desejos sao: {string.Join(", ", topWantsNames)}.");
+
+            if (unclassifiedActual > 0)
+                insights.Add($"{unclassifiedActual.ToString(CurrencyFormat)} ainda nao classificados. Classifique suas categorias para uma analise completa.");
+
+            return insights;
+        }
+
         public async Task<SimulationReadDto> GetSimulationAsync()
         {
             Guid userId = GetCurrentUserId();
@@ -910,6 +1045,8 @@ namespace Piggino.Api.Domain.Transactions.Services
                 IsRecurring = transaction.IsRecurring,
                 CategoryId = transaction.CategoryId,
                 CategoryName = transaction.Category?.Name,
+                CategoryColor = transaction.Category?.Color,
+                CategoryBudgetBucket = transaction.Category?.BudgetBucket ?? Piggino.Api.Enum.BudgetBucket.None,
                 FinancialSourceId = transaction.FinancialSourceId,
                 FinancialSourceName = transaction.FinancialSource?.Name,
                 UserId = transaction.UserId,

@@ -36,6 +36,8 @@ namespace Piggino.Api.Domain.Users.Entities
 
         public DateTime? PasswordResetTokenExpiry { get; set; }
 
+        public bool Is503020Enabled { get; set; } = false;
+
         public ICollection<FinancialSource>? FinancialSources { get; set; }
         public ICollection<Category>? Categories { get; set; }
         public ICollection<Transaction>? Transactions { get; set; }

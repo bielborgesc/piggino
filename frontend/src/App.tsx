@@ -12,6 +12,7 @@ import { SimulationPage } from './components/SimulationPage';
 import { MainLayout } from './components/MainLayout';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { useAuth } from './hooks/useAuth';
+import { UserSettingsModal } from './components/UserSettingsModal';
 
 enum AuthView { Login, Register }
 type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation';
@@ -23,6 +24,7 @@ function App() {
   const [authView, setAuthView] = useState<AuthView>(AuthView.Login);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
   const handleLoginSuccess = () => {
     setCurrentPage('dashboard');
@@ -38,13 +40,20 @@ function App() {
             onLogout={onLogout}
           />
         )}
+        {isSettingsOpen && (
+          <UserSettingsModal
+            onClose={() => setIsSettingsOpen(false)}
+            onNavigateToCategories={() => setCurrentPage('categories')}
+          />
+        )}
         <MainLayout
           activePage={currentPage}
           onNavigate={setCurrentPage}
           onLogout={onLogout}
           onChangePassword={() => setIsChangePasswordOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         >
-          {currentPage === 'dashboard' && <Dashboard />}
+          {currentPage === 'dashboard' && <Dashboard onNavigateToCategories={() => setCurrentPage('categories')} />}
           {currentPage === 'transactions' && <TransactionsPage />}
           {currentPage === 'categories' && <CategoriesPage />}
           {currentPage === 'financial-sources' && <FinancialSourcesPage />}

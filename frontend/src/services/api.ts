@@ -20,6 +20,8 @@ import {
   ForgotPasswordData,
   ForgotPasswordResponse,
   ResetPasswordData,
+  UserSettings,
+  BudgetAnalysis,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -303,6 +305,25 @@ export const updateFinancialSource = async (id: number, data: FinancialSourceDat
 
 export const deleteFinancialSource = async (id: number): Promise<void> => {
   await apiClient.delete(`/FinancialSources/${id}`);
+};
+
+// --- User Settings API ---
+
+export const getUserSettings = async (): Promise<UserSettings> => {
+  const response = await apiClient.get<UserSettings>('/user-settings');
+  return response.data;
+};
+
+export const updateUserSettings = async (settings: UserSettings): Promise<UserSettings> => {
+  const response = await apiClient.put<UserSettings>('/user-settings', settings);
+  return response.data;
+};
+
+// --- Budget Analysis API ---
+
+export const getBudgetAnalysis = async (month: string): Promise<BudgetAnalysis> => {
+  const response = await apiClient.get<BudgetAnalysis>('/Transactions/budget-analysis', { params: { month } });
+  return response.data;
 };
 
 // Unused export kept for CategoryType import consumers
