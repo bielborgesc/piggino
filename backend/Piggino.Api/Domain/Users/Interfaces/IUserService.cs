@@ -11,5 +11,8 @@ namespace Piggino.Api.Domain.Users.Interfaces
         Task<bool> UpdateAsync(Guid id, UserUpdateDto dto);
         Task<bool> DeleteAsync(Guid id);
         Task<bool> UpdatePasswordAsync(Guid id, UserPasswordUpdateDto dto);
+        Task<(bool Success, string? Error)> ChangePasswordAsync(Guid userId, ChangePasswordDto dto);
+        Task<(bool Success, string? Token, string? Error)> ForgotPasswordAsync(ForgotPasswordDto dto);
+        Task<(bool Success, string? Error)> ResetPasswordAsync(ResetPasswordDto dto);
     }
 }

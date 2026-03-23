@@ -32,6 +32,10 @@ namespace Piggino.Api.Domain.Users.Entities
 
         public DateTime? RefreshTokenExpiry { get; set; }
 
+        public string? PasswordResetToken { get; set; }
+
+        public DateTime? PasswordResetTokenExpiry { get; set; }
+
         public ICollection<FinancialSource>? FinancialSources { get; set; }
         public ICollection<Category>? Categories { get; set; }
         public ICollection<Transaction>? Transactions { get; set; }

@@ -53,6 +53,11 @@ namespace Piggino.Api.Infrastructure.Repositories
             return await _context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
         }
 
+        public async Task<User?> GetUserByPasswordResetTokenAsync(string token)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == token);
+        }
+
         public async Task<IEnumerable<User>> GetAllUsersAsync()
         {
             return await _context.Users.ToListAsync();

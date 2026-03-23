@@ -39,8 +39,15 @@ namespace Piggino.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<UserReadDto>> Post(UserCreateDto dto)
         {
-            UserReadDto createdUser = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(Get), new { id = createdUser.Id }, createdUser);
+            try
+            {
+                UserReadDto createdUser = await _service.CreateAsync(dto);
+                return CreatedAtAction(nameof(Get), new { id = createdUser.Id }, createdUser);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id:guid}")]

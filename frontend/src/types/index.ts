@@ -62,6 +62,28 @@ export interface UserRegistrationData {
   name: string;
   email: string;
   password: string;
+  confirmPassword: string;
+}
+
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
+export interface ForgotPasswordData {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+  token: string;
+}
+
+export interface ResetPasswordData {
+  token: string;
+  newPassword: string;
+  confirmNewPassword: string;
 }
 
 export interface UserLoginData {

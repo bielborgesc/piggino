@@ -10,6 +10,7 @@ import { InvoicePage } from './components/InvoicePage';
 import { FixedBillsPage } from './components/FixedBillsPage';
 import { SimulationPage } from './components/SimulationPage';
 import { MainLayout } from './components/MainLayout';
+import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { useAuth } from './hooks/useAuth';
 
 enum AuthView { Login, Register }
@@ -21,6 +22,7 @@ function App() {
   const { isAuthenticated, onLoginSuccess, onLogout } = useAuth();
   const [authView, setAuthView] = useState<AuthView>(AuthView.Login);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState<boolean>(false);
 
   const handleLoginSuccess = () => {
     setCurrentPage('dashboard');
@@ -30,10 +32,17 @@ function App() {
     return (
       <>
         <Toaster position="top-right" toastOptions={toastStyles} />
+        {isChangePasswordOpen && (
+          <ChangePasswordModal
+            onClose={() => setIsChangePasswordOpen(false)}
+            onLogout={onLogout}
+          />
+        )}
         <MainLayout
           activePage={currentPage}
           onNavigate={setCurrentPage}
           onLogout={onLogout}
+          onChangePassword={() => setIsChangePasswordOpen(true)}
         >
           {currentPage === 'dashboard' && <Dashboard />}
           {currentPage === 'transactions' && <TransactionsPage />}

@@ -104,8 +104,9 @@ export function TransactionsPage() {
             setCategories(categoriesData);
             setFinancialSources(sourcesData);
 
-        } catch (error) {
-            toast.error("Não foi possível carregar os dados da página.");
+        } catch (fetchError) {
+            const message = extractErrorMessage(fetchError, 'Não foi possível carregar os dados da página.');
+            toast.error(message);
         } finally {
             setIsLoading(false);
         }
@@ -184,8 +185,9 @@ export function TransactionsPage() {
             // Apenas recarrega os dados para refletir a mudança
             const data = await getTransactions();
             setAllTransactions(data);
-        } catch (error) {
-            toast.error("Não foi possível atualizar o status.", { id: toastId });
+        } catch (toggleError) {
+            const message = extractErrorMessage(toggleError, 'Não foi possível atualizar o status.');
+            toast.error(message, { id: toastId });
         }
     };
     
@@ -256,8 +258,9 @@ export function TransactionsPage() {
             await deleteTransaction(id, scope);
             toast.success('Transação excluída!', { id: toastId });
             fetchPageData();
-        } catch (error) {
-            toast.error('Falha ao excluir a transação.', { id: toastId });
+        } catch (deleteError) {
+            const message = extractErrorMessage(deleteError, 'Falha ao excluir a transação.');
+            toast.error(message, { id: toastId });
         }
     };
 
@@ -288,8 +291,9 @@ export function TransactionsPage() {
             await deleteInstallmentsByScope(transactionId, installmentNumber, scope);
             toast.success('Parcelas excluídas!', { id: toastId });
             fetchPageData();
-        } catch (error) {
-            toast.error('Falha ao excluir as parcelas.', { id: toastId });
+        } catch (deleteError) {
+            const message = extractErrorMessage(deleteError, 'Falha ao excluir as parcelas.');
+            toast.error(message, { id: toastId });
         }
     };
 
@@ -329,8 +333,9 @@ export function TransactionsPage() {
             await settleInstallments(transactionId);
             toast.success('Parcelas quitadas com sucesso!', { id: toastId });
             fetchPageData();
-        } catch {
-            toast.error('Nao foi possivel quitar as parcelas.', { id: toastId });
+        } catch (settleError) {
+            const message = extractErrorMessage(settleError, 'Não foi possível quitar as parcelas.');
+            toast.error(message, { id: toastId });
         } finally {
             setSettlingId(null);
         }

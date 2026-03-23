@@ -16,6 +16,10 @@ import {
   AuthTokens,
   RefreshTokenData,
   Simulation,
+  ChangePasswordData,
+  ForgotPasswordData,
+  ForgotPasswordResponse,
+  ResetPasswordData,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -153,6 +157,19 @@ export const refreshAccessToken = async (data: RefreshTokenData): Promise<AuthTo
 
 export const logoutUser = async (): Promise<void> => {
   await apiClient.post('/Auth/logout');
+};
+
+export const changePassword = async (data: ChangePasswordData): Promise<void> => {
+  await apiClient.post('/Auth/change-password', data);
+};
+
+export const forgotPassword = async (data: ForgotPasswordData): Promise<ForgotPasswordResponse> => {
+  const response = await apiClient.post<ForgotPasswordResponse>('/Auth/forgot-password', data);
+  return response.data;
+};
+
+export const resetPassword = async (data: ResetPasswordData): Promise<void> => {
+  await apiClient.post('/Auth/reset-password', data);
 };
 
 // --- Transactions API ---

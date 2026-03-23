@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck, Calculator } from 'lucide-react';
+import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck, Calculator, KeyRound } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../types';
 import { getAccessToken } from '../services/api';
@@ -11,6 +11,7 @@ interface MainLayoutProps {
   activePage: PageType;
   onNavigate: (page: PageType) => void;
   onLogout: () => Promise<void>;
+  onChangePassword: () => void;
 }
 // Sidebar permanece o mesmo, mas agora fecha ao navegar
 function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNavigate: (page: PageType) => void; onClose: () => void; }) {
@@ -76,13 +77,27 @@ function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNa
           <CalendarCheck className="h-5 w-5" />
           Contas Fixas
         </button>
+        <button
+          onClick={() => handleNavigation('simulation')}
+          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'simulation' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
+        >
+          <Calculator className="h-5 w-5" />
+          Simulacao
+        </button>
       </nav>
     </aside>
   );
 }
 
-// 2. Header agora recebe onLogout
-function Header({ onOpenSidebar, onLogout }: { onOpenSidebar: () => void; onLogout: () => Promise<void>; }) {
+function Header({
+  onOpenSidebar,
+  onLogout,
+  onChangePassword,
+}: {
+  onOpenSidebar: () => void;
+  onLogout: () => Promise<void>;
+  onChangePassword: () => void;
+}) {
     const [userName, setUserName] = useState('Usuário');
 
     useEffect(() => {
@@ -109,8 +124,15 @@ function Header({ onOpenSidebar, onLogout }: { onOpenSidebar: () => void; onLogo
                 <p className="text-slate-400 text-sm sm:text-base">Bem-vindo de volta.</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            {/* 3. Conecte a função ao onClick do botão */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button
+              onClick={onChangePassword}
+              className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors"
+              aria-label="Alterar senha"
+            >
+              <KeyRound className="h-5 w-5" />
+              <span className="hidden sm:inline">Alterar senha</span>
+            </button>
             <button onClick={onLogout} className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
                 <LogOut className="h-5 w-5 hidden sm:block" />
                 <span>Sair</span>
@@ -120,7 +142,7 @@ function Header({ onOpenSidebar, onLogout }: { onOpenSidebar: () => void; onLogo
       );
 }
 
-export function MainLayout({ children, activePage, onNavigate, onLogout }: MainLayoutProps) {
+export function MainLayout({ children, activePage, onNavigate, onLogout, onChangePassword }: MainLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -132,10 +154,13 @@ export function MainLayout({ children, activePage, onNavigate, onLogout }: MainL
         <div className="hidden md:flex">
             <Sidebar activePage={activePage} onNavigate={onNavigate} onClose={() => {}} />
         </div>
-      
+
       <main className="flex-1 flex flex-col">
-        {/* 4. Passe a função onLogout para o Header */}
-        <Header onOpenSidebar={() => setIsSidebarOpen(true)} onLogout={onLogout} />
+        <Header
+          onOpenSidebar={() => setIsSidebarOpen(true)}
+          onLogout={onLogout}
+          onChangePassword={onChangePassword}
+        />
         {children}
       </main>
     </div>

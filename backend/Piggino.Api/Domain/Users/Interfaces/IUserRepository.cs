@@ -8,6 +8,7 @@ namespace Piggino.Api.Domain.Users.Interfaces
         Task<User?> GetUserByIdAsync(Guid id);
         Task<User?> GetUserByEmailAsync(string email);
         Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
+        Task<User?> GetUserByPasswordResetTokenAsync(string token);
         Task<IEnumerable<User>> GetAllUsersAsync();
         Task UpdateUserAsync(User user);
         Task<bool> DeleteUserAsync(Guid id);

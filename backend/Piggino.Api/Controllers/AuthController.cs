@@ -16,11 +16,13 @@ namespace Piggino.Api.Controllers
 
         private readonly IUserRepository _userRepository;
         private readonly ITokenService _tokenService;
+        private readonly IUserService _userService;
 
-        public AuthController(IUserRepository userRepository, ITokenService tokenService)
+        public AuthController(IUserRepository userRepository, ITokenService tokenService, IUserService userService)
         {
             _userRepository = userRepository;
             _tokenService = tokenService;
+            _userService = userService;
         }
 
         [HttpPost("login")]
@@ -70,6 +72,45 @@ namespace Piggino.Api.Controllers
             user.RefreshToken = null;
             user.RefreshTokenExpiry = null;
             await _userRepository.UpdateUserAsync(user);
+
+            return NoContent();
+        }
+
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            string? userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (!Guid.TryParse(userIdClaim, out Guid userId))
+                return Unauthorized();
+
+            (bool success, string? error) = await _userService.ChangePasswordAsync(userId, dto);
+
+            if (!success)
+                return BadRequest(new { message = error });
+
+            return NoContent();
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            (bool success, string? token, string? error) = await _userService.ForgotPasswordAsync(dto);
+
+            if (!success)
+                return BadRequest(new { message = error });
+
+            return Ok(new { message = MessageProvider.Get("PasswordResetTokenGenerated"), token });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            (bool success, string? error) = await _userService.ResetPasswordAsync(dto);
+
+            if (!success)
+                return BadRequest(new { message = error });
 
             return NoContent();
         }

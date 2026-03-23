@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Piggino.Api.Data;
 
@@ -10,9 +11,11 @@ using Piggino.Api.Data;
 namespace Piggino.Api.Migrations
 {
     [DbContext(typeof(PigginoDbContext))]
-    partial class PigginoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260323010322_AddPasswordResetTokenToUser")]
+    partial class AddPasswordResetTokenToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
