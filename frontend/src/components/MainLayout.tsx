@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../types';
+import { getAccessToken } from '../services/api';
 
 type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills';
 
@@ -9,7 +10,7 @@ interface MainLayoutProps {
   children: React.ReactNode;
   activePage: PageType;
   onNavigate: (page: PageType) => void;
-  onLogout: () => void;
+  onLogout: () => Promise<void>;
 }
 // Sidebar permanece o mesmo, mas agora fecha ao navegar
 function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNavigate: (page: PageType) => void; onClose: () => void; }) {
@@ -81,11 +82,11 @@ function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNa
 }
 
 // 2. Header agora recebe onLogout
-function Header({ onOpenSidebar, onLogout }: { onOpenSidebar: () => void; onLogout: () => void; }) {
+function Header({ onOpenSidebar, onLogout }: { onOpenSidebar: () => void; onLogout: () => Promise<void>; }) {
     const [userName, setUserName] = useState('Usuário');
 
     useEffect(() => {
-      const token = localStorage.getItem('piggino_token');
+      const token = getAccessToken();
       if (token) {
         try {
           const decoded = jwtDecode<TokenPayload>(token);

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import {
   Transaction,
   Category,
@@ -12,10 +12,37 @@ import {
   RecurrenceScope,
   Invoice,
   MonthlyFixedBills,
-  DashboardSummary
+  DashboardSummary,
+  AuthTokens,
+  RefreshTokenData,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+const ACCESS_TOKEN_KEY = 'piggino_token';
+const REFRESH_TOKEN_KEY = 'piggino_refresh_token';
+
+// --- Token storage helpers ---
+
+export function getAccessToken(): string | null {
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+export function getRefreshToken(): string | null {
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+export function storeTokens(tokens: AuthTokens): void {
+  localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
+  localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+}
+
+export function clearTokens(): void {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
+// --- Axios instance ---
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -24,82 +51,119 @@ const apiClient = axios.create({
   },
 });
 
+// --- Request interceptor: attach access token ---
+
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('piggino_token');
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
+  (error: AxiosError) => Promise.reject(error)
+);
+
+// --- Token refresh state (prevents concurrent refresh storms) ---
+
+let isRefreshing = false;
+let pendingRequests: Array<(token: string) => void> = [];
+
+function drainPendingRequests(newToken: string): void {
+  pendingRequests.forEach((resolve) => resolve(newToken));
+  pendingRequests = [];
+}
+
+function rejectPendingRequests(): void {
+  pendingRequests.forEach((resolve) => resolve(''));
+  pendingRequests = [];
+}
+
+// --- Response interceptor: handle 401 with token refresh ---
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retried?: boolean };
+
+    const isUnauthorized = error.response?.status === 401;
+    const isRefreshEndpoint = originalRequest.url?.includes('/Auth/refresh');
+    const alreadyRetried = originalRequest._retried === true;
+
+    if (!isUnauthorized || isRefreshEndpoint || alreadyRetried) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retried = true;
+
+    if (isRefreshing) {
+      return new Promise<string>((resolve) => {
+        pendingRequests.push(resolve);
+      }).then((newToken) => {
+        if (!newToken) return Promise.reject(error);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return apiClient(originalRequest);
+      });
+    }
+
+    isRefreshing = true;
+
+    const storedRefreshToken = getRefreshToken();
+    if (!storedRefreshToken) {
+      isRefreshing = false;
+      rejectPendingRequests();
+      clearTokens();
+      window.dispatchEvent(new Event('piggino:auth-expired'));
+      return Promise.reject(error);
+    }
+
+    try {
+      const tokens = await refreshAccessToken({ refreshToken: storedRefreshToken });
+      storeTokens(tokens);
+      drainPendingRequests(tokens.accessToken);
+      originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`;
+      return apiClient(originalRequest);
+    } catch {
+      rejectPendingRequests();
+      clearTokens();
+      window.dispatchEvent(new Event('piggino:auth-expired'));
+      return Promise.reject(error);
+    } finally {
+      isRefreshing = false;
+    }
   }
 );
 
-// --- Funções da API de Autenticação (permanecem as mesmas) ---
-export const registerUser = async (userData: UserRegistrationData) => {
-  const response = await apiClient.post('/User', userData);
+// --- Auth API ---
+
+export const registerUser = async (userData: UserRegistrationData): Promise<void> => {
+  await apiClient.post('/User', userData);
+};
+
+export const loginUser = async (userData: UserLoginData): Promise<AuthTokens> => {
+  const response = await apiClient.post<AuthTokens>('/Auth/login', userData);
   return response.data;
 };
 
-export const loginUser = async (userData: UserLoginData) => {
-  const response = await apiClient.post('/Auth/login', userData);
+export const refreshAccessToken = async (data: RefreshTokenData): Promise<AuthTokens> => {
+  const response = await apiClient.post<AuthTokens>('/Auth/refresh', data);
   return response.data;
 };
 
-// --- Funções da API de Transações ---
+export const logoutUser = async (): Promise<void> => {
+  await apiClient.post('/Auth/logout');
+};
+
+// --- Transactions API ---
+
 export const getTransactions = async (): Promise<Transaction[]> => {
-  const response = await apiClient.get('/Transactions');
+  const response = await apiClient.get<Transaction[]>('/Transactions');
   return response.data;
 };
 
-// ✅ NOVA IMPLEMENTAÇÃO
 export const createTransaction = async (transactionData: TransactionData): Promise<Transaction> => {
-  const response = await apiClient.post('/Transactions', transactionData);
+  const response = await apiClient.post<Transaction>('/Transactions', transactionData);
   return response.data;
-};
-
-
-// --- Funções da API de Categorias e Fontes ---
-// ✅ NOVA IMPLEMENTAÇÃO
-export const getCategories = async (): Promise<Category[]> => {
-  const response = await apiClient.get('/Categories');
-  return response.data;
-};
-
-export const createCategory = async (categoryData: CategoryData): Promise<Category> => {
-  const response = await apiClient.post('/Categories', categoryData);
-  return response.data;
-};
-
-export const updateCategory = async (id: number, categoryData: CategoryData): Promise<void> => {
-  await apiClient.put(`/Categories/${id}`, categoryData);
-};
-
-// ✅ NOVA FUNÇÃO
-export const deleteCategory = async (id: number): Promise<void> => {
-  await apiClient.delete(`/Categories/${id}`);
-};
-
-
-// ✅ NOVA IMPLEMENTAÇÃO
-export const getFinancialSources = async (): Promise<FinancialSource[]> => {
-  const response = await apiClient.get('/FinancialSources');
-  return response.data;
-};
-
-export const createFinancialSource = async (data: FinancialSourceData): Promise<FinancialSource> => {
-  const response = await apiClient.post('/FinancialSources', data);
-  return response.data;
-};
-
-export const updateFinancialSource = async (id: number, data: FinancialSourceData): Promise<void> => {
-  await apiClient.put(`/FinancialSources/${id}`, data);
-};
-
-export const deleteFinancialSource = async (id: number): Promise<void> => {
-  await apiClient.delete(`/FinancialSources/${id}`);
 };
 
 export const updateTransaction = async (id: number, transactionData: TransactionData): Promise<void> => {
@@ -140,7 +204,7 @@ export const toggleTransactionPaidStatus = async (transactionId: number): Promis
 };
 
 export const getInvoice = async (financialSourceId: number, month: string): Promise<Invoice> => {
-  const response = await apiClient.get('/Transactions/invoices', {
+  const response = await apiClient.get<Invoice>('/Transactions/invoices', {
     params: { financialSourceId, month },
   });
   return response.data;
@@ -153,7 +217,7 @@ export const payInvoice = async (financialSourceId: number, month: string): Prom
 };
 
 export const getFixedBills = async (month: string): Promise<MonthlyFixedBills> => {
-  const response = await apiClient.get('/Transactions/fixed-bills', { params: { month } });
+  const response = await apiClient.get<MonthlyFixedBills>('/Transactions/fixed-bills', { params: { month } });
   return response.data;
 };
 
@@ -170,8 +234,51 @@ export const unpayFixedBill = async (transactionId: number, month: string): Prom
 };
 
 export const getDashboardSummary = async (months = 6): Promise<DashboardSummary> => {
-  const response = await apiClient.get('/Transactions/summary', { params: { months } });
+  const response = await apiClient.get<DashboardSummary>('/Transactions/summary', { params: { months } });
   return response.data;
 };
+
+// --- Categories API ---
+
+export const getCategories = async (): Promise<Category[]> => {
+  const response = await apiClient.get<Category[]>('/Categories');
+  return response.data;
+};
+
+export const createCategory = async (categoryData: CategoryData): Promise<Category> => {
+  const response = await apiClient.post<Category>('/Categories', categoryData);
+  return response.data;
+};
+
+export const updateCategory = async (id: number, categoryData: CategoryData): Promise<void> => {
+  await apiClient.put(`/Categories/${id}`, categoryData);
+};
+
+export const deleteCategory = async (id: number): Promise<void> => {
+  await apiClient.delete(`/Categories/${id}`);
+};
+
+// --- Financial Sources API ---
+
+export const getFinancialSources = async (): Promise<FinancialSource[]> => {
+  const response = await apiClient.get<FinancialSource[]>('/FinancialSources');
+  return response.data;
+};
+
+export const createFinancialSource = async (data: FinancialSourceData): Promise<FinancialSource> => {
+  const response = await apiClient.post<FinancialSource>('/FinancialSources', data);
+  return response.data;
+};
+
+export const updateFinancialSource = async (id: number, data: FinancialSourceData): Promise<void> => {
+  await apiClient.put(`/FinancialSources/${id}`, data);
+};
+
+export const deleteFinancialSource = async (id: number): Promise<void> => {
+  await apiClient.delete(`/FinancialSources/${id}`);
+};
+
+// Unused export kept for CategoryType import consumers
+export type { CategoryType };
 
 export default apiClient;

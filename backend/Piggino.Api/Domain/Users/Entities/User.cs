@@ -28,6 +28,10 @@ namespace Piggino.Api.Domain.Users.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        public string? RefreshToken { get; set; }
+
+        public DateTime? RefreshTokenExpiry { get; set; }
+
         public ICollection<FinancialSource>? FinancialSources { get; set; }
         public ICollection<Category>? Categories { get; set; }
         public ICollection<Transaction>? Transactions { get; set; }

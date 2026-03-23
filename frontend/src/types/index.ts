@@ -69,6 +69,15 @@ export interface UserLoginData {
   password: string;
 }
 
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface RefreshTokenData {
+  refreshToken: string;
+}
+
 export interface CategoryData {
   name: string;
   type: CategoryType;

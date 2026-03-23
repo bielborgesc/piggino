@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
@@ -9,48 +9,31 @@ import { FinancialSourcesPage } from './components/FinancialSourcesPage';
 import { InvoicePage } from './components/InvoicePage';
 import { FixedBillsPage } from './components/FixedBillsPage';
 import { MainLayout } from './components/MainLayout';
+import { useAuth } from './hooks/useAuth';
 
 enum AuthView { Login, Register }
 type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills';
 
+const toastStyles = { style: { background: '#334155', color: '#f1f5f9' } };
+
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('piggino_token'));
+  const { isAuthenticated, onLoginSuccess, onLogout } = useAuth();
   const [authView, setAuthView] = useState<AuthView>(AuthView.Login);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setIsAuthenticated(!!localStorage.getItem('piggino_token'));
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
   const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-    setCurrentPage('dashboard'); // Volta para o dashboard após o login
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('piggino_token');
-    setIsAuthenticated(false);
-    setAuthView(AuthView.Login); 
+    setCurrentPage('dashboard');
   };
 
   if (isAuthenticated) {
     return (
       <>
-        <Toaster position="top-right" toastOptions={{
-          style: { background: '#334155', color: '#f1f5f9' },
-        }} />
-        <MainLayout 
-          activePage={currentPage} 
+        <Toaster position="top-right" toastOptions={toastStyles} />
+        <MainLayout
+          activePage={currentPage}
           onNavigate={setCurrentPage}
-          onLogout={handleLogout}
+          onLogout={onLogout}
         >
-          {/* ✅ 3. O seu bloco de renderização, que já está correto */}
           {currentPage === 'dashboard' && <Dashboard />}
           {currentPage === 'transactions' && <TransactionsPage />}
           {currentPage === 'categories' && <CategoriesPage />}
@@ -64,17 +47,18 @@ function App() {
 
   return (
     <div className="bg-slate-900 min-h-screen flex items-center justify-center p-4 font-sans">
-      <Toaster position="top-right" toastOptions={{
-          style: { background: '#334155', color: '#f1f5f9' },
-        }} />
+      <Toaster position="top-right" toastOptions={toastStyles} />
       {authView === AuthView.Login ? (
-        <LoginForm 
-          onLoginSuccess={handleLoginSuccess}
-          onNavigateToRegister={() => setAuthView(AuthView.Register)} 
+        <LoginForm
+          onLoginSuccess={(tokens) => {
+            onLoginSuccess(tokens);
+            handleLoginSuccess();
+          }}
+          onNavigateToRegister={() => setAuthView(AuthView.Register)}
         />
       ) : (
-        <RegisterForm 
-          onNavigateToLogin={() => setAuthView(AuthView.Login)} 
+        <RegisterForm
+          onNavigateToLogin={() => setAuthView(AuthView.Login)}
         />
       )}
     </div>

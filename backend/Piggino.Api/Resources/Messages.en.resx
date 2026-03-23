@@ -126,6 +126,9 @@
   <data name="InvalidCredentialsOrUserNotFound" xml:space="preserve">
     <value>Incorrect current password or user not found.</value>
   </data>
+  <data name="InvalidOrExpiredRefreshToken" xml:space="preserve">
+    <value>Invalid or expired refresh token.</value>
+  </data>
   <data name="NameLength" xml:space="preserve">
     <value>The name must be between {2} and {1} characters long.</value>
   </data>
