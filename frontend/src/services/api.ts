@@ -25,6 +25,9 @@ import {
   Goal,
   GoalData,
   AddContributionData,
+  DebtSummary,
+  HealthScore,
+  TipsData,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -270,6 +273,11 @@ export const getSimulation = async (): Promise<Simulation> => {
   return response.data;
 };
 
+export const getDebtSummary = async (): Promise<DebtSummary> => {
+  const response = await apiClient.get<DebtSummary>('/Transactions/debt-summary');
+  return response.data;
+};
+
 // --- Categories API ---
 
 export const getCategories = async (): Promise<Category[]> => {
@@ -356,6 +364,18 @@ export const deleteGoal = async (id: number): Promise<void> => {
 
 export const addContribution = async (id: number, data: AddContributionData): Promise<Goal> => {
   const response = await apiClient.post<Goal>(`/Goals/${id}/contribute`, data);
+  return response.data;
+};
+
+// --- Analytics API ---
+
+export const getHealthScore = async (): Promise<HealthScore> => {
+  const response = await apiClient.get<HealthScore>('/Transactions/health-score');
+  return response.data;
+};
+
+export const getTips = async (): Promise<TipsData> => {
+  const response = await apiClient.get<TipsData>('/Transactions/tips');
   return response.data;
 };
 

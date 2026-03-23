@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck, Calculator, KeyRound, Settings, Target } from 'lucide-react';
+import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck, Calculator, KeyRound, Settings, Target, TrendingUp, CreditCard } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../../types';
 import { getAccessToken } from '../../services/api';
 
-type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation' | 'goals';
+type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation' | 'goals' | 'projection' | 'debts';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -88,6 +88,20 @@ function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNa
         >
           <Target className="h-5 w-5" />
           Metas
+        </button>
+        <button
+          onClick={() => handleNavigation('projection')}
+          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'projection' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
+        >
+          <TrendingUp className="h-5 w-5" />
+          Projecao
+        </button>
+        <button
+          onClick={() => handleNavigation('debts')}
+          className={`flex items-center gap-3 px-4 py-2 rounded-lg font-semibold transition-colors w-full text-left ${activePage === 'debts' ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
+        >
+          <CreditCard className="h-5 w-5" />
+          Dividas
         </button>
       </nav>
     </aside>

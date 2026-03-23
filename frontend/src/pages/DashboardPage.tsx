@@ -18,13 +18,15 @@ import {
   TooltipProps,
 } from 'recharts';
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
-import { LoaderCircle, TrendingUp, TrendingDown, Scale, AlertCircle, ChevronLeft, ChevronRight, Target, X } from 'lucide-react';
+import { LoaderCircle, TrendingUp, TrendingDown, Scale, AlertCircle, ChevronLeft, ChevronRight, Target, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { TransactionModal } from '../components/features/transactions/TransactionModal';
 import { useDashboard } from '../hooks/useDashboard';
 import { useBudgetAnalysis } from '../hooks/useBudgetAnalysis';
 import { useGoals } from '../hooks/useGoals';
+import { useHealthScore } from '../hooks/useHealthScore';
+import { useContextualTips } from '../hooks/useContextualTips';
 import { getCategories, getUserSettings } from '../services/api';
-import { Category, MonthlySummary, CategoryExpense, TopExpense, BudgetAnalysis, BucketCategoryBreakdown, Goal } from '../types';
+import { Category, MonthlySummary, CategoryExpense, TopExpense, BudgetAnalysis, BucketCategoryBreakdown, Goal, HealthScore, ContextualTip } from '../types';
 import { formatBRL } from '../utils/formatters';
 
 const MONTH_COUNT = 6;

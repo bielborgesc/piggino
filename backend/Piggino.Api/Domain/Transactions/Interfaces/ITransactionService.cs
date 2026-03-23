@@ -24,5 +24,8 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         Task<bool> SettleInstallmentsAsync(int transactionId);
         Task<SimulationReadDto> GetSimulationAsync();
         Task<BudgetAnalysisDto> GetBudgetAnalysisAsync(int year, int month);
+        Task<DebtSummaryDto> GetDebtSummaryAsync();
+        Task<HealthScoreDto> GetHealthScoreAsync();
+        Task<TipsDto> GetContextualTipsAsync();
     }
 }

@@ -10,6 +10,10 @@ namespace Piggino.Api.Domain.Transactions.Dtos
         public decimal CurrentMonthBalance { get; set; }
         public int PendingFixedBills { get; set; }
         public decimal PendingInvoiceAmount { get; set; }
+        public decimal PreviousMonthExpenses { get; set; }
+        public decimal PreviousMonthIncome { get; set; }
+        public decimal ExpensesChangePercent { get; set; }
+        public decimal IncomeChangePercent { get; set; }
     }
 
     public class MonthlySummaryDto

@@ -3,6 +3,7 @@ using Piggino.Api.Domain.CardInstallments.Entities;
 using Piggino.Api.Domain.Categories.Interfaces;
 using Piggino.Api.Domain.FinancialSources.Entities;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
+using Piggino.Api.Domain.Goals.Interfaces;
 using Piggino.Api.Domain.Transactions.Dtos;
 using Piggino.Api.Domain.Transactions.Entities;
 using Piggino.Api.Domain.Transactions.Interfaces;
@@ -23,17 +24,20 @@ namespace Piggino.Api.Domain.Transactions.Services
         private readonly IFinancialSourceRepository _financialSourceRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IGoalRepository _goalRepository;
 
         public TransactionService(
             ITransactionRepository transactionRepository,
             IFinancialSourceRepository financialSourceRepository,
             ICategoryRepository categoryRepository,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IGoalRepository goalRepository)
         {
             _transactionRepository = transactionRepository;
             _financialSourceRepository = financialSourceRepository;
             _categoryRepository = categoryRepository;
             _httpContextAccessor = httpContextAccessor;
+            _goalRepository = goalRepository;
         }
 
         public async Task<TransactionReadDto> CreateAsync(TransactionCreateDto createDto)
@@ -359,6 +363,11 @@ namespace Piggino.Api.Domain.Transactions.Services
             int pendingFixedBills = await CountPendingFixedBillsAsync(currentYear, currentMonth);
             decimal pendingInvoiceAmount = await SumPendingInvoiceAmountAsync(currentYear, currentMonth);
 
+            decimal previousMonthIncome = SumByTypeForMonth(allProjected, TransactionType.Income, now.AddMonths(-1).Year, now.AddMonths(-1).Month);
+            decimal previousMonthExpenses = SumByTypeForMonth(allProjected, TransactionType.Expense, now.AddMonths(-1).Year, now.AddMonths(-1).Month);
+            decimal incomeChangePercent = previousMonthIncome > 0 ? Math.Round((currentMonthIncome - previousMonthIncome) / previousMonthIncome * 100, 1) : 0;
+            decimal expensesChangePercent = previousMonthExpenses > 0 ? Math.Round((currentMonthExpenses - previousMonthExpenses) / previousMonthExpenses * 100, 1) : 0;
+
             return new DashboardSummaryDto
             {
                 MonthlySummaries = monthlySummaries,
@@ -368,7 +377,11 @@ namespace Piggino.Api.Domain.Transactions.Services
                 CurrentMonthExpenses = currentMonthExpenses,
                 CurrentMonthBalance = currentMonthBalance,
                 PendingFixedBills = pendingFixedBills,
-                PendingInvoiceAmount = pendingInvoiceAmount
+                PendingInvoiceAmount = pendingInvoiceAmount,
+                PreviousMonthIncome = previousMonthIncome,
+                PreviousMonthExpenses = previousMonthExpenses,
+                IncomeChangePercent = incomeChangePercent,
+                ExpensesChangePercent = expensesChangePercent
             };
         }
 
@@ -1141,6 +1154,574 @@ namespace Piggino.Api.Domain.Transactions.Services
         {
             int daysInMonth = DateTime.DaysInMonth(year, month);
             return new DateTime(year, month, Math.Min(day, daysInMonth), 0, 0, 0, DateTimeKind.Utc);
+        }
+
+        // --- Debt Summary ---
+
+        public async Task<DebtSummaryDto> GetDebtSummaryAsync()
+        {
+            Guid userId = GetCurrentUserId();
+
+            IEnumerable<Transaction> activeTransactions = await _transactionRepository
+                .GetActiveInstallmentTransactionsAsync(userId);
+
+            List<DebtItemDto> unsorted = activeTransactions
+                .Select(MapToDebtItemDto)
+                .ToList();
+
+            List<DebtItemDto> avalancheRanked = unsorted
+                .OrderByDescending(d => d.MonthlyPayment)
+                .ToList();
+
+            List<DebtItemDto> snowballRanked = unsorted
+                .OrderBy(d => d.TotalRemaining)
+                .ToList();
+
+            for (int index = 0; index < avalancheRanked.Count; index++)
+                avalancheRanked[index].Priority_Avalanche = index + 1;
+
+            for (int index = 0; index < snowballRanked.Count; index++)
+                snowballRanked[index].Priority_Snowball = index + 1;
+
+            decimal totalDebt = unsorted.Sum(d => d.TotalRemaining);
+            decimal totalMonthlyPayment = unsorted.Sum(d => d.MonthlyPayment);
+
+            int estimatedMonthsToFreedom = totalMonthlyPayment > 0
+                ? (int)Math.Ceiling(totalDebt / totalMonthlyPayment)
+                : 0;
+
+            return new DebtSummaryDto
+            {
+                Debts = unsorted,
+                TotalDebt = totalDebt,
+                TotalMonthlyPayment = totalMonthlyPayment,
+                EstimatedMonthsToFreedom = estimatedMonthsToFreedom
+            };
+        }
+
+        private static DebtItemDto MapToDebtItemDto(Transaction transaction)
+        {
+            ICollection<CardInstallment> installments = transaction.CardInstallments!;
+
+            int paidCount = installments.Count(i => i.IsPaid);
+            int totalCount = transaction.InstallmentCount ?? installments.Count;
+            int remainingCount = totalCount - paidCount;
+
+            decimal monthlyPayment = totalCount > 0
+                ? transaction.TotalAmount / totalCount
+                : transaction.TotalAmount;
+
+            decimal totalRemaining = monthlyPayment * remainingCount;
+
+            DateTime? nextDue = installments
+                .Where(i => !i.IsPaid)
+                .OrderBy(i => i.DueDate)
+                .Select(i => (DateTime?)i.DueDate)
+                .FirstOrDefault();
+
+            return new DebtItemDto
+            {
+                TransactionId = transaction.Id,
+                Description = transaction.Description ?? string.Empty,
+                FinancialSourceName = transaction.FinancialSource?.Name ?? string.Empty,
+                TotalRemaining = totalRemaining,
+                MonthlyPayment = monthlyPayment,
+                TotalInstallments = totalCount,
+                RemainingInstallments = remainingCount,
+                NextDueDate = nextDue.HasValue ? nextDue.Value.ToString("yyyy-MM-dd") : null
+            };
+        }
+
+        // --- Health Score ---
+
+        private const int HealthScoreComponentMaxPoints = 25;
+
+        public async Task<HealthScoreDto> GetHealthScoreAsync()
+        {
+            Guid userId = GetCurrentUserId();
+            IEnumerable<TransactionReadDto> allProjected = await GetAllAsync();
+
+            DateTime now = DateTime.UtcNow;
+            int currentYear = now.Year;
+            int currentMonth = now.Month;
+
+            decimal income = SumByTypeForMonth(allProjected, TransactionType.Income, currentYear, currentMonth);
+            decimal expenses = SumByTypeForMonth(allProjected, TransactionType.Expense, currentYear, currentMonth);
+
+            HealthScoreComponent savingsComponent = ScoreSavingsRate(income, expenses);
+            HealthScoreComponent fixedBillsComponent = ScoreFixedBillsControl(allProjected, income, currentYear, currentMonth);
+            HealthScoreComponent consistencyComponent = ScoreSpendingConsistency(allProjected, expenses, now);
+            HealthScoreComponent goalComponent = await ScoreGoalProgressAsync(userId);
+
+            List<HealthScoreComponent> components = new List<HealthScoreComponent>
+            {
+                savingsComponent,
+                fixedBillsComponent,
+                consistencyComponent,
+                goalComponent
+            };
+
+            int totalScore = components.Sum(c => c.Score);
+            string grade = ResolveGrade(totalScore);
+            string gradeLabel = ResolveGradeLabel(grade);
+
+            List<string> strengths = BuildStrengthsList(savingsComponent, fixedBillsComponent, consistencyComponent, goalComponent);
+            List<string> warnings = BuildWarningsList(savingsComponent, fixedBillsComponent, consistencyComponent, goalComponent);
+
+            return new HealthScoreDto
+            {
+                Score = totalScore,
+                Grade = grade,
+                GradeLabel = gradeLabel,
+                Components = components,
+                Strengths = strengths,
+                Warnings = warnings
+            };
+        }
+
+        private static HealthScoreComponent ScoreSavingsRate(decimal income, decimal expenses)
+        {
+            if (income <= 0)
+            {
+                return new HealthScoreComponent
+                {
+                    Name = "Taxa de Poupanca",
+                    Score = 0,
+                    MaxScore = HealthScoreComponentMaxPoints,
+                    Description = "Sem renda registrada este mes."
+                };
+            }
+
+            decimal savingsRate = (income - expenses) / income;
+
+            int score = savingsRate switch
+            {
+                >= 0.20m => 25,
+                >= 0.15m => 20,
+                >= 0.10m => 15,
+                >= 0.05m => 10,
+                > 0m     =>  5,
+                _        =>  0
+            };
+
+            decimal ratePercent = Math.Round(savingsRate * 100, 1);
+
+            return new HealthScoreComponent
+            {
+                Name = "Taxa de Poupanca",
+                Score = score,
+                MaxScore = HealthScoreComponentMaxPoints,
+                Description = $"Voce poupou {ratePercent}% da sua renda este mes."
+            };
+        }
+
+        private static HealthScoreComponent ScoreFixedBillsControl(
+            IEnumerable<TransactionReadDto> transactions,
+            decimal income,
+            int year,
+            int month)
+        {
+            if (income <= 0)
+            {
+                return new HealthScoreComponent
+                {
+                    Name = "Controle de Contas Fixas",
+                    Score = 0,
+                    MaxScore = HealthScoreComponentMaxPoints,
+                    Description = "Sem renda registrada para calcular."
+                };
+            }
+
+            decimal fixedExpenses = transactions
+                .Where(t =>
+                    t.TransactionType == TransactionType.Expense &&
+                    t.IsFixed &&
+                    t.PurchaseDate.Year == year &&
+                    t.PurchaseDate.Month == month)
+                .Sum(t => t.TotalAmount);
+
+            decimal ratio = fixedExpenses / income;
+
+            int score = ratio switch
+            {
+                < 0.30m => 25,
+                < 0.40m => 18,
+                < 0.50m => 12,
+                < 0.60m =>  6,
+                _       =>  0
+            };
+
+            decimal ratioPercent = Math.Round(ratio * 100, 1);
+
+            return new HealthScoreComponent
+            {
+                Name = "Controle de Contas Fixas",
+                Score = score,
+                MaxScore = HealthScoreComponentMaxPoints,
+                Description = $"Suas contas fixas representam {ratioPercent}% da sua renda."
+            };
+        }
+
+        private static HealthScoreComponent ScoreSpendingConsistency(
+            IEnumerable<TransactionReadDto> transactions,
+            decimal currentMonthExpenses,
+            DateTime now)
+        {
+            decimal threeMonthTotal = 0m;
+            int monthsWithData = 0;
+
+            for (int offset = 1; offset <= 3; offset++)
+            {
+                DateTime pastMonth = now.AddMonths(-offset);
+                decimal monthExpenses = SumByTypeForMonth(transactions, TransactionType.Expense, pastMonth.Year, pastMonth.Month);
+
+                if (monthExpenses <= 0) continue;
+
+                threeMonthTotal += monthExpenses;
+                monthsWithData++;
+            }
+
+            if (monthsWithData == 0 || threeMonthTotal == 0)
+            {
+                return new HealthScoreComponent
+                {
+                    Name = "Consistencia de Gastos",
+                    Score = 15,
+                    MaxScore = HealthScoreComponentMaxPoints,
+                    Description = "Dados insuficientes para comparar. Score neutro aplicado."
+                };
+            }
+
+            decimal threeMonthAverage = threeMonthTotal / monthsWithData;
+            decimal deviation = threeMonthAverage > 0 ? (currentMonthExpenses - threeMonthAverage) / threeMonthAverage : 0;
+
+            int score = deviation switch
+            {
+                <= 0.10m => 25,
+                <= 0.20m => 15,
+                <= 0.30m =>  8,
+                _        =>  0
+            };
+
+            decimal deviationPercent = Math.Round(Math.Abs(deviation) * 100, 1);
+            string direction = deviation > 0 ? "acima" : "abaixo";
+
+            return new HealthScoreComponent
+            {
+                Name = "Consistencia de Gastos",
+                Score = score,
+                MaxScore = HealthScoreComponentMaxPoints,
+                Description = $"Seus gastos estao {deviationPercent}% {direction} da media dos ultimos 3 meses."
+            };
+        }
+
+        private async Task<HealthScoreComponent> ScoreGoalProgressAsync(Guid userId)
+        {
+            IEnumerable<Piggino.Api.Domain.Goals.Entities.Goal> allGoals = await _goalRepository.GetAllAsync(userId);
+            List<Piggino.Api.Domain.Goals.Entities.Goal> activeGoals = allGoals.Where(g => !g.IsCompleted).ToList();
+
+            if (!activeGoals.Any())
+            {
+                return new HealthScoreComponent
+                {
+                    Name = "Progresso de Metas",
+                    Score = 15,
+                    MaxScore = HealthScoreComponentMaxPoints,
+                    Description = "Nenhuma meta ativa. Score neutro aplicado."
+                };
+            }
+
+            bool hasContributions = activeGoals.Any(g => g.CurrentAmount > 0);
+
+            int score = hasContributions ? 25 : 10;
+            string description = hasContributions
+                ? $"Voce tem {activeGoals.Count} meta(s) ativa(s) com contribuicoes registradas."
+                : $"Voce tem {activeGoals.Count} meta(s) ativa(s) mas ainda nao contribuiu.";
+
+            return new HealthScoreComponent
+            {
+                Name = "Progresso de Metas",
+                Score = score,
+                MaxScore = HealthScoreComponentMaxPoints,
+                Description = description
+            };
+        }
+
+        private static string ResolveGrade(int score)
+        {
+            return score switch
+            {
+                >= 80 => "A",
+                >= 60 => "B",
+                >= 40 => "C",
+                >= 20 => "D",
+                _     => "F"
+            };
+        }
+
+        private static string ResolveGradeLabel(string grade)
+        {
+            return grade switch
+            {
+                "A" => "Excelente",
+                "B" => "Bom",
+                "C" => "Regular",
+                "D" => "Atencao",
+                _   => "Critico"
+            };
+        }
+
+        private static List<string> BuildStrengthsList(params HealthScoreComponent[] components)
+        {
+            const int StrengthThreshold = 20;
+            return components
+                .Where(c => c.Score >= StrengthThreshold)
+                .Select(c => c.Description)
+                .ToList();
+        }
+
+        private static List<string> BuildWarningsList(params HealthScoreComponent[] components)
+        {
+            const int WarningThreshold = 12;
+            return components
+                .Where(c => c.Score < WarningThreshold)
+                .Select(c => c.Description)
+                .ToList();
+        }
+
+        // --- Contextual Tips ---
+
+        private const int MaxTipsReturned = 10;
+        private const decimal HighCategorySpendingThreshold = 0.30m;
+        private const decimal HighFixedBillsThreshold = 0.50m;
+        private const decimal LowSavingsThreshold = 0.10m;
+        private const decimal HighMomSpendingThreshold = 0.20m;
+
+        public async Task<TipsDto> GetContextualTipsAsync()
+        {
+            Guid userId = GetCurrentUserId();
+            IEnumerable<TransactionReadDto> allProjected = await GetAllAsync();
+
+            DateTime now = DateTime.UtcNow;
+            int currentYear = now.Year;
+            int currentMonth = now.Month;
+
+            decimal income = SumByTypeForMonth(allProjected, TransactionType.Income, currentYear, currentMonth);
+            decimal expenses = SumByTypeForMonth(allProjected, TransactionType.Expense, currentYear, currentMonth);
+
+            IEnumerable<TransactionReadDto> monthlyExpenses = allProjected
+                .Where(t =>
+                    t.TransactionType == TransactionType.Expense &&
+                    t.PurchaseDate.Year == currentYear &&
+                    t.PurchaseDate.Month == currentMonth);
+
+            IEnumerable<Piggino.Api.Domain.Goals.Entities.Goal> allGoals = await _goalRepository.GetAllAsync(userId);
+            IEnumerable<Transaction> activeInstallments = await _transactionRepository.GetActiveInstallmentTransactionsAsync(userId);
+
+            List<ContextualTip> tips = new List<ContextualTip>();
+
+            bool hasTransactionsThisMonth = monthlyExpenses.Any() || income > 0;
+            if (!hasTransactionsThisMonth)
+            {
+                tips.Add(new ContextualTip
+                {
+                    Title = "Nenhuma transacao registrada",
+                    Message = "Voce ainda nao registrou transacoes este mes.",
+                    Icon = "📊",
+                    Category = "habit",
+                    Priority = "high"
+                });
+                return new TipsDto { Tips = tips };
+            }
+
+            AddHighCategorySpendingTip(tips, monthlyExpenses, income);
+            AddNoGoalsTip(tips, allGoals);
+            AddHighFixedBillsTip(tips, allProjected, income, currentYear, currentMonth);
+            AddLowSavingsTip(tips, income, expenses);
+            AddHighMomSpendingTip(tips, allProjected, expenses, now);
+            AddInstallmentDebtTip(tips, activeInstallments);
+            AddPositiveSpendingTrendTip(tips, allProjected, now);
+
+            List<ContextualTip> prioritized = tips
+                .OrderBy(t => t.Priority == "high" ? 0 : t.Priority == "medium" ? 1 : 2)
+                .Take(MaxTipsReturned)
+                .ToList();
+
+            return new TipsDto { Tips = prioritized };
+        }
+
+        private static void AddHighCategorySpendingTip(
+            List<ContextualTip> tips,
+            IEnumerable<TransactionReadDto> monthlyExpenses,
+            decimal income)
+        {
+            if (income <= 0) return;
+
+            var topCategory = monthlyExpenses
+                .GroupBy(t => t.CategoryName ?? "Sem categoria")
+                .Select(g => new { Name = g.Key, Total = g.Sum(t => t.TotalAmount) })
+                .OrderByDescending(c => c.Total)
+                .FirstOrDefault();
+
+            if (topCategory == null) return;
+
+            decimal ratio = topCategory.Total / income;
+            if (ratio <= HighCategorySpendingThreshold) return;
+
+            decimal percent = Math.Round(ratio * 100, 1);
+
+            tips.Add(new ContextualTip
+            {
+                Title = "Gasto elevado em categoria",
+                Message = $"Sua maior categoria de gasto e {topCategory.Name} com R$ {topCategory.Total:F2} ({percent}% da sua renda).",
+                Icon = "⚠️",
+                Category = "spending",
+                Priority = "high"
+            });
+        }
+
+        private static void AddNoGoalsTip(
+            List<ContextualTip> tips,
+            IEnumerable<Piggino.Api.Domain.Goals.Entities.Goal> goals)
+        {
+            if (goals.Any(g => !g.IsCompleted)) return;
+
+            tips.Add(new ContextualTip
+            {
+                Title = "Sem metas financeiras",
+                Message = "Voce ainda nao tem metas financeiras. Crie uma meta de emergencia hoje.",
+                Icon = "🎯",
+                Category = "goal",
+                Priority = "medium"
+            });
+        }
+
+        private static void AddHighFixedBillsTip(
+            List<ContextualTip> tips,
+            IEnumerable<TransactionReadDto> transactions,
+            decimal income,
+            int year,
+            int month)
+        {
+            if (income <= 0) return;
+
+            decimal fixedExpenses = transactions
+                .Where(t =>
+                    t.TransactionType == TransactionType.Expense &&
+                    t.IsFixed &&
+                    t.PurchaseDate.Year == year &&
+                    t.PurchaseDate.Month == month)
+                .Sum(t => t.TotalAmount);
+
+            decimal ratio = fixedExpenses / income;
+            if (ratio <= HighFixedBillsThreshold) return;
+
+            decimal percent = Math.Round(ratio * 100, 1);
+
+            tips.Add(new ContextualTip
+            {
+                Title = "Contas fixas elevadas",
+                Message = $"Suas contas fixas consomem {percent}% da sua renda. Tente reduzir para menos de 50%.",
+                Icon = "⚠️",
+                Category = "spending",
+                Priority = "high"
+            });
+        }
+
+        private static void AddLowSavingsTip(
+            List<ContextualTip> tips,
+            decimal income,
+            decimal expenses)
+        {
+            if (income <= 0) return;
+
+            decimal savingsRate = (income - expenses) / income;
+            if (savingsRate >= LowSavingsThreshold) return;
+
+            decimal percent = Math.Round(savingsRate * 100, 1);
+
+            tips.Add(new ContextualTip
+            {
+                Title = "Taxa de poupanca baixa",
+                Message = $"Voce poupou apenas {percent}% este mes. Tente aumentar para 20% seguindo o metodo 50/30/20.",
+                Icon = "💡",
+                Category = "saving",
+                Priority = "medium"
+            });
+        }
+
+        private static void AddHighMomSpendingTip(
+            List<ContextualTip> tips,
+            IEnumerable<TransactionReadDto> transactions,
+            decimal currentExpenses,
+            DateTime now)
+        {
+            DateTime previousMonth = now.AddMonths(-1);
+            decimal previousExpenses = SumByTypeForMonth(transactions, TransactionType.Expense, previousMonth.Year, previousMonth.Month);
+
+            if (previousExpenses <= 0) return;
+
+            decimal changeRatio = (currentExpenses - previousExpenses) / previousExpenses;
+            if (changeRatio <= HighMomSpendingThreshold) return;
+
+            decimal percent = Math.Round(changeRatio * 100, 1);
+
+            tips.Add(new ContextualTip
+            {
+                Title = "Gastos em alta",
+                Message = $"Seus gastos aumentaram {percent}% em relacao ao mes passado.",
+                Icon = "⚠️",
+                Category = "spending",
+                Priority = "high"
+            });
+        }
+
+        private static void AddInstallmentDebtTip(
+            List<ContextualTip> tips,
+            IEnumerable<Transaction> activeInstallments)
+        {
+            List<Transaction> installmentList = activeInstallments.ToList();
+            if (!installmentList.Any()) return;
+
+            decimal totalRemaining = installmentList.Sum(t =>
+            {
+                int total = t.InstallmentCount ?? t.CardInstallments!.Count;
+                int paid = t.CardInstallments!.Count(i => i.IsPaid);
+                int remaining = total - paid;
+                decimal monthly = total > 0 ? t.TotalAmount / total : t.TotalAmount;
+                return monthly * remaining;
+            });
+
+            tips.Add(new ContextualTip
+            {
+                Title = "Parcelas em aberto",
+                Message = $"Voce tem {installmentList.Count} compras parceladas em aberto totalizando R$ {totalRemaining:F2}. Considere quitar as de maior valor.",
+                Icon = "📊",
+                Category = "spending",
+                Priority = "medium"
+            });
+        }
+
+        private static void AddPositiveSpendingTrendTip(
+            List<ContextualTip> tips,
+            IEnumerable<TransactionReadDto> transactions,
+            DateTime now)
+        {
+            decimal m1 = SumByTypeForMonth(transactions, TransactionType.Expense, now.AddMonths(-1).Year, now.AddMonths(-1).Month);
+            decimal m2 = SumByTypeForMonth(transactions, TransactionType.Expense, now.AddMonths(-2).Year, now.AddMonths(-2).Month);
+            decimal m3 = SumByTypeForMonth(transactions, TransactionType.Expense, now.AddMonths(-3).Year, now.AddMonths(-3).Month);
+
+            bool isDecreasingTrend = m3 > 0 && m2 > 0 && m1 > 0 && m3 > m2 && m2 > m1;
+            if (!isDecreasingTrend) return;
+
+            tips.Add(new ContextualTip
+            {
+                Title = "Tendencia positiva",
+                Message = "Parabens! Seus gastos tem diminuido nos ultimos 3 meses. Continue assim!",
+                Icon = "✅",
+                Category = "habit",
+                Priority = "low"
+            });
         }
     }
 }

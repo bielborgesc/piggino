@@ -247,5 +247,26 @@ namespace Piggino.Api.Controllers
             BudgetAnalysisDto analysis = await _service.GetBudgetAnalysisAsync(parsedMonth.Year, parsedMonth.Month);
             return Ok(analysis);
         }
+
+        [HttpGet("debt-summary")]
+        public async Task<ActionResult<DebtSummaryDto>> GetDebtSummary()
+        {
+            DebtSummaryDto summary = await _service.GetDebtSummaryAsync();
+            return Ok(summary);
+        }
+
+        [HttpGet("health-score")]
+        public async Task<ActionResult<HealthScoreDto>> GetHealthScore()
+        {
+            HealthScoreDto healthScore = await _service.GetHealthScoreAsync();
+            return Ok(healthScore);
+        }
+
+        [HttpGet("tips")]
+        public async Task<ActionResult<TipsDto>> GetContextualTips()
+        {
+            TipsDto tips = await _service.GetContextualTipsAsync();
+            return Ok(tips);
+        }
     }
 }

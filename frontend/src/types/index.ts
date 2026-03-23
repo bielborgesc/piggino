@@ -253,6 +253,38 @@ export interface DashboardSummary {
   currentMonthBalance: number;
   pendingFixedBills: number;
   pendingInvoiceAmount: number;
+  previousMonthIncome: number;
+  previousMonthExpenses: number;
+  incomeChangePercent: number;
+  expensesChangePercent: number;
+}
+
+export interface HealthScoreComponent {
+  name: string;
+  score: number;
+  maxScore: number;
+  description: string;
+}
+
+export interface HealthScore {
+  score: number;
+  grade: string;
+  gradeLabel: string;
+  components: HealthScoreComponent[];
+  strengths: string[];
+  warnings: string[];
+}
+
+export interface ContextualTip {
+  title: string;
+  message: string;
+  icon: string;
+  category: string;
+  priority: string;
+}
+
+export interface TipsData {
+  tips: ContextualTip[];
 }
 
 export interface UserSettings {
@@ -264,6 +296,26 @@ export interface BucketCategoryBreakdown {
   categoryColor: string;
   amount: number;
   percentage: number;
+}
+
+export interface DebtItem {
+  transactionId: number;
+  description: string;
+  financialSourceName: string;
+  totalRemaining: number;
+  monthlyPayment: number;
+  totalInstallments: number;
+  remainingInstallments: number;
+  nextDueDate: string | null;
+  priority_Avalanche: number;
+  priority_Snowball: number;
+}
+
+export interface DebtSummary {
+  debts: DebtItem[];
+  totalDebt: number;
+  totalMonthlyPayment: number;
+  estimatedMonthsToFreedom: number;
 }
 
 export interface BudgetAnalysis {

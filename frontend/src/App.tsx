@@ -9,12 +9,14 @@ import { InvoicePage } from './pages/InvoicePage';
 import { FixedBillsPage } from './pages/FixedBillsPage';
 import { SimulationPage } from './pages/SimulationPage';
 import { GoalsPage } from './pages/GoalsPage';
+import { WealthProjectionPage } from './pages/WealthProjectionPage';
+import { DebtPlanningPage } from './pages/DebtPlanningPage';
 import { MainLayout } from './components/layout/MainLayout';
 import { ChangePasswordModal } from './components/features/auth/ChangePasswordModal';
 import { UserSettingsModal } from './components/features/settings/UserSettingsModal';
 import { useAuth } from './hooks/useAuth';
 
-type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation' | 'goals';
+type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation' | 'goals' | 'projection' | 'debts';
 
 const TOAST_STYLES = { style: { background: '#334155', color: '#f1f5f9' } };
 
@@ -55,6 +57,8 @@ function App() {
           {currentPage === 'fixed-bills' && <FixedBillsPage />}
           {currentPage === 'simulation' && <SimulationPage />}
           {currentPage === 'goals' && <GoalsPage />}
+          {currentPage === 'projection' && <WealthProjectionPage />}
+          {currentPage === 'debts' && <DebtPlanningPage />}
         </MainLayout>
       </>
     );
