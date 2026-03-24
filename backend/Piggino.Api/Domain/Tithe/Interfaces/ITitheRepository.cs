@@ -8,10 +8,14 @@ namespace Piggino.Api.Domain.Tithe.Interfaces
     {
         Task<IReadOnlyList<(Category Category, decimal Income)>> GetTitheableCategoriesWithIncomeAsync(Guid userId, int year, int month);
         Task<bool> TitheTransactionExistsForCategoryAsync(Guid userId, int year, int month, string categoryName);
+        Task<Transaction?> FindTitheTransactionForCategoryAsync(Guid userId, int year, int month, string categoryName);
         Task<Category?> FindTitheCategoryAsync(Guid userId);
         Task<Category?> FindFirstExpenseCategoryAsync(Guid userId);
         Task<FinancialSource?> FindFirstFinancialSourceAsync(Guid userId);
+        Task<decimal> GetTotalIncomeForCategoryAsync(Guid userId, int categoryId, int year, int month);
         Task AddTransactionAsync(Transaction transaction);
+        void DeleteTransactionAsync(Transaction transaction);
+        void UpdateTransactionAmount(Transaction transaction, decimal newAmount);
         Task<bool> SaveChangesAsync();
     }
 }

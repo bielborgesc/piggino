@@ -4,6 +4,7 @@ using Piggino.Api.Domain.Categories.Interfaces;
 using Piggino.Api.Domain.FinancialSources.Entities;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
 using Piggino.Api.Domain.Goals.Interfaces;
+using Piggino.Api.Domain.Tithe.Interfaces;
 using Piggino.Api.Domain.Transactions.Dtos;
 using Piggino.Api.Domain.Transactions.Entities;
 using Piggino.Api.Domain.Transactions.Interfaces;
@@ -25,19 +26,22 @@ namespace Piggino.Api.Domain.Transactions.Services
         private readonly ICategoryRepository _categoryRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IGoalRepository _goalRepository;
+        private readonly ITitheService _titheService;
 
         public TransactionService(
             ITransactionRepository transactionRepository,
             IFinancialSourceRepository financialSourceRepository,
             ICategoryRepository categoryRepository,
             IHttpContextAccessor httpContextAccessor,
-            IGoalRepository goalRepository)
+            IGoalRepository goalRepository,
+            ITitheService titheService)
         {
             _transactionRepository = transactionRepository;
             _financialSourceRepository = financialSourceRepository;
             _categoryRepository = categoryRepository;
             _httpContextAccessor = httpContextAccessor;
             _goalRepository = goalRepository;
+            _titheService = titheService;
         }
 
         public async Task<TransactionReadDto> CreateAsync(TransactionCreateDto createDto)
@@ -56,6 +60,10 @@ namespace Piggino.Api.Domain.Transactions.Services
             await _transactionRepository.AddAsync(newTransaction);
             await _transactionRepository.SaveChangesAsync();
 
+            if (newTransaction.TransactionType == TransactionType.Income)
+                await _titheService.RecalculateTitheForCategoryAsync(
+                    userId, newTransaction.CategoryId, newTransaction.PurchaseDate.Year, newTransaction.PurchaseDate.Month);
+
             return MapToReadDto(newTransaction);
         }
 
@@ -66,19 +74,41 @@ namespace Piggino.Api.Domain.Transactions.Services
 
             if (anchor == null) return false;
 
+            bool isIncomeDeletion = anchor.TransactionType == TransactionType.Income;
+            int affectedCategoryId = anchor.CategoryId;
+            int affectedYear = anchor.PurchaseDate.Year;
+            int affectedMonth = anchor.PurchaseDate.Month;
+
             if (!anchor.IsRecurring || scope == RecurrenceScope.OnlyThis)
             {
                 _transactionRepository.Delete(anchor);
-                return await _transactionRepository.SaveChangesAsync();
+                bool saved = await _transactionRepository.SaveChangesAsync();
+
+                if (saved && isIncomeDeletion)
+                    await _titheService.RecalculateTitheForCategoryAsync(userId, affectedCategoryId, affectedYear, affectedMonth);
+
+                return saved;
             }
 
             IEnumerable<Transaction> group = await _transactionRepository.GetRecurrenceGroupAsync(anchor, userId);
-            IEnumerable<Transaction> targets = FilterGroupByScope(group, anchor.PurchaseDate, scope);
+            IEnumerable<Transaction> targets = FilterGroupByScope(group, anchor.PurchaseDate, scope).ToList();
 
             foreach (Transaction target in targets)
                 _transactionRepository.Delete(target);
 
-            return await _transactionRepository.SaveChangesAsync();
+            bool groupSaved = await _transactionRepository.SaveChangesAsync();
+
+            if (groupSaved && isIncomeDeletion)
+            {
+                IEnumerable<(int year, int month)> affectedMonths = targets
+                    .Select(t => (t.PurchaseDate.Year, t.PurchaseDate.Month))
+                    .Distinct();
+
+                foreach ((int year, int month) in affectedMonths)
+                    await _titheService.RecalculateTitheForCategoryAsync(userId, affectedCategoryId, year, month);
+            }
+
+            return groupSaved;
         }
 
         public async Task<bool> DeleteInstallmentsByScope(int transactionId, int anchorInstallmentNumber, RecurrenceScope scope)
@@ -163,17 +193,31 @@ namespace Piggino.Api.Domain.Transactions.Services
             if (financialSource == null)
                 throw new InvalidOperationException("Financial Source not found.");
 
+            bool isIncomeUpdate = anchor.TransactionType == TransactionType.Income
+                || updateDto.TransactionType == TransactionType.Income;
+
+            int previousCategoryId = anchor.CategoryId;
+            int previousYear = anchor.PurchaseDate.Year;
+            int previousMonth = anchor.PurchaseDate.Month;
+
             RecurrenceScope scope = updateDto.RecurrenceScope ?? RecurrenceScope.OnlyThis;
 
             if (!anchor.IsRecurring || scope == RecurrenceScope.OnlyThis)
             {
                 ApplySingleTransactionUpdate(anchor, updateDto, financialSource);
                 _transactionRepository.Update(anchor);
-                return await _transactionRepository.SaveChangesAsync();
+                bool saved = await _transactionRepository.SaveChangesAsync();
+
+                if (saved && isIncomeUpdate)
+                    await RecalculateTitheForUpdatedTransactionAsync(
+                        userId, previousCategoryId, previousYear, previousMonth,
+                        anchor.CategoryId, anchor.PurchaseDate.Year, anchor.PurchaseDate.Month);
+
+                return saved;
             }
 
             IEnumerable<Transaction> group = await _transactionRepository.GetRecurrenceGroupAsync(anchor, userId);
-            IEnumerable<Transaction> targets = FilterGroupByScope(group, anchor.PurchaseDate, scope);
+            IEnumerable<Transaction> targets = FilterGroupByScope(group, anchor.PurchaseDate, scope).ToList();
 
             foreach (Transaction target in targets)
             {
@@ -184,7 +228,39 @@ namespace Piggino.Api.Domain.Transactions.Services
                 _transactionRepository.Update(targetWithInstallments);
             }
 
-            return await _transactionRepository.SaveChangesAsync();
+            bool groupSaved = await _transactionRepository.SaveChangesAsync();
+
+            if (groupSaved && isIncomeUpdate)
+            {
+                IEnumerable<(int year, int month)> affectedMonths = targets
+                    .Select(t => (t.PurchaseDate.Year, t.PurchaseDate.Month))
+                    .Append((previousYear, previousMonth))
+                    .Distinct();
+
+                foreach ((int year, int month) in affectedMonths)
+                    await _titheService.RecalculateTitheForCategoryAsync(userId, updateDto.CategoryId, year, month);
+
+                if (previousCategoryId != updateDto.CategoryId)
+                    await _titheService.RecalculateTitheForCategoryAsync(
+                        userId, previousCategoryId, previousYear, previousMonth);
+            }
+
+            return groupSaved;
+        }
+
+        private async Task RecalculateTitheForUpdatedTransactionAsync(
+            Guid userId,
+            int previousCategoryId, int previousYear, int previousMonth,
+            int newCategoryId, int newYear, int newMonth)
+        {
+            await _titheService.RecalculateTitheForCategoryAsync(userId, newCategoryId, newYear, newMonth);
+
+            bool categoryChanged = previousCategoryId != newCategoryId;
+            bool monthChanged = previousYear != newYear || previousMonth != newMonth;
+
+            if (categoryChanged || monthChanged)
+                await _titheService.RecalculateTitheForCategoryAsync(
+                    userId, previousCategoryId, previousYear, previousMonth);
         }
 
         private void ApplySingleTransactionUpdate(Transaction transaction, TransactionUpdateDto updateDto, FinancialSource financialSource)

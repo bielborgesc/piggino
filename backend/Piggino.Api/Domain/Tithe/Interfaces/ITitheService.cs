@@ -7,5 +7,6 @@ namespace Piggino.Api.Domain.Tithe.Interfaces
         Task<TitheStatusDto> GetStatusAsync(Guid userId);
         Task<int> GenerateMonthlyTitheAsync(Guid userId, int year, int month);
         Task GenerateMonthlyTitheForAllEnabledUsersAsync(int year, int month);
+        Task RecalculateTitheForCategoryAsync(Guid userId, int categoryId, int year, int month);
     }
 }

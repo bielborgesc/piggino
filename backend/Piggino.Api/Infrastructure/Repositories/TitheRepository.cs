@@ -53,7 +53,7 @@ namespace Piggino.Api.Infrastructure.Repositories
         public async Task<bool> TitheTransactionExistsForCategoryAsync(
             Guid userId, int year, int month, string categoryName)
         {
-            string expectedPrefix = $"{TitheDescriptionPrefix} - {categoryName}";
+            string expectedPrefix = BuildTitheDescriptionPrefix(categoryName);
 
             return await _context.Transactions
                 .AnyAsync(t =>
@@ -63,6 +63,49 @@ namespace Piggino.Api.Infrastructure.Repositories
                     t.Description.StartsWith(expectedPrefix) &&
                     t.PurchaseDate.Year == year &&
                     t.PurchaseDate.Month == month);
+        }
+
+        public async Task<Transaction?> FindTitheTransactionForCategoryAsync(
+            Guid userId, int year, int month, string categoryName)
+        {
+            string expectedPrefix = BuildTitheDescriptionPrefix(categoryName);
+
+            return await _context.Transactions
+                .FirstOrDefaultAsync(t =>
+                    t.UserId == userId &&
+                    t.TransactionType == TransactionType.Expense &&
+                    t.Description != null &&
+                    t.Description.StartsWith(expectedPrefix) &&
+                    t.PurchaseDate.Year == year &&
+                    t.PurchaseDate.Month == month);
+        }
+
+        public async Task<decimal> GetTotalIncomeForCategoryAsync(Guid userId, int categoryId, int year, int month)
+        {
+            return await _context.Transactions
+                .Where(t =>
+                    t.UserId == userId &&
+                    t.CategoryId == categoryId &&
+                    t.TransactionType == TransactionType.Income &&
+                    t.PurchaseDate.Year == year &&
+                    t.PurchaseDate.Month == month)
+                .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m;
+        }
+
+        public void DeleteTransactionAsync(Transaction transaction)
+        {
+            _context.Transactions.Remove(transaction);
+        }
+
+        public void UpdateTransactionAmount(Transaction transaction, decimal newAmount)
+        {
+            transaction.TotalAmount = newAmount;
+            _context.Transactions.Update(transaction);
+        }
+
+        private static string BuildTitheDescriptionPrefix(string categoryName)
+        {
+            return $"{TitheDescriptionPrefix} - {categoryName}";
         }
 
         public async Task<Category?> FindTitheCategoryAsync(Guid userId)
