@@ -471,9 +471,9 @@ export function TransactionsPage() {
               ) : (
                 <EmptyState
                   icon={<ArrowRightLeft size={40} />}
-                  title="No transactions found"
-                  description="No transactions match your current filters. Try adjusting the filters or add a new transaction."
-                  action={{ label: 'Add Transaction', onClick: () => handleOpenModal(null) }}
+                  title="Nenhuma transacao encontrada"
+                  description="Nenhuma transacao corresponde aos filtros atuais. Tente ajustar os filtros ou adicione uma nova transacao."
+                  action={{ label: 'Adicionar Transacao', onClick: () => handleOpenModal(null) }}
                 />
               )}
             </div>
@@ -564,9 +564,9 @@ export function TransactionsPage() {
                       <td colSpan={6}>
                         <EmptyState
                           icon={<ArrowRightLeft size={40} />}
-                          title="No transactions found"
-                          description="No transactions match your current filters. Try adjusting the filters or add a new transaction."
-                          action={{ label: 'Add Transaction', onClick: () => handleOpenModal(null) }}
+                          title="Nenhuma transacao encontrada"
+                          description="Nenhuma transacao corresponde aos filtros atuais. Tente ajustar os filtros ou adicione uma nova transacao."
+                          action={{ label: 'Adicionar Transacao', onClick: () => handleOpenModal(null) }}
                         />
                       </td>
                     </tr>

@@ -108,7 +108,7 @@ function LoginPanel({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
-          Email
+          E-mail
         </label>
         <input
           type="email"
@@ -116,14 +116,14 @@ function LoginPanel({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full bg-slate-700 border-slate-600 rounded-md p-3 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
-          placeholder="your.email@example.com"
+          placeholder="seu.email@exemplo.com"
           required
           disabled={isLoading}
         />
       </div>
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
-          Password
+          Senha
         </label>
         <PasswordInput
           id="password"
@@ -150,7 +150,7 @@ function LoginPanel({
           disabled={isLoading}
           className="w-full flex justify-center items-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 disabled:bg-slate-500 disabled:scale-100"
         >
-          {isLoading ? <SpinnerIcon /> : 'Sign in'}
+          {isLoading ? <SpinnerIcon /> : 'Entrar'}
         </button>
       </div>
       <div className="text-center">
@@ -159,7 +159,7 @@ function LoginPanel({
           onClick={onNavigateToRegister}
           className="text-sm text-green-400 hover:text-green-300 bg-transparent border-none cursor-pointer"
         >
-          Don't have an account? Create one here.
+          Nao tem uma conta? Crie uma aqui.
         </button>
       </div>
     </form>
@@ -370,8 +370,8 @@ export function LoginForm({ onNavigateToRegister, onLoginSuccess }: LoginFormPro
         />
         {view === 'login' ? (
           <>
-            <h1 className="text-3xl font-bold text-slate-100">Welcome to Piggino</h1>
-            <p className="text-slate-400 mt-1">Take control of your finances.</p>
+            <h1 className="text-3xl font-bold text-slate-100">Bem-vindo ao Piggino</h1>
+            <p className="text-slate-400 mt-1">Tome o controle das suas financas.</p>
           </>
         ) : (
           <>

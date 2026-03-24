@@ -56,10 +56,10 @@ function StepCategory({ onNext, onSkip }: { onNext: () => void; onSkip: () => vo
     try {
       const data: CategoryData = { name: name.trim(), type, color, budgetBucket: 'None' };
       await createCategory(data);
-      toast.success('Category created!');
+      toast.success('Categoria criada!');
       onNext();
     } catch (error) {
-      toast.error(extractErrorMessage(error, 'Failed to create category.'));
+      toast.error(extractErrorMessage(error, 'Nao foi possivel criar a categoria.'));
     } finally {
       setIsSaving(false);
     }
@@ -68,27 +68,27 @@ function StepCategory({ onNext, onSkip }: { onNext: () => void; onSkip: () => vo
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <h2 className="text-white text-xl font-bold mb-1">Create your first category</h2>
-        <p className="text-slate-400 text-sm">Categories help you organize your spending and income.</p>
+        <h2 className="text-white text-xl font-bold mb-1">Crie sua primeira categoria</h2>
+        <p className="text-slate-400 text-sm">Categorias ajudam a organizar seus gastos e receitas.</p>
       </div>
 
       <div>
         <label htmlFor="cat-name" className="block text-sm font-medium text-slate-300 mb-1">
-          Category name
+          Nome da categoria
         </label>
         <input
           id="cat-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Groceries"
+          placeholder="Ex: Supermercado"
           required
           className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Type</label>
+        <label className="block text-sm font-medium text-slate-300 mb-1">Tipo</label>
         <div className="flex bg-slate-900 rounded-lg p-1 gap-1">
           <button
             type="button"
@@ -97,7 +97,7 @@ function StepCategory({ onNext, onSkip }: { onNext: () => void; onSkip: () => vo
               type === 'Expense' ? 'bg-red-500 text-white' : 'text-slate-400 hover:bg-slate-700'
             }`}
           >
-            Expense
+            Despesa
           </button>
           <button
             type="button"
@@ -106,14 +106,14 @@ function StepCategory({ onNext, onSkip }: { onNext: () => void; onSkip: () => vo
               type === 'Income' ? 'bg-green-500 text-white' : 'text-slate-400 hover:bg-slate-700'
             }`}
           >
-            Income
+            Receita
           </button>
         </div>
       </div>
 
       <div>
         <label htmlFor="cat-color" className="block text-sm font-medium text-slate-300 mb-1">
-          Color
+          Cor
         </label>
         <div className="flex items-center gap-3">
           <input
@@ -138,14 +138,14 @@ function StepCategory({ onNext, onSkip }: { onNext: () => void; onSkip: () => vo
           className="flex items-center gap-1 text-slate-500 hover:text-slate-300 text-sm transition-colors"
         >
           <SkipForward size={14} />
-          Skip this step
+          Pular esta etapa
         </button>
         <button
           type="submit"
           disabled={isSaving}
           className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-2 px-5 rounded-lg text-sm transition-colors"
         >
-          {isSaving ? 'Saving...' : 'Continue'}
+          {isSaving ? 'Salvando...' : 'Continuar'}
           <ArrowRight size={16} />
         </button>
       </div>
@@ -166,10 +166,10 @@ function StepFinancialSource({ onNext, onSkip }: { onNext: () => void; onSkip: (
     try {
       const data: FinancialSourceData = { name: name.trim(), type, closingDay: null, dueDay: null };
       await createFinancialSource(data);
-      toast.success('Financial source created!');
+      toast.success('Fonte financeira criada!');
       onNext();
     } catch (error) {
-      toast.error(extractErrorMessage(error, 'Failed to create financial source.'));
+      toast.error(extractErrorMessage(error, 'Nao foi possivel criar a fonte financeira.'));
     } finally {
       setIsSaving(false);
     }
@@ -178,20 +178,20 @@ function StepFinancialSource({ onNext, onSkip }: { onNext: () => void; onSkip: (
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <h2 className="text-white text-xl font-bold mb-1">Add a financial source</h2>
-        <p className="text-slate-400 text-sm">A financial source is a bank account, credit card, or cash wallet.</p>
+        <h2 className="text-white text-xl font-bold mb-1">Adicione uma fonte financeira</h2>
+        <p className="text-slate-400 text-sm">Uma fonte financeira e uma conta bancaria, cartao de credito ou carteira.</p>
       </div>
 
       <div>
         <label htmlFor="source-name" className="block text-sm font-medium text-slate-300 mb-1">
-          Source name
+          Nome da fonte
         </label>
         <input
           id="source-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Main Checking Account"
+          placeholder="Ex: Conta Corrente Principal"
           required
           className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
         />
@@ -199,7 +199,7 @@ function StepFinancialSource({ onNext, onSkip }: { onNext: () => void; onSkip: (
 
       <div>
         <label htmlFor="source-type" className="block text-sm font-medium text-slate-300 mb-1">
-          Type
+          Tipo
         </label>
         <select
           id="source-type"
@@ -207,9 +207,9 @@ function StepFinancialSource({ onNext, onSkip }: { onNext: () => void; onSkip: (
           onChange={(e) => setType(e.target.value as FinancialSourceType)}
           className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
         >
-          <option value="Account">Checking Account</option>
-          <option value="Card">Credit Card</option>
-          <option value="Cash">Cash</option>
+          <option value="Account">Conta Corrente</option>
+          <option value="Card">Cartao de Credito</option>
+          <option value="Cash">Dinheiro</option>
         </select>
       </div>
 
@@ -220,14 +220,14 @@ function StepFinancialSource({ onNext, onSkip }: { onNext: () => void; onSkip: (
           className="flex items-center gap-1 text-slate-500 hover:text-slate-300 text-sm transition-colors"
         >
           <SkipForward size={14} />
-          Skip this step
+          Pular esta etapa
         </button>
         <button
           type="submit"
           disabled={isSaving}
           className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-2 px-5 rounded-lg text-sm transition-colors"
         >
-          {isSaving ? 'Saving...' : 'Continue'}
+          {isSaving ? 'Salvando...' : 'Continuar'}
           <ArrowRight size={16} />
         </button>
       </div>
@@ -258,10 +258,10 @@ function StepTransaction({ onFinish, onSkip }: { onFinish: () => void; onSkip: (
         isRecurring: false,
       };
       await createTransaction(data as TransactionData);
-      toast.success('First transaction recorded!');
+      toast.success('Primeira transacao registrada!');
       onFinish();
     } catch (error) {
-      toast.error(extractErrorMessage(error, 'Failed to create transaction. You can add it later from the Transactions page.'));
+      toast.error(extractErrorMessage(error, 'Nao foi possivel criar a transacao. Voce pode adicioná-la depois na pagina de Transacoes.'));
       onFinish();
     } finally {
       setIsSaving(false);
@@ -271,20 +271,20 @@ function StepTransaction({ onFinish, onSkip }: { onFinish: () => void; onSkip: (
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <h2 className="text-white text-xl font-bold mb-1">Record your first transaction</h2>
-        <p className="text-slate-400 text-sm">Add any recent expense or income to get started tracking.</p>
+        <h2 className="text-white text-xl font-bold mb-1">Registre sua primeira transacao</h2>
+        <p className="text-slate-400 text-sm">Adicione qualquer despesa ou receita recente para comecar a acompanhar.</p>
       </div>
 
       <div>
         <label htmlFor="tx-description" className="block text-sm font-medium text-slate-300 mb-1">
-          Description
+          Descricao
         </label>
         <input
           id="tx-description"
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="e.g. Coffee at the office"
+          placeholder="Ex: Cafe no escritorio"
           required
           className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
         />
@@ -292,7 +292,7 @@ function StepTransaction({ onFinish, onSkip }: { onFinish: () => void; onSkip: (
 
       <div>
         <label htmlFor="tx-amount" className="block text-sm font-medium text-slate-300 mb-1">
-          Amount (R$)
+          Valor (R$)
         </label>
         <input
           id="tx-amount"
@@ -314,14 +314,14 @@ function StepTransaction({ onFinish, onSkip }: { onFinish: () => void; onSkip: (
           className="flex items-center gap-1 text-slate-500 hover:text-slate-300 text-sm transition-colors"
         >
           <SkipForward size={14} />
-          Skip this step
+          Pular esta etapa
         </button>
         <button
           type="submit"
           disabled={isSaving}
           className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-2 px-5 rounded-lg text-sm transition-colors"
         >
-          {isSaving ? 'Saving...' : 'Finish setup'}
+          {isSaving ? 'Salvando...' : 'Concluir configuracao'}
           <CheckCircle size={16} />
         </button>
       </div>
@@ -329,7 +329,7 @@ function StepTransaction({ onFinish, onSkip }: { onFinish: () => void; onSkip: (
   );
 }
 
-const STEP_LABELS = ['Create Category', 'Add Financial Source', 'First Transaction'];
+const STEP_LABELS = ['Criar Categoria', 'Adicionar Fonte Financeira', 'Primeira Transacao'];
 
 export function OnboardingPage({ onFinish }: OnboardingPageProps) {
   const [currentStep, setCurrentStep] = useState(1);
@@ -346,15 +346,15 @@ export function OnboardingPage({ onFinish }: OnboardingPageProps) {
     <div className="flex-1 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-white text-2xl font-bold mb-2">Welcome to Piggino!</h1>
-          <p className="text-slate-400 text-sm">Let's set up your account in 3 quick steps.</p>
+          <h1 className="text-white text-2xl font-bold mb-2">Bem-vindo ao Piggino!</h1>
+          <p className="text-slate-400 text-sm">Vamos configurar sua conta em 3 passos rapidos.</p>
         </div>
 
         <ProgressIndicator currentStep={currentStep} />
 
         <div className="text-center mb-6">
           <p className="text-slate-500 text-xs uppercase tracking-widest font-semibold">
-            Step {currentStep} of {TOTAL_STEPS} — {STEP_LABELS[currentStep - 1]}
+            Etapa {currentStep} de {TOTAL_STEPS} — {STEP_LABELS[currentStep - 1]}
           </p>
         </div>
 

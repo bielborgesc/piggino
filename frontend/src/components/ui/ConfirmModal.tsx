@@ -12,7 +12,7 @@ export function ConfirmModal({
   isOpen,
   title,
   message,
-  confirmLabel = 'Confirm',
+  confirmLabel = 'Confirmar',
   confirmVariant = 'primary',
   onConfirm,
   onCancel,
@@ -35,7 +35,7 @@ export function ConfirmModal({
             onClick={onCancel}
             className="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 text-sm font-semibold transition-colors"
           >
-            Cancel
+            Cancelar
           </button>
           <button
             type="button"

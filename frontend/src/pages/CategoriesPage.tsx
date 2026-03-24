@@ -132,9 +132,9 @@ export function CategoriesPage() {
                     <td colSpan={3}>
                       <EmptyState
                         icon={<Shapes size={40} />}
-                        title="No categories yet"
-                        description="Categories help you organize your income and expenses. Create your first one to get started."
-                        action={{ label: 'Create Category', onClick: handleOpenCreateModal }}
+                        title="Nenhuma categoria ainda"
+                        description="Categorias ajudam a organizar suas receitas e despesas. Crie a primeira para comecar."
+                        action={{ label: 'Criar Categoria', onClick: handleOpenCreateModal }}
                       />
                     </td>
                   </tr>
@@ -153,9 +153,9 @@ export function CategoriesPage() {
       />
       <ConfirmModal
         isOpen={deleteConfirm !== null}
-        title="Delete Category"
-        message={`Are you sure you want to delete "${deleteConfirm?.name}"? This action cannot be undone.`}
-        confirmLabel="Delete"
+        title="Excluir Categoria"
+        message={`Tem certeza que deseja excluir "${deleteConfirm?.name}"? Esta acao nao pode ser desfeita.`}
+        confirmLabel="Excluir"
         confirmVariant="danger"
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteConfirm(null)}

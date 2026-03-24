@@ -28,33 +28,33 @@ interface NavSection {
 
 const NAV_SECTIONS: NavSection[] = [
   {
-    label: 'Core',
+    label: 'Principal',
     items: [
       { page: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-      { page: 'transactions', label: 'Transactions', icon: <ArrowRightLeft className="h-5 w-5" /> },
-      { page: 'invoices', label: 'Invoices', icon: <Receipt className="h-5 w-5" /> },
-      { page: 'fixed-bills', label: 'Fixed Bills', icon: <CalendarCheck className="h-5 w-5" /> },
+      { page: 'transactions', label: 'Transacoes', icon: <ArrowRightLeft className="h-5 w-5" /> },
+      { page: 'invoices', label: 'Fatura', icon: <Receipt className="h-5 w-5" /> },
+      { page: 'fixed-bills', label: 'Contas Fixas', icon: <CalendarCheck className="h-5 w-5" /> },
     ],
   },
   {
-    label: 'Planning',
+    label: 'Planejamento',
     items: [
-      { page: 'goals', label: 'Goals', icon: <Target className="h-5 w-5" /> },
-      { page: 'debts', label: 'Debt Planning', icon: <CreditCard className="h-5 w-5" /> },
-      { page: 'projection', label: 'Wealth Projection', icon: <TrendingUp className="h-5 w-5" /> },
+      { page: 'goals', label: 'Metas', icon: <Target className="h-5 w-5" /> },
+      { page: 'debts', label: 'Dividas', icon: <CreditCard className="h-5 w-5" /> },
+      { page: 'projection', label: 'Projecao de Patrimonio', icon: <TrendingUp className="h-5 w-5" /> },
     ],
   },
   {
-    label: 'Analysis',
+    label: 'Analise',
     items: [
-      { page: 'simulation', label: 'Simulation', icon: <Calculator className="h-5 w-5" /> },
+      { page: 'simulation', label: 'Simulacao', icon: <Calculator className="h-5 w-5" /> },
     ],
   },
   {
-    label: 'Settings',
+    label: 'Configuracoes',
     items: [
-      { page: 'categories', label: 'Categories', icon: <Shapes className="h-5 w-5" /> },
-      { page: 'financial-sources', label: 'Financial Sources', icon: <Wallet className="h-5 w-5" /> },
+      { page: 'categories', label: 'Categorias', icon: <Shapes className="h-5 w-5" /> },
+      { page: 'financial-sources', label: 'Fontes Financeiras', icon: <Wallet className="h-5 w-5" /> },
     ],
   },
 ];

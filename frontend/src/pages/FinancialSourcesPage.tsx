@@ -129,9 +129,9 @@ export function FinancialSourcesPage() {
       />
       <ConfirmModal
         isOpen={deleteConfirm !== null}
-        title="Delete Financial Source"
-        message={`Are you sure you want to delete "${deleteConfirm?.name}"? This action cannot be undone.`}
-        confirmLabel="Delete"
+        title="Excluir Fonte Financeira"
+        message={`Tem certeza que deseja excluir "${deleteConfirm?.name}"? Esta acao nao pode ser desfeita.`}
+        confirmLabel="Excluir"
         confirmVariant="danger"
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteConfirm(null)}

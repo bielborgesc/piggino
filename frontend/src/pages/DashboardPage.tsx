@@ -126,7 +126,7 @@ function KpiCard({ title, value, icon, valueClassName, trend }: KpiCardProps) {
         {trend && trend.percent !== 0 && (
           <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${trendColor}`}>
             <TrendIcon size={12} />
-            <span>{trendLabel} vs mes anterior</span>
+            <span>{trendLabel} vs. mes anterior</span>
           </div>
         )}
       </div>
@@ -898,7 +898,7 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals, onNav
     return (
       <div className="flex-1 flex flex-col justify-center items-center gap-4 text-slate-400">
         <AlertCircle size={40} />
-        <p>{error ?? 'Failed to load dashboard.'}</p>
+        <p>{error ?? 'Nao foi possivel carregar o dashboard.'}</p>
         <button
           onClick={refetch}
           className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold transition-colors"
@@ -924,16 +924,16 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals, onNav
         {hasNoActivity && (
           <div className="flex items-center justify-between gap-4 bg-green-900/30 border border-green-700 rounded-xl p-4">
             <div>
-              <p className="text-green-300 font-semibold text-sm">Welcome to Piggino!</p>
+              <p className="text-green-300 font-semibold text-sm">Bem-vindo ao Piggino!</p>
               <p className="text-green-400 text-xs mt-0.5">
-                You have no transactions yet. Follow the setup wizard to configure your account.
+                Voce ainda nao tem transacoes. Siga o assistente de configuracao para comecar.
               </p>
             </div>
             <button
               onClick={onNavigateToOnboarding}
               className="shrink-0 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition-colors"
             >
-              Start Setup
+              Iniciar Configuracao
             </button>
           </div>
         )}
