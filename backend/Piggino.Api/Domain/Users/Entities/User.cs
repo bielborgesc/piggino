@@ -39,6 +39,12 @@ namespace Piggino.Api.Domain.Users.Entities
 
         public bool IsTitheModuleEnabled { get; set; } = false;
 
+        public string? TelegramChatId { get; set; }
+
+        public string? TelegramLinkToken { get; set; }
+
+        public DateTime? TelegramLinkTokenExpiry { get; set; }
+
         public ICollection<FinancialSource>? FinancialSources { get; set; }
         public ICollection<Category>? Categories { get; set; }
         public ICollection<Transaction>? Transactions { get; set; }
