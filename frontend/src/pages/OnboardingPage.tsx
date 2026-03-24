@@ -42,7 +42,7 @@ function ProgressIndicator({ currentStep }: { currentStep: number }) {
   );
 }
 
-function StepCategory({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
+function StepCategory({ onNext, onSkip }: { onNext: (categoryId: number) => void; onSkip: () => void }) {
   const [name, setName] = useState('');
   const [type, setType] = useState<CategoryType>('Expense');
   const [color, setColor] = useState('#22c55e');
@@ -55,9 +55,9 @@ function StepCategory({ onNext, onSkip }: { onNext: () => void; onSkip: () => vo
     setIsSaving(true);
     try {
       const data: CategoryData = { name: name.trim(), type, color, budgetBucket: 'None' };
-      await createCategory(data);
+      const created = await createCategory(data);
       toast.success('Categoria criada!');
-      onNext();
+      onNext(created.id);
     } catch (error) {
       toast.error(extractErrorMessage(error, 'Nao foi possivel criar a categoria.'));
     } finally {
@@ -153,7 +153,7 @@ function StepCategory({ onNext, onSkip }: { onNext: () => void; onSkip: () => vo
   );
 }
 
-function StepFinancialSource({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
+function StepFinancialSource({ onNext, onSkip }: { onNext: (financialSourceId: number) => void; onSkip: () => void }) {
   const [name, setName] = useState('');
   const [type, setType] = useState<FinancialSourceType>('Account');
   const [isSaving, setIsSaving] = useState(false);
@@ -165,9 +165,9 @@ function StepFinancialSource({ onNext, onSkip }: { onNext: () => void; onSkip: (
     setIsSaving(true);
     try {
       const data: FinancialSourceData = { name: name.trim(), type, closingDay: null, dueDay: null };
-      await createFinancialSource(data);
+      const created = await createFinancialSource(data);
       toast.success('Fonte financeira criada!');
-      onNext();
+      onNext(created.id);
     } catch (error) {
       toast.error(extractErrorMessage(error, 'Nao foi possivel criar a fonte financeira.'));
     } finally {
@@ -235,7 +235,14 @@ function StepFinancialSource({ onNext, onSkip }: { onNext: () => void; onSkip: (
   );
 }
 
-function StepTransaction({ onFinish, onSkip }: { onFinish: () => void; onSkip: () => void }) {
+interface StepTransactionProps {
+  categoryId: number | null;
+  financialSourceId: number | null;
+  onFinish: () => void;
+  onSkip: () => void;
+}
+
+function StepTransaction({ categoryId, financialSourceId, onFinish, onSkip }: StepTransactionProps) {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -248,16 +255,18 @@ function StepTransaction({ onFinish, onSkip }: { onFinish: () => void; onSkip: (
     try {
       const today = new Date();
       const localDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      const data: Partial<TransactionData> = {
+      const data: TransactionData = {
         description: description.trim(),
         totalAmount: parseFloat(amount),
         transactionType: 'Expense',
+        categoryId: categoryId ?? 0,
+        financialSourceId: financialSourceId ?? 0,
         purchaseDate: new Date(`${localDate}T12:00:00`).toISOString(),
         isInstallment: false,
         isFixed: false,
         isRecurring: false,
       };
-      await createTransaction(data as TransactionData);
+      await createTransaction(data);
       toast.success('Primeira transacao registrada!');
       onFinish();
     } catch (error) {
@@ -333,13 +342,17 @@ const STEP_LABELS = ['Criar Categoria', 'Adicionar Fonte Financeira', 'Primeira 
 
 export function OnboardingPage({ onFinish }: OnboardingPageProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [createdCategoryId, setCreatedCategoryId] = useState<number | null>(null);
+  const [createdFinancialSourceId, setCreatedFinancialSourceId] = useState<number | null>(null);
 
-  const advanceStep = () => {
-    if (currentStep < TOTAL_STEPS) {
-      setCurrentStep((prev) => prev + 1);
-    } else {
-      onFinish();
-    }
+  const handleCategoryNext = (categoryId: number) => {
+    setCreatedCategoryId(categoryId);
+    setCurrentStep(2);
+  };
+
+  const handleFinancialSourceNext = (financialSourceId: number) => {
+    setCreatedFinancialSourceId(financialSourceId);
+    setCurrentStep(3);
   };
 
   return (
@@ -360,13 +373,18 @@ export function OnboardingPage({ onFinish }: OnboardingPageProps) {
 
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-xl">
           {currentStep === 1 && (
-            <StepCategory onNext={advanceStep} onSkip={advanceStep} />
+            <StepCategory onNext={handleCategoryNext} onSkip={() => setCurrentStep(2)} />
           )}
           {currentStep === 2 && (
-            <StepFinancialSource onNext={advanceStep} onSkip={advanceStep} />
+            <StepFinancialSource onNext={handleFinancialSourceNext} onSkip={() => setCurrentStep(3)} />
           )}
           {currentStep === 3 && (
-            <StepTransaction onFinish={onFinish} onSkip={onFinish} />
+            <StepTransaction
+              categoryId={createdCategoryId}
+              financialSourceId={createdFinancialSourceId}
+              onFinish={onFinish}
+              onSkip={onFinish}
+            />
           )}
         </div>
       </div>
