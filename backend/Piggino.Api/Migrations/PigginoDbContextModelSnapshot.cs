@@ -312,6 +312,15 @@ namespace Piggino.Api.Migrations
                     b.Property<DateTime?>("RefreshTokenExpiry")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("TelegramChatId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TelegramLinkToken")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("TelegramLinkTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.ToTable("Users");

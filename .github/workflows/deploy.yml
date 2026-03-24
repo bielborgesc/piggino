@@ -23,8 +23,27 @@ jobs:
       - name: Build backend
         run: dotnet build backend/Piggino.Api/Piggino.Api.csproj --no-restore -c Release
 
+  build-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install bot dependencies
+        run: npm install
+        working-directory: ./bot
+
+      - name: Build bot
+        run: npm run build
+        working-directory: ./bot
+
   build-and-push:
-    needs: build-backend
+    needs: [build-backend, build-bot]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -62,17 +81,23 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: POSTGRES_PASSWORD,JWT_KEY
+          envs: POSTGRES_PASSWORD,JWT_KEY,TELEGRAM_BOT_TOKEN,GEMINI_API_KEY,BOT_SECRET
           script: |
             cd ~/piggino
             git pull
             export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
             export JWT_KEY="${JWT_KEY}"
+            export TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN}"
+            export GEMINI_API_KEY="${GEMINI_API_KEY}"
+            export BOT_SECRET="${BOT_SECRET}"
             docker compose pull
-            docker compose up -d
+            docker compose up -d --build
         env:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           JWT_KEY: ${{ secrets.JWT_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          BOT_SECRET: ${{ secrets.BOT_SECRET }}
 
       - name: Verify deployment health
         run: |

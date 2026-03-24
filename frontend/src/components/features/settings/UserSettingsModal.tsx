@@ -4,6 +4,7 @@ import { getUserSettings, updateUserSettings } from '../../../services/api';
 import { UserSettings } from '../../../types';
 import toast from 'react-hot-toast';
 import { extractErrorMessage } from '../../../utils/errors';
+import { TelegramConnectCard } from './TelegramConnectCard';
 
 interface UserSettingsModalProps {
   onClose: () => void;
@@ -11,7 +12,7 @@ interface UserSettingsModalProps {
 }
 
 export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSettingsModalProps) {
-  const [settings, setSettings] = useState<UserSettings>({ is503020Enabled: false, isTitheModuleEnabled: false });
+  const [settings, setSettings] = useState<UserSettings>({ is503020Enabled: false, isTitheModuleEnabled: false, isTelegramConnected: false });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -141,6 +142,13 @@ export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSetti
                     }`}
                   />
                 </button>
+              </div>
+
+              <div className="border-t border-slate-700 pt-4">
+                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3">
+                  Integracao Telegram
+                </p>
+                <TelegramConnectCard />
               </div>
             </div>
           )}

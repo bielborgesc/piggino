@@ -29,6 +29,7 @@ import {
   HealthScore,
   TipsData,
   TitheStatus,
+  BotLinkTokenResponse,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -394,6 +395,17 @@ export const toggleTitheModule = async (enabled: boolean): Promise<UserSettings>
 
 export const generateMonthlyTithe = async (): Promise<void> => {
   await apiClient.post('/tithe/generate');
+};
+
+// --- Bot / Telegram API ---
+
+export const generateBotLinkToken = async (): Promise<BotLinkTokenResponse> => {
+  const response = await apiClient.post<BotLinkTokenResponse>('/Bot/link-token');
+  return response.data;
+};
+
+export const disconnectTelegram = async (): Promise<void> => {
+  await apiClient.post('/Bot/disconnect');
 };
 
 // Unused export kept for CategoryType import consumers
