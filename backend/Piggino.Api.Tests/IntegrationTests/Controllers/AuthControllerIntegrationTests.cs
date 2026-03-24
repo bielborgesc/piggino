@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Piggino.Api.Data;
@@ -15,8 +14,8 @@ namespace Piggino.Api.Tests.IntegrationTests.Controllers
     [TestFixture]
     public class AuthControllerIntegrationTests
     {
-        private CustomWebApplicationFactory<Program> _factory;
-        private HttpClient _client;
+        private CustomWebApplicationFactory<Program>? _factory;
+        private HttpClient? _client;
 
         [OneTimeSetUp]
         public void OneTimeSetup()
