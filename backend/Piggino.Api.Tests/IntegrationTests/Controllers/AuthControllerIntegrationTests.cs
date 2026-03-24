@@ -28,13 +28,13 @@ namespace Piggino.Api.Tests.IntegrationTests.Controllers
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            _client.Dispose();
-            _factory.Dispose();
+            _client!.Dispose();
+            _factory!.Dispose();
         }
 
         private async Task CreateTestUser(string email, string password)
         {
-            using (IServiceScope scope = _factory.Services.CreateScope())
+            using (IServiceScope scope = _factory!.Services.CreateScope())
             {
                 IServiceProvider scopedServices = scope.ServiceProvider;
                 PigginoDbContext db = scopedServices.GetRequiredService<PigginoDbContext>();
@@ -70,7 +70,7 @@ namespace Piggino.Api.Tests.IntegrationTests.Controllers
             StringContent content = new StringContent(JsonConvert.SerializeObject(loginDto), Encoding.UTF8, "application/json");
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("/api/Auth/login", content);
+            HttpResponseMessage response = await _client!.PostAsync("/api/Auth/login", content);
 
             // Assert
             response.EnsureSuccessStatusCode();
@@ -90,7 +90,7 @@ namespace Piggino.Api.Tests.IntegrationTests.Controllers
             StringContent content = new StringContent(JsonConvert.SerializeObject(loginDto), Encoding.UTF8, "application/json");
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("/api/Auth/login", content);
+            HttpResponseMessage response = await _client!.PostAsync("/api/Auth/login", content);
 
             // Assert
             Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Unauthorized));
@@ -108,7 +108,7 @@ namespace Piggino.Api.Tests.IntegrationTests.Controllers
             StringContent content = new StringContent(JsonConvert.SerializeObject(loginDto), Encoding.UTF8, "application/json");
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("/api/Auth/login", content);
+            HttpResponseMessage response = await _client!.PostAsync("/api/Auth/login", content);
 
             // Assert
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
