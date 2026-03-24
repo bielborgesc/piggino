@@ -45,7 +45,8 @@ namespace Piggino.Api.Infrastructure.Repositories
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            string normalizedEmail = email.Trim().ToLowerInvariant();
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
         }
 
         public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)

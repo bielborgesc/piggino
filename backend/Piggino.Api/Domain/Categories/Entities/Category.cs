@@ -25,6 +25,8 @@ namespace Piggino.Api.Domain.Categories.Entities
 
         public BudgetBucket BudgetBucket { get; set; } = BudgetBucket.None;
 
+        public bool IsTitheable { get; set; } = false;
+
         public ICollection<Transaction>? Transactions { get; set; }
     }
 }

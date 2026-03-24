@@ -51,12 +51,12 @@ namespace Piggino.Api.Controllers
                 return Unauthorized();
 
             DateTime now = DateTime.UtcNow;
-            bool generated = await _titheService.GenerateMonthlyTitheAsync(userId, now.Year, now.Month);
+            int createdCount = await _titheService.GenerateMonthlyTitheAsync(userId, now.Year, now.Month);
 
-            if (!generated)
-                return Conflict(new { message = "Tithe already generated for this month or no income found." });
+            if (createdCount == 0)
+                return Conflict(new { message = "No tithe transactions created. They may already exist or no titheable income was found." });
 
-            return Ok(new { message = "Tithe transaction created successfully." });
+            return Ok(new { message = $"{createdCount} tithe transaction(s) created successfully." });
         }
 
         private bool TryGetCurrentUserId(out Guid userId)

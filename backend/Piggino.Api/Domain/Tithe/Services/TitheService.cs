@@ -11,7 +11,6 @@ namespace Piggino.Api.Domain.Tithe.Services
     public class TitheService : ITitheService
     {
         private const decimal TithePercentage = 0.10m;
-        private const string TitheCategoryName = "Dizimo";
         private const string TitheDescriptionPrefix = "Dizimo";
 
         private readonly ITitheRepository _titheRepository;
@@ -30,57 +29,84 @@ namespace Piggino.Api.Domain.Tithe.Services
                 return new TitheStatusDto { IsEnabled = false };
 
             var now = DateTime.UtcNow;
-            decimal monthlyIncome = await _titheRepository.GetMonthlyIncomeAsync(userId, now.Year, now.Month);
-            bool alreadyGenerated = await _titheRepository.TitheTransactionExistsForMonthAsync(userId, now.Year, now.Month);
+            var categoriesWithIncome = await _titheRepository.GetTitheableCategoriesWithIncomeAsync(
+                userId, now.Year, now.Month);
+
+            var previews = new List<CategoryTithePreviewDto>();
+
+            foreach (var (category, income) in categoriesWithIncome)
+            {
+                bool alreadyGenerated = await _titheRepository.TitheTransactionExistsForCategoryAsync(
+                    userId, now.Year, now.Month, category.Name!);
+
+                previews.Add(new CategoryTithePreviewDto
+                {
+                    CategoryId = category.Id,
+                    CategoryName = category.Name!,
+                    IncomeAmount = income,
+                    TitheAmount = income * TithePercentage,
+                    AlreadyGenerated = alreadyGenerated
+                });
+            }
 
             return new TitheStatusDto
             {
                 IsEnabled = user.IsTitheModuleEnabled,
-                MonthlyIncomeAmount = monthlyIncome,
-                TitheAmount = monthlyIncome * TithePercentage,
-                AlreadyGeneratedThisMonth = alreadyGenerated
+                CategoryPreviews = previews.AsReadOnly()
             };
         }
 
-        public async Task<bool> GenerateMonthlyTitheAsync(Guid userId, int year, int month)
+        public async Task<int> GenerateMonthlyTitheAsync(Guid userId, int year, int month)
         {
-            bool alreadyExists = await _titheRepository.TitheTransactionExistsForMonthAsync(userId, year, month);
-            if (alreadyExists)
-                return false;
+            var categoriesWithIncome = await _titheRepository.GetTitheableCategoriesWithIncomeAsync(
+                userId, year, month);
 
-            decimal monthlyIncome = await _titheRepository.GetMonthlyIncomeAsync(userId, year, month);
-            if (monthlyIncome <= 0)
-                return false;
+            if (categoriesWithIncome.Count == 0)
+                return 0;
 
             Category? titheCategory = await _titheRepository.FindTitheCategoryAsync(userId)
                 ?? await _titheRepository.FindFirstExpenseCategoryAsync(userId);
 
             if (titheCategory == null)
-                return false;
+                return 0;
 
             FinancialSource? financialSource = await _titheRepository.FindFirstFinancialSourceAsync(userId);
             if (financialSource == null)
-                return false;
+                return 0;
 
-            decimal titheAmount = monthlyIncome * TithePercentage;
-            string description = BuildTitheDescription(year, month);
+            int createdCount = 0;
 
-            var titheTransaction = new Transaction
+            foreach (var (category, income) in categoriesWithIncome)
             {
-                Description = description,
-                TotalAmount = titheAmount,
-                TransactionType = TransactionType.Expense,
-                PurchaseDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc),
-                CategoryId = titheCategory.Id,
-                FinancialSourceId = financialSource.Id,
-                UserId = userId,
-                IsPaid = true
-            };
+                bool alreadyExists = await _titheRepository.TitheTransactionExistsForCategoryAsync(
+                    userId, year, month, category.Name!);
 
-            await _titheRepository.AddTransactionAsync(titheTransaction);
-            await _titheRepository.SaveChangesAsync();
+                if (alreadyExists)
+                    continue;
 
-            return true;
+                decimal titheAmount = income * TithePercentage;
+                string description = BuildTitheDescription(category.Name!, year, month);
+
+                var titheTransaction = new Transaction
+                {
+                    Description = description,
+                    TotalAmount = titheAmount,
+                    TransactionType = TransactionType.Expense,
+                    PurchaseDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc),
+                    CategoryId = titheCategory.Id,
+                    FinancialSourceId = financialSource.Id,
+                    UserId = userId,
+                    IsPaid = true
+                };
+
+                await _titheRepository.AddTransactionAsync(titheTransaction);
+                createdCount++;
+            }
+
+            if (createdCount > 0)
+                await _titheRepository.SaveChangesAsync();
+
+            return createdCount;
         }
 
         public async Task GenerateMonthlyTitheForAllEnabledUsersAsync(int year, int month)
@@ -94,11 +120,9 @@ namespace Piggino.Api.Domain.Tithe.Services
             }
         }
 
-        private static string BuildTitheDescription(int year, int month)
+        private static string BuildTitheDescription(string categoryName, int year, int month)
         {
-            var date = new DateTime(year, month, 1);
-            string monthName = date.ToString("MMMM/yyyy", new System.Globalization.CultureInfo("pt-BR"));
-            return $"{TitheDescriptionPrefix} - {monthName}";
+            return $"{TitheDescriptionPrefix} - {categoryName} - {month}/{year}";
         }
     }
 }

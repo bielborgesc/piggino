@@ -29,6 +29,7 @@ export function CategoryForm({ onSave, onCancel, initialData, isSaving }: Catego
   const [type, setType] = useState<CategoryType>('Expense');
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [budgetBucket, setBudgetBucket] = useState<BudgetBucket>(DEFAULT_BUDGET_BUCKET);
+  const [isTitheable, setIsTitheable] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -36,17 +37,19 @@ export function CategoryForm({ onSave, onCancel, initialData, isSaving }: Catego
       setType(initialData.type);
       setColor(initialData.color ?? DEFAULT_COLOR);
       setBudgetBucket(initialData.budgetBucket ?? DEFAULT_BUDGET_BUCKET);
+      setIsTitheable(initialData.isTitheable ?? false);
     } else {
       setName('');
       setType('Expense');
       setColor(DEFAULT_COLOR);
       setBudgetBucket(DEFAULT_BUDGET_BUCKET);
+      setIsTitheable(false);
     }
   }, [initialData]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    onSave({ name, type, color, budgetBucket });
+    onSave({ name, type, color, budgetBucket, isTitheable });
   };
 
   return (
@@ -90,6 +93,31 @@ export function CategoryForm({ onSave, onCancel, initialData, isSaving }: Catego
           </button>
         </div>
       </div>
+
+      {type === 'Income' && (
+        <div className="flex items-center justify-between rounded-lg bg-slate-900 px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-slate-300">Incluir no dizimo</p>
+            <p className="text-xs text-slate-500 mt-0.5">10% desta receita sera calculado como dizimo</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isTitheable}
+            onClick={() => setIsTitheable((prev) => !prev)}
+            disabled={isSaving}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+              isTitheable ? 'bg-amber-500' : 'bg-slate-600'
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition duration-200 ${
+                isTitheable ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+      )}
 
       <div>
         <div className="flex items-center gap-2 mb-2">

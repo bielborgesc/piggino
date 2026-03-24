@@ -18,5 +18,7 @@ namespace Piggino.Api.Domain.Categories.Dtos
 
         [EnumDataType(typeof(BudgetBucket), ErrorMessage = "InvalidBudgetBucket")]
         public BudgetBucket BudgetBucket { get; set; } = BudgetBucket.None;
+
+        public bool IsTitheable { get; set; } = false;
     }
 }

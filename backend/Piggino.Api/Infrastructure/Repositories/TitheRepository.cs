@@ -20,25 +20,47 @@ namespace Piggino.Api.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<decimal> GetMonthlyIncomeAsync(Guid userId, int year, int month)
+        public async Task<IReadOnlyList<(Category Category, decimal Income)>> GetTitheableCategoriesWithIncomeAsync(
+            Guid userId, int year, int month)
         {
-            return await _context.Transactions
-                .Where(t =>
-                    t.UserId == userId &&
-                    t.TransactionType == TransactionType.Income &&
-                    t.PurchaseDate.Year == year &&
-                    t.PurchaseDate.Month == month)
-                .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m;
+            var titheableCategories = await _context.Categories
+                .Where(c =>
+                    c.UserId == userId &&
+                    c.Type == CategoryType.Income &&
+                    c.IsTitheable)
+                .ToListAsync();
+
+            var results = new List<(Category Category, decimal Income)>();
+
+            foreach (var category in titheableCategories)
+            {
+                decimal income = await _context.Transactions
+                    .Where(t =>
+                        t.UserId == userId &&
+                        t.CategoryId == category.Id &&
+                        t.TransactionType == TransactionType.Income &&
+                        t.PurchaseDate.Year == year &&
+                        t.PurchaseDate.Month == month)
+                    .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m;
+
+                if (income > 0)
+                    results.Add((category, income));
+            }
+
+            return results.AsReadOnly();
         }
 
-        public async Task<bool> TitheTransactionExistsForMonthAsync(Guid userId, int year, int month)
+        public async Task<bool> TitheTransactionExistsForCategoryAsync(
+            Guid userId, int year, int month, string categoryName)
         {
+            string expectedPrefix = $"{TitheDescriptionPrefix} - {categoryName}";
+
             return await _context.Transactions
                 .AnyAsync(t =>
                     t.UserId == userId &&
                     t.TransactionType == TransactionType.Expense &&
                     t.Description != null &&
-                    t.Description.StartsWith(TitheDescriptionPrefix) &&
+                    t.Description.StartsWith(expectedPrefix) &&
                     t.PurchaseDate.Year == year &&
                     t.PurchaseDate.Month == month);
         }

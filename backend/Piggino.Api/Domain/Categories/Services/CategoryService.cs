@@ -43,6 +43,7 @@ namespace Piggino.Api.Domain.Categories.Services
                 Type = createDto.Type,
                 Color = createDto.Color ?? "#6b7280",
                 BudgetBucket = createDto.BudgetBucket,
+                IsTitheable = createDto.IsTitheable,
                 UserId = userId
             };
 
@@ -56,6 +57,7 @@ namespace Piggino.Api.Domain.Categories.Services
                 Type = newCategory.Type,
                 Color = newCategory.Color,
                 BudgetBucket = newCategory.BudgetBucket,
+                IsTitheable = newCategory.IsTitheable,
                 UserId = newCategory.UserId
             };
         }
@@ -95,6 +97,7 @@ namespace Piggino.Api.Domain.Categories.Services
                 Type = c.Type,
                 Color = c.Color,
                 BudgetBucket = c.BudgetBucket,
+                IsTitheable = c.IsTitheable,
                 UserId = c.UserId
             });
         }
@@ -116,6 +119,7 @@ namespace Piggino.Api.Domain.Categories.Services
                 Type = category.Type,
                 Color = category.Color,
                 BudgetBucket = category.BudgetBucket,
+                IsTitheable = category.IsTitheable,
                 UserId = category.UserId
             };
         }
@@ -134,6 +138,7 @@ namespace Piggino.Api.Domain.Categories.Services
             category.Type = updateDto.Type;
             category.Color = updateDto.Color ?? category.Color;
             category.BudgetBucket = updateDto.BudgetBucket;
+            category.IsTitheable = updateDto.IsTitheable;
 
             _repository.Update(category);
             return await _repository.SaveChangesAsync();

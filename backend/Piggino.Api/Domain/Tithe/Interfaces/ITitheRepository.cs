@@ -6,8 +6,8 @@ namespace Piggino.Api.Domain.Tithe.Interfaces
 {
     public interface ITitheRepository
     {
-        Task<decimal> GetMonthlyIncomeAsync(Guid userId, int year, int month);
-        Task<bool> TitheTransactionExistsForMonthAsync(Guid userId, int year, int month);
+        Task<IReadOnlyList<(Category Category, decimal Income)>> GetTitheableCategoriesWithIncomeAsync(Guid userId, int year, int month);
+        Task<bool> TitheTransactionExistsForCategoryAsync(Guid userId, int year, int month, string categoryName);
         Task<Category?> FindTitheCategoryAsync(Guid userId);
         Task<Category?> FindFirstExpenseCategoryAsync(Guid userId);
         Task<FinancialSource?> FindFirstFinancialSourceAsync(Guid userId);

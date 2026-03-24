@@ -1,7 +1,24 @@
 import { Church, LoaderCircle } from 'lucide-react';
 import { useTitheModule } from '../../../hooks/useTitheModule';
 import { formatBRL } from '../../../utils/formatters';
+import { CategoryTithePreview } from '../../../types';
 import toast from 'react-hot-toast';
+
+function CategoryTitheRow({ preview }: { preview: CategoryTithePreview }) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <span className="text-slate-300 text-sm">{preview.categoryName}</span>
+        {preview.alreadyGenerated && (
+          <span className="text-xs text-green-400 font-medium">(gerado)</span>
+        )}
+      </div>
+      <span className="text-amber-400 font-semibold text-sm">
+        {formatBRL(preview.titheAmount)}
+      </span>
+    </div>
+  );
+}
 
 export function TitheModuleCard() {
   const { status, isLoading, isToggling, isGenerating, toggle, generate } = useTitheModule();
@@ -19,9 +36,9 @@ export function TitheModuleCard() {
   const handleGenerate = async () => {
     try {
       await generate();
-      toast.success('Transacao de dizimo criada com sucesso!');
+      toast.success('Transacoes de dizimo criadas com sucesso!');
     } catch {
-      toast.error('Nao foi possivel gerar o dizimo. Verifique se ja foi gerado este mes ou se ha receitas registradas.');
+      toast.error('Nao foi possivel gerar o dizimo. Verifique se ja foi gerado este mes ou se ha receitas titulaveis registradas.');
     }
   };
 
@@ -35,6 +52,9 @@ export function TitheModuleCard() {
 
   if (!status) return null;
 
+  const hasPendingPreviews = status.categoryPreviews.some((p) => !p.alreadyGenerated);
+  const hasAnyPreviews = status.categoryPreviews.length > 0;
+
   return (
     <div className="bg-slate-800 rounded-xl border border-slate-700 p-5 space-y-4">
       <div className="flex items-start justify-between gap-4">
@@ -45,7 +65,7 @@ export function TitheModuleCard() {
           <div>
             <p className="text-white font-semibold text-sm">Modulo Dizimo</p>
             <p className="text-slate-400 text-xs mt-0.5">
-              10% da sua receita mensal e reservado automaticamente como dizimo
+              10% de cada receita marcada como dizmavel e reservado como dizimo
             </p>
           </div>
         </div>
@@ -67,38 +87,46 @@ export function TitheModuleCard() {
 
       {status.isEnabled && (
         <div className="border-t border-slate-700 pt-4 space-y-3">
-          {status.titheAmount !== null && status.titheAmount > 0 ? (
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400 text-sm">Dizimo do mes atual</span>
-              <span className="text-amber-400 font-semibold text-sm">
-                {formatBRL(status.titheAmount)}
-              </span>
-            </div>
+          {hasAnyPreviews ? (
+            <>
+              <div className="space-y-2">
+                {status.categoryPreviews.map((preview) => (
+                  <CategoryTitheRow key={preview.categoryId} preview={preview} />
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between border-t border-slate-700 pt-2">
+                <span className="text-slate-400 text-sm font-medium">Total</span>
+                <span className="text-amber-400 font-bold text-sm">
+                  {formatBRL(status.totalTitheAmount)}
+                </span>
+              </div>
+
+              {hasPendingPreviews ? (
+                <button
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  className="w-full py-2 px-4 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors"
+                >
+                  {isGenerating ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <LoaderCircle size={14} className="animate-spin" />
+                      Gerando...
+                    </span>
+                  ) : (
+                    'Gerar transacoes de dizimo'
+                  )}
+                </button>
+              ) : (
+                <p className="text-green-400 text-xs font-medium">
+                  Todas as transacoes de dizimo ja foram geradas para este mes.
+                </p>
+              )}
+            </>
           ) : (
             <p className="text-slate-500 text-xs">
-              Nenhuma receita registrada neste mes para calcular o dizimo.
+              Nenhuma receita dizmavel registrada neste mes. Marque uma categoria de receita como "Incluir no dizimo" para comecar.
             </p>
-          )}
-
-          {status.alreadyGeneratedThisMonth ? (
-            <p className="text-green-400 text-xs font-medium">
-              Transacao de dizimo ja gerada para este mes.
-            </p>
-          ) : (
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating || !status.titheAmount || status.titheAmount <= 0}
-              className="w-full py-2 px-4 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors"
-            >
-              {isGenerating ? (
-                <span className="flex items-center justify-center gap-2">
-                  <LoaderCircle size={14} className="animate-spin" />
-                  Gerando...
-                </span>
-              ) : (
-                'Gerar transacao de dizimo'
-              )}
-            </button>
           )}
         </div>
       )}

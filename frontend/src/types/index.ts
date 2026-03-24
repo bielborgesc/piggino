@@ -64,6 +64,7 @@ export interface Category {
   color?: string;
   userId: string;
   budgetBucket?: BudgetBucket;
+  isTitheable?: boolean;
 }
 
 // ✅ CORREÇÃO: Adicione as propriedades opcionais aqui
@@ -138,6 +139,7 @@ export interface CategoryData {
   type: CategoryType;
   color?: string;
   budgetBucket?: BudgetBucket;
+  isTitheable?: boolean;
 }
 
 export interface FinancialSourceData {
@@ -292,10 +294,18 @@ export interface UserSettings {
   isTitheModuleEnabled: boolean;
 }
 
+export interface CategoryTithePreview {
+  categoryId: number;
+  categoryName: string;
+  incomeAmount: number;
+  titheAmount: number;
+  alreadyGenerated: boolean;
+}
+
 export interface TitheStatus {
   isEnabled: boolean;
-  monthlyIncomeAmount: number | null;
-  titheAmount: number | null;
+  categoryPreviews: CategoryTithePreview[];
+  totalTitheAmount: number;
   alreadyGeneratedThisMonth: boolean;
 }
 
