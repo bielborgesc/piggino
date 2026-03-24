@@ -6,6 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Piggino.Api.Data;
 using Piggino.Api.Infrastructure.Localization;
+using Piggino.Api.Domain.Bot.Interfaces;
+using Piggino.Api.Domain.Bot.Services;
 using Piggino.Api.Domain.Categories.Interfaces;
 using Piggino.Api.Domain.Categories.Services;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
@@ -32,6 +34,9 @@ builder.AddServiceDefaults();
 
 // Configure JwtSettings using the options pattern
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
+// Configure BotSettings
+builder.Services.Configure<BotSettings>(builder.Configuration.GetSection("BotSettings"));
 
 builder.Services.AddCors(options =>
 {
@@ -174,6 +179,8 @@ builder.Services.AddScoped<IGoalRepository, GoalRepository>();
 builder.Services.AddScoped<IGoalService, GoalService>();
 builder.Services.AddScoped<ITitheRepository, TitheRepository>();
 builder.Services.AddScoped<ITitheService, TitheService>();
+builder.Services.AddScoped<IBotRepository, BotRepository>();
+builder.Services.AddScoped<IBotService, BotService>();
 builder.Services.AddHostedService<TitheMonthlyBackgroundService>();
 builder.Services.AddHttpContextAccessor();
 
