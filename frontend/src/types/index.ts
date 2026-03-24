@@ -292,6 +292,12 @@ export interface TipsData {
 export interface UserSettings {
   is503020Enabled: boolean;
   isTitheModuleEnabled: boolean;
+  isTelegramConnected: boolean;
+}
+
+export interface BotLinkTokenResponse {
+  token: string;
+  expiresAt: string;
 }
 
 export interface CategoryTithePreview {

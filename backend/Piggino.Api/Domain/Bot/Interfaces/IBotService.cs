@@ -9,5 +9,6 @@ namespace Piggino.Api.Domain.Bot.Interfaces
         Task<BotContextDto?> GetContextAsync(string chatId);
         Task<bool> CreateTransactionAsync(BotTransactionDto dto);
         Task<BotSummaryDto?> GetSummaryAsync(string chatId);
+        Task DisconnectAsync(Guid userId);
     }
 }

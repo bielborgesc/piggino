@@ -105,6 +105,11 @@ namespace Piggino.Api.Domain.Bot.Services
             return await _botRepository.GetMonthlySummaryAsync(user.Id, now.Year, now.Month);
         }
 
+        public async Task DisconnectAsync(Guid userId)
+        {
+            await _botRepository.DisconnectTelegramAsync(userId);
+        }
+
         private static string GenerateSecureToken()
         {
             return Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");

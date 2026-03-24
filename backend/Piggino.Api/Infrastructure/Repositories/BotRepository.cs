@@ -82,6 +82,19 @@ namespace Piggino.Api.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task DisconnectTelegramAsync(Guid userId)
+        {
+            User? user = await _context.Users.FindAsync(userId);
+
+            if (user == null)
+                return;
+
+            user.TelegramChatId = null;
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<BotSummaryDto> GetMonthlySummaryAsync(Guid userId, int year, int month)
         {
             DateTime periodStart = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);

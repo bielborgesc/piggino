@@ -12,5 +12,6 @@ namespace Piggino.Api.Domain.Bot.Interfaces
         Task<List<BotCategoryDto>> GetUserCategoriesAsync(Guid userId);
         Task<List<BotFinancialSourceDto>> GetUserFinancialSourcesAsync(Guid userId);
         Task<BotSummaryDto> GetMonthlySummaryAsync(Guid userId, int year, int month);
+        Task DisconnectTelegramAsync(Guid userId);
     }
 }

@@ -37,6 +37,20 @@ namespace Piggino.Api.Controllers
             return Ok(result);
         }
 
+        [Authorize]
+        [HttpPost("disconnect")]
+        public async Task<IActionResult> Disconnect()
+        {
+            string? userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!Guid.TryParse(userIdClaim, out Guid userId))
+                return Unauthorized();
+
+            await _botService.DisconnectAsync(userId);
+
+            return Ok(new { message = "Telegram account disconnected successfully." });
+        }
+
         [HttpPost("connect")]
         public async Task<IActionResult> Connect([FromBody] BotConnectDto dto)
         {

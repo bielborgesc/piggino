@@ -172,7 +172,8 @@ namespace Piggino.Api.Domain.Users.Services
             return new UserSettingsDto
             {
                 Is503020Enabled = user.Is503020Enabled,
-                IsTitheModuleEnabled = user.IsTitheModuleEnabled
+                IsTitheModuleEnabled = user.IsTitheModuleEnabled,
+                IsTelegramConnected = user.TelegramChatId != null
             };
         }
 
@@ -189,7 +190,8 @@ namespace Piggino.Api.Domain.Users.Services
             return new UserSettingsDto
             {
                 Is503020Enabled = user.Is503020Enabled,
-                IsTitheModuleEnabled = user.IsTitheModuleEnabled
+                IsTitheModuleEnabled = user.IsTitheModuleEnabled,
+                IsTelegramConnected = user.TelegramChatId != null
             };
         }
 
@@ -205,7 +207,8 @@ namespace Piggino.Api.Domain.Users.Services
             return new UserSettingsDto
             {
                 Is503020Enabled = user.Is503020Enabled,
-                IsTitheModuleEnabled = user.IsTitheModuleEnabled
+                IsTitheModuleEnabled = user.IsTitheModuleEnabled,
+                IsTelegramConnected = user.TelegramChatId != null
             };
         }
     }
