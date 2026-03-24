@@ -11,7 +11,7 @@ interface UserSettingsModalProps {
 }
 
 export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSettingsModalProps) {
-  const [settings, setSettings] = useState<UserSettings>({ is503020Enabled: false });
+  const [settings, setSettings] = useState<UserSettings>({ is503020Enabled: false, isTitheModuleEnabled: false });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -24,14 +24,29 @@ export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSetti
       .finally(() => setIsLoading(false));
   }, []);
 
-  const handleToggle = async () => {
-    const updated: UserSettings = { is503020Enabled: !settings.is503020Enabled };
+  const handleToggle503020 = async () => {
+    const updated: UserSettings = { ...settings, is503020Enabled: !settings.is503020Enabled };
     setIsSaving(true);
 
     try {
       const saved = await updateUserSettings(updated);
       setSettings(saved);
       toast.success(saved.is503020Enabled ? 'Metodo 50/30/20 ativado.' : 'Metodo 50/30/20 desativado.');
+    } catch (error) {
+      toast.error(extractErrorMessage(error, 'Erro ao salvar configuracoes.'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleTithe = async () => {
+    const updated: UserSettings = { ...settings, isTitheModuleEnabled: !settings.isTitheModuleEnabled };
+    setIsSaving(true);
+
+    try {
+      const saved = await updateUserSettings(updated);
+      setSettings(saved);
+      toast.success(saved.isTitheModuleEnabled ? 'Modulo Dizimo ativado.' : 'Modulo Dizimo desativado.');
     } catch (error) {
       toast.error(extractErrorMessage(error, 'Erro ao salvar configuracoes.'));
     } finally {
@@ -76,7 +91,7 @@ export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSetti
                   )}
                 </div>
                 <button
-                  onClick={handleToggle}
+                  onClick={handleToggle503020}
                   disabled={isSaving}
                   aria-label="Ativar ou desativar metodo 50/30/20"
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
@@ -99,6 +114,34 @@ export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSetti
                   Classificar categorias &rarr;
                 </button>
               )}
+
+              <div className="border-t border-slate-700 pt-4 flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <p className="text-white font-semibold">Modulo Dizimo</p>
+                  <p className="text-slate-400 text-sm mt-1">
+                    Gera automaticamente uma transacao de 10% da sua receita mensal como dizimo.
+                  </p>
+                  {settings.isTitheModuleEnabled && (
+                    <p className="text-slate-500 text-xs mt-2">
+                      Visivel no Dashboard para acompanhar e gerar o dizimo do mes.
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={handleToggleTithe}
+                  disabled={isSaving}
+                  aria-label="Ativar ou desativar modulo dizimo"
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+                    settings.isTitheModuleEnabled ? 'bg-amber-500' : 'bg-slate-600'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition duration-200 ${
+                      settings.isTitheModuleEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
           )}
         </div>

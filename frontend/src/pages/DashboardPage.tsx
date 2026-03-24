@@ -20,6 +20,7 @@ import {
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { LoaderCircle, TrendingUp, TrendingDown, Scale, AlertCircle, ChevronLeft, ChevronRight, Target, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { TransactionModal } from '../components/features/transactions/TransactionModal';
+import { TitheModuleCard } from '../components/features/dashboard/TitheModuleCard';
 import { useDashboard } from '../hooks/useDashboard';
 import { useBudgetAnalysis } from '../hooks/useBudgetAnalysis';
 import { useGoals } from '../hooks/useGoals';
@@ -984,6 +985,8 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals, onNav
           <BalanceTrendChart monthlySummaries={summary.monthlySummaries} />
           <TopExpensesList expenses={summary.topExpenses} />
         </div>
+
+        <TitheModuleCard />
 
         {is503020Enabled && (
           <BudgetAnalysisSection

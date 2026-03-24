@@ -281,6 +281,9 @@ namespace Piggino.Api.Migrations
                     b.Property<bool>("Is503020Enabled")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsTitheModuleEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)

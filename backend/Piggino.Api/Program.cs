@@ -12,10 +12,13 @@ using Piggino.Api.Domain.FinancialSources.Interfaces;
 using Piggino.Api.Domain.FinancialSources.Services;
 using Piggino.Api.Domain.Goals.Interfaces;
 using Piggino.Api.Domain.Goals.Services;
+using Piggino.Api.Domain.Tithe.Interfaces;
+using Piggino.Api.Domain.Tithe.Services;
 using Piggino.Api.Domain.Transactions.Interfaces;
 using Piggino.Api.Domain.Transactions.Services;
 using Piggino.Api.Domain.Users.Interfaces;
 using Piggino.Api.Domain.Users.Services;
+using Piggino.Api.Infrastructure.BackgroundServices;
 using Piggino.Api.Infrastructure.Repositories;
 using Piggino.Api.Resources;
 using Piggino.Api.Settings;
@@ -169,6 +172,9 @@ builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IGoalRepository, GoalRepository>();
 builder.Services.AddScoped<IGoalService, GoalService>();
+builder.Services.AddScoped<ITitheRepository, TitheRepository>();
+builder.Services.AddScoped<ITitheService, TitheService>();
+builder.Services.AddHostedService<TitheMonthlyBackgroundService>();
 builder.Services.AddHttpContextAccessor();
 
 

@@ -54,7 +54,7 @@ namespace Piggino.Api.Domain.Users.Services
             {
                 Id = Guid.NewGuid(),
                 Name = dto.Name,
-                Email = dto.Email,
+                Email = dto.Email.Trim().ToLowerInvariant(),
                 PasswordHash = passwordHash,
                 PasswordSalt = passwordSalt,
                 CreatedAt = DateTime.UtcNow
@@ -78,7 +78,7 @@ namespace Piggino.Api.Domain.Users.Services
                 return false;
 
             user.Name = dto.Name;
-            user.Email = dto.Email;
+            user.Email = dto.Email.Trim().ToLowerInvariant();
 
             await _repository.UpdateUserAsync(user);
             return true;
@@ -169,7 +169,11 @@ namespace Piggino.Api.Domain.Users.Services
             if (user == null)
                 return null;
 
-            return new UserSettingsDto { Is503020Enabled = user.Is503020Enabled };
+            return new UserSettingsDto
+            {
+                Is503020Enabled = user.Is503020Enabled,
+                IsTitheModuleEnabled = user.IsTitheModuleEnabled
+            };
         }
 
         public async Task<UserSettingsDto?> UpdateSettingsAsync(Guid userId, UserSettingsDto dto)
@@ -179,9 +183,30 @@ namespace Piggino.Api.Domain.Users.Services
                 return null;
 
             user.Is503020Enabled = dto.Is503020Enabled;
+            user.IsTitheModuleEnabled = dto.IsTitheModuleEnabled;
             await _repository.UpdateUserAsync(user);
 
-            return new UserSettingsDto { Is503020Enabled = user.Is503020Enabled };
+            return new UserSettingsDto
+            {
+                Is503020Enabled = user.Is503020Enabled,
+                IsTitheModuleEnabled = user.IsTitheModuleEnabled
+            };
+        }
+
+        public async Task<UserSettingsDto?> ToggleTitheModuleAsync(Guid userId, bool enabled)
+        {
+            User? user = await _repository.GetUserByIdAsync(userId);
+            if (user == null)
+                return null;
+
+            user.IsTitheModuleEnabled = enabled;
+            await _repository.UpdateUserAsync(user);
+
+            return new UserSettingsDto
+            {
+                Is503020Enabled = user.Is503020Enabled,
+                IsTitheModuleEnabled = user.IsTitheModuleEnabled
+            };
         }
     }
 }

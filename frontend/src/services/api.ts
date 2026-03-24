@@ -28,6 +28,7 @@ import {
   DebtSummary,
   HealthScore,
   TipsData,
+  TitheStatus,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -377,6 +378,22 @@ export const getHealthScore = async (): Promise<HealthScore> => {
 export const getTips = async (): Promise<TipsData> => {
   const response = await apiClient.get<TipsData>('/Transactions/tips');
   return response.data;
+};
+
+// --- Tithe Module API ---
+
+export const getTitheStatus = async (): Promise<TitheStatus> => {
+  const response = await apiClient.get<TitheStatus>('/tithe/status');
+  return response.data;
+};
+
+export const toggleTitheModule = async (enabled: boolean): Promise<UserSettings> => {
+  const response = await apiClient.patch<UserSettings>('/tithe/toggle', { enabled });
+  return response.data;
+};
+
+export const generateMonthlyTithe = async (): Promise<void> => {
+  await apiClient.post('/tithe/generate');
 };
 
 // Unused export kept for CategoryType import consumers

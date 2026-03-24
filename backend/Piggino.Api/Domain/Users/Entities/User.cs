@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Piggino.Api.Domain.Categories.Entities;
 using Piggino.Api.Domain.FinancialSources.Entities;
 using Piggino.Api.Domain.Goals.Entities;
@@ -38,6 +36,8 @@ namespace Piggino.Api.Domain.Users.Entities
         public DateTime? PasswordResetTokenExpiry { get; set; }
 
         public bool Is503020Enabled { get; set; } = false;
+
+        public bool IsTitheModuleEnabled { get; set; } = false;
 
         public ICollection<FinancialSource>? FinancialSources { get; set; }
         public ICollection<Category>? Categories { get; set; }

@@ -1,5 +1,4 @@
 ﻿using Piggino.Api.Domain.Users.Dtos;
-using Piggino.Api.Domain.Users.Entities;
 
 namespace Piggino.Api.Domain.Users.Interfaces
 {
@@ -16,5 +15,6 @@ namespace Piggino.Api.Domain.Users.Interfaces
         Task<(bool Success, string? Error)> ResetPasswordAsync(ResetPasswordDto dto);
         Task<UserSettingsDto?> GetSettingsAsync(Guid userId);
         Task<UserSettingsDto?> UpdateSettingsAsync(Guid userId, UserSettingsDto dto);
+        Task<UserSettingsDto?> ToggleTitheModuleAsync(Guid userId, bool enabled);
     }
 }

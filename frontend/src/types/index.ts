@@ -289,6 +289,14 @@ export interface TipsData {
 
 export interface UserSettings {
   is503020Enabled: boolean;
+  isTitheModuleEnabled: boolean;
+}
+
+export interface TitheStatus {
+  isEnabled: boolean;
+  monthlyIncomeAmount: number | null;
+  titheAmount: number | null;
+  alreadyGeneratedThisMonth: boolean;
 }
 
 export interface BucketCategoryBreakdown {
