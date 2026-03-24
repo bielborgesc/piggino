@@ -454,6 +454,7 @@ function BalanceTrendChart({ monthlySummaries }: BalanceTrendChartProps) {
   const data = monthlySummaries.map((s) => ({
     month: formatMonthLabel(s.month),
     Saldo: s.balance,
+    SaldoArea: s.balance,
   }));
 
   return (
@@ -465,7 +466,7 @@ function BalanceTrendChart({ monthlySummaries }: BalanceTrendChartProps) {
           <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
           <Tooltip content={<BrlTooltip />} cursor={{ stroke: '#475569' }} />
           <ReferenceLine y={0} stroke="#475569" strokeDasharray="4 4" />
-          <Area dataKey="Saldo" fill="#22c55e22" stroke="transparent" />
+          <Area dataKey="SaldoArea" fill="#22c55e22" stroke="transparent" />
           <Line dataKey="Saldo" stroke="#22c55e" strokeWidth={2} dot={{ r: 4, fill: '#22c55e' }} activeDot={{ r: 6 }} />
         </ComposedChart>
       </ResponsiveContainer>

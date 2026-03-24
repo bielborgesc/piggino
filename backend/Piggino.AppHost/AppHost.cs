@@ -1,6 +1,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var postgres = builder.AddPostgres("piggino-postgres")
+    .WithDataVolume("piggino-postgres-data")
     .AddDatabase("piggino-db");
 
 var apiService = builder.AddProject<Projects.Piggino_Api>("piggino-api")
