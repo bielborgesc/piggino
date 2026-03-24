@@ -240,6 +240,21 @@ function TokenDisplay({ token }: { token: string }) {
   );
 }
 
+const PASSWORD_MIN_LENGTH = 8;
+const UPPERCASE_PATTERN = /[A-Z]/;
+const DIGIT_PATTERN = /[0-9]/;
+
+function meetsPasswordComplexity(password: string): boolean {
+  return (
+    password.length >= PASSWORD_MIN_LENGTH &&
+    UPPERCASE_PATTERN.test(password) &&
+    DIGIT_PATTERN.test(password)
+  );
+}
+
+const PASSWORD_COMPLEXITY_MESSAGE =
+  'Minimo 8 caracteres, uma letra maiuscula e um numero.';
+
 function ForgotStepTwo({
   resetToken,
   onSuccess,
@@ -257,8 +272,15 @@ function ForgotStepTwo({
   const passwordsDoNotMatch =
     confirmNewPassword.length > 0 && newPassword !== confirmNewPassword;
 
+  const passwordFailsComplexity =
+    newPassword.length > 0 && !meetsPasswordComplexity(newPassword);
+
   const isSubmitDisabled =
-    isLoading || passwordsDoNotMatch || newPassword.length === 0 || confirmNewPassword.length === 0;
+    isLoading ||
+    passwordsDoNotMatch ||
+    passwordFailsComplexity ||
+    newPassword.length === 0 ||
+    confirmNewPassword.length === 0;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -314,6 +336,9 @@ function ForgotStepTwo({
           show={showNewPassword}
           onToggleShow={() => setShowNewPassword((prev) => !prev)}
         />
+        {passwordFailsComplexity && (
+          <p className="text-red-400 text-xs mt-1">{PASSWORD_COMPLEXITY_MESSAGE}</p>
+        )}
       </div>
       <div>
         <label htmlFor="reset-confirm-password" className="block text-sm font-medium text-slate-300 mb-2">

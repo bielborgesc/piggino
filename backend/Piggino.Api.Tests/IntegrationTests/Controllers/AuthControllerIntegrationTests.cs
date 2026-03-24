@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -8,12 +7,8 @@ using Piggino.Api.Domain.Users.Dtos;
 using Piggino.Api.Domain.Users.Entities;
 using Piggino.Api.Helpers;
 using Piggino.Api.Tests.Support;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Piggino.Api.Tests.IntegrationTests.Controllers
 {
@@ -107,7 +102,7 @@ namespace Piggino.Api.Tests.IntegrationTests.Controllers
         }
 
         [Test]
-        public async Task Login_WithEmptyCredentials_ReturnsBadRequest()
+        public async Task Login_WithEmptyCredentials_ReturnsBadRequestWithMessage()
         {
             // Arrange
             UserLoginDto loginDto = new UserLoginDto { Email = "", Password = "" };
@@ -120,15 +115,11 @@ namespace Piggino.Api.Tests.IntegrationTests.Controllers
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
             string responseString = await response.Content.ReadAsStringAsync();
-            ValidationProblemDetails? problemDetails = JsonConvert.DeserializeObject<ValidationProblemDetails>(responseString);
+            dynamic? body = JsonConvert.DeserializeObject(responseString);
 
-            Assert.That(problemDetails, Is.Not.Null);
-
-            Assert.That(problemDetails.Errors.Keys, Has.Member("Email"));
-            Assert.That(problemDetails.Errors.Keys, Has.Member("Password"));
-
-            Assert.That(problemDetails.Errors["Email"].FirstOrDefault(), Is.EqualTo("O email é obrigatório."));
-            Assert.That(problemDetails.Errors["Password"].FirstOrDefault(), Is.EqualTo("A senha é obrigatória."));
+            Assert.That(body, Is.Not.Null);
+            Assert.That((string?)body!.message, Is.Not.Null.And.Not.Empty);
+            Assert.That((string?)body.message, Does.Contain("obrigatório").Or.Contain("obrigatória"));
         }
     }
 }

@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Piggino.Api.Data;
+using Piggino.Api.Infrastructure.Localization;
 using Piggino.Api.Domain.Categories.Interfaces;
 using Piggino.Api.Domain.Categories.Services;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
@@ -46,7 +48,10 @@ if (!builder.Environment.IsEnvironment("Testing"))
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+    {
+        options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = false;
+    })
     .AddMvcLocalization(options =>
     {
         options.DataAnnotationLocalizerProvider = (type, factory) =>
@@ -55,7 +60,27 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    }); ;
+    });
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        IEnumerable<string> fieldErrors = context.ModelState
+            .Where(entry => entry.Value?.Errors.Count > 0)
+            .SelectMany(entry => entry.Value!.Errors.Select(e => e.ErrorMessage))
+            .Where(msg => !string.IsNullOrWhiteSpace(msg));
+
+        string message = string.Join(" ", fieldErrors);
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            message = MessageProvider.Get("Required");
+        }
+
+        return new BadRequestObjectResult(new { message });
+    };
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
