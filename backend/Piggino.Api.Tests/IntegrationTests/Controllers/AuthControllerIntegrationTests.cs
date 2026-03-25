@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Piggino.Api.Data;
@@ -8,20 +6,16 @@ using Piggino.Api.Domain.Users.Dtos;
 using Piggino.Api.Domain.Users.Entities;
 using Piggino.Api.Helpers;
 using Piggino.Api.Tests.Support;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Piggino.Api.Tests.IntegrationTests.Controllers
 {
     [TestFixture]
     public class AuthControllerIntegrationTests
     {
-        private CustomWebApplicationFactory<Program> _factory;
-        private HttpClient _client;
+        private CustomWebApplicationFactory<Program>? _factory;
+        private HttpClient? _client;
 
         [OneTimeSetUp]
         public void OneTimeSetup()
@@ -34,13 +28,13 @@ namespace Piggino.Api.Tests.IntegrationTests.Controllers
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            _client.Dispose();
-            _factory.Dispose();
+            _client!.Dispose();
+            _factory!.Dispose();
         }
 
         private async Task CreateTestUser(string email, string password)
         {
-            using (IServiceScope scope = _factory.Services.CreateScope())
+            using (IServiceScope scope = _factory!.Services.CreateScope())
             {
                 IServiceProvider scopedServices = scope.ServiceProvider;
                 PigginoDbContext db = scopedServices.GetRequiredService<PigginoDbContext>();
@@ -76,7 +70,7 @@ namespace Piggino.Api.Tests.IntegrationTests.Controllers
             StringContent content = new StringContent(JsonConvert.SerializeObject(loginDto), Encoding.UTF8, "application/json");
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("/api/Auth/login", content);
+            HttpResponseMessage response = await _client!.PostAsync("/api/Auth/login", content);
 
             // Assert
             response.EnsureSuccessStatusCode();
@@ -96,7 +90,7 @@ namespace Piggino.Api.Tests.IntegrationTests.Controllers
             StringContent content = new StringContent(JsonConvert.SerializeObject(loginDto), Encoding.UTF8, "application/json");
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("/api/Auth/login", content);
+            HttpResponseMessage response = await _client!.PostAsync("/api/Auth/login", content);
 
             // Assert
             Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Unauthorized));
@@ -107,28 +101,24 @@ namespace Piggino.Api.Tests.IntegrationTests.Controllers
         }
 
         [Test]
-        public async Task Login_WithEmptyCredentials_ReturnsBadRequest()
+        public async Task Login_WithEmptyCredentials_ReturnsBadRequestWithMessage()
         {
             // Arrange
             UserLoginDto loginDto = new UserLoginDto { Email = "", Password = "" };
             StringContent content = new StringContent(JsonConvert.SerializeObject(loginDto), Encoding.UTF8, "application/json");
 
             // Act
-            HttpResponseMessage response = await _client.PostAsync("/api/Auth/login", content);
+            HttpResponseMessage response = await _client!.PostAsync("/api/Auth/login", content);
 
             // Assert
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
 
             string responseString = await response.Content.ReadAsStringAsync();
-            ValidationProblemDetails? problemDetails = JsonConvert.DeserializeObject<ValidationProblemDetails>(responseString);
+            dynamic? body = JsonConvert.DeserializeObject(responseString);
 
-            Assert.That(problemDetails, Is.Not.Null);
-
-            Assert.That(problemDetails.Errors.Keys, Has.Member("Email"));
-            Assert.That(problemDetails.Errors.Keys, Has.Member("Password"));
-
-            Assert.That(problemDetails.Errors["Email"].FirstOrDefault(), Is.EqualTo("O email é obrigatório."));
-            Assert.That(problemDetails.Errors["Password"].FirstOrDefault(), Is.EqualTo("A senha é obrigatória."));
+            Assert.That(body, Is.Not.Null);
+            Assert.That((string?)body!.message, Is.Not.Null.And.Not.Empty);
+            Assert.That((string?)body.message, Does.Contain("obrigatório").Or.Contain("obrigatória"));
         }
     }
 }

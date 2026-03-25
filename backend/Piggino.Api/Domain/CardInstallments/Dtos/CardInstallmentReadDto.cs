@@ -7,5 +7,6 @@
         public decimal Amount { get; set; }
         public bool IsPaid { get; set; }
         public int TransactionId { get; set; }
+        public DateTime DueDate { get; set; }
     }
 }

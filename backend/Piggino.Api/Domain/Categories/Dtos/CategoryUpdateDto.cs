@@ -12,5 +12,13 @@ namespace Piggino.Api.Domain.Categories.Dtos
         [Required(ErrorMessage = "TypeRequired")]
         [EnumDataType(typeof(CategoryType), ErrorMessage = "InvalidCategoryType")]
         public CategoryType Type { get; set; }
+
+        [MaxLength(7)]
+        public string? Color { get; set; }
+
+        [EnumDataType(typeof(BudgetBucket), ErrorMessage = "InvalidBudgetBucket")]
+        public BudgetBucket BudgetBucket { get; set; } = BudgetBucket.None;
+
+        public bool IsTitheable { get; set; } = false;
     }
 }

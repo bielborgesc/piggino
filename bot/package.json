@@ -1,0 +1,19 @@
+{
+  "name": "piggino-bot",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "grammy": "^1.30.0",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0"
+  }
+}

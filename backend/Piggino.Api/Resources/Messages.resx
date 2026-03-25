@@ -126,6 +126,9 @@
   <data name="InvalidCredentialsOrUserNotFound" xml:space="preserve">
     <value>Senha atual incorreta ou usuário não encontrado.</value>
   </data>
+  <data name="InvalidOrExpiredRefreshToken" xml:space="preserve">
+    <value>Token de atualização inválido ou expirado.</value>
+  </data>
   <data name="NameLength" xml:space="preserve">
     <value>O nome deve ter entre {2} e {1} caracteres.</value>
   </data>
@@ -143,5 +146,29 @@
   </data>
   <data name="StringLength" xml:space="preserve">
     <value>{0} deve ter entre {2} e {1} caracteres.</value>
+  </data>
+  <data name="PasswordsDoNotMatch" xml:space="preserve">
+    <value>As senhas não coincidem.</value>
+  </data>
+  <data name="PasswordComplexity" xml:space="preserve">
+    <value>A senha deve ter pelo menos 8 caracteres, uma letra maiúscula e um número.</value>
+  </data>
+  <data name="CurrentPasswordIncorrect" xml:space="preserve">
+    <value>Senha atual incorreta.</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>Usuário não encontrado.</value>
+  </data>
+  <data name="InvalidOrExpiredResetToken" xml:space="preserve">
+    <value>Token de redefinição inválido ou expirado.</value>
+  </data>
+  <data name="ConfirmPasswordRequired" xml:space="preserve">
+    <value>A confirmação de senha é obrigatória.</value>
+  </data>
+  <data name="NewPasswordRequired" xml:space="preserve">
+    <value>A nova senha é obrigatória.</value>
+  </data>
+  <data name="PasswordResetTokenGenerated" xml:space="preserve">
+    <value>Token de redefinição gerado com sucesso.</value>
   </data>
 </root>

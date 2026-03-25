@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Piggino.Api.Domain.Transactions.Dtos;
 using Piggino.Api.Domain.Transactions.Interfaces;
+using Piggino.Api.Enum;
 
 namespace Piggino.Api.Controllers
 {
@@ -73,9 +74,9 @@ namespace Piggino.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTransaction(int id)
+        public async Task<IActionResult> DeleteTransaction(int id, [FromQuery] RecurrenceScope scope = RecurrenceScope.OnlyThis)
         {
-            bool success = await _service.DeleteAsync(id);
+            bool success = await _service.DeleteAsync(id, scope);
 
             if (!success)
             {
@@ -83,6 +84,41 @@ namespace Piggino.Api.Controllers
             }
 
             return NoContent();
+        }
+
+        [HttpDelete("{id}/installments/{installmentNumber}")]
+        public async Task<IActionResult> DeleteInstallmentsByScope(
+            int id,
+            int installmentNumber,
+            [FromQuery] RecurrenceScope scope = RecurrenceScope.OnlyThis)
+        {
+            bool success = await _service.DeleteInstallmentsByScope(id, installmentNumber, scope);
+
+            if (!success)
+                return NotFound();
+
+            return NoContent();
+        }
+
+        [HttpPut("{id}/installments/{installmentNumber}")]
+        public async Task<IActionResult> UpdateInstallmentsByScope(
+            int id,
+            int installmentNumber,
+            TransactionUpdateDto updateDto)
+        {
+            try
+            {
+                bool success = await _service.UpdateInstallmentsByScope(id, installmentNumber, updateDto);
+
+                if (!success)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPatch("installments/{installmentId}/toggle-paid")]
@@ -105,6 +141,132 @@ namespace Piggino.Api.Controllers
                 return NotFound();
             }
             return NoContent();
+        }
+
+        [HttpPost("invoices/pay")]
+        public async Task<IActionResult> PayInvoice(
+            [FromQuery] int financialSourceId,
+            [FromQuery] string month)
+        {
+            if (!DateOnly.TryParseExact(month, "yyyy-MM", out DateOnly parsedMonth))
+                return BadRequest(new { message = "Invalid month format. Use yyyy-MM." });
+
+            bool success = await _service.PayInvoiceAsync(financialSourceId, parsedMonth.Year, parsedMonth.Month);
+
+            if (!success)
+                return NotFound(new { message = "Financial source not found." });
+
+            return NoContent();
+        }
+
+        [HttpGet("invoices")]
+        public async Task<ActionResult<InvoiceReadDto>> GetInvoice(
+            [FromQuery] int financialSourceId,
+            [FromQuery] string month)
+        {
+            if (!DateOnly.TryParseExact(month, "yyyy-MM", out DateOnly parsedMonth))
+                return BadRequest(new { message = "Invalid month format. Use yyyy-MM." });
+
+            InvoiceReadDto? invoice = await _service.GetInvoiceAsync(financialSourceId, parsedMonth.Year, parsedMonth.Month);
+
+            if (invoice == null)
+                return NotFound(new { message = "Financial source not found." });
+
+            return Ok(invoice);
+        }
+
+        [HttpGet("summary")]
+        public async Task<ActionResult<DashboardSummaryDto>> GetDashboardSummary([FromQuery] int months = 6)
+        {
+            DashboardSummaryDto summary = await _service.GetDashboardSummaryAsync(months);
+            return Ok(summary);
+        }
+
+        [HttpGet("fixed-bills")]
+        public async Task<ActionResult<MonthlyFixedBillsReadDto>> GetFixedBills([FromQuery] string month)
+        {
+            if (!DateOnly.TryParseExact(month, "yyyy-MM", out DateOnly parsedMonth))
+                return BadRequest(new { message = "Invalid month format. Use yyyy-MM." });
+
+            MonthlyFixedBillsReadDto result = await _service.GetMonthlyFixedBillsAsync(parsedMonth.Year, parsedMonth.Month);
+            return Ok(result);
+        }
+
+        [HttpPost("fixed-bills/{transactionId}/pay")]
+        public async Task<IActionResult> MarkFixedBillAsPaid(int transactionId, [FromQuery] string month)
+        {
+            if (!DateOnly.TryParseExact(month, "yyyy-MM", out DateOnly parsedMonth))
+                return BadRequest(new { message = "Invalid month format. Use yyyy-MM." });
+
+            bool success = await _service.MarkFixedBillAsPaidAsync(transactionId, parsedMonth.Year, parsedMonth.Month);
+
+            if (!success)
+                return NotFound(new { message = "Fixed transaction not found." });
+
+            return NoContent();
+        }
+
+        [HttpDelete("fixed-bills/{transactionId}/pay")]
+        public async Task<IActionResult> UnmarkFixedBillAsPaid(int transactionId, [FromQuery] string month)
+        {
+            if (!DateOnly.TryParseExact(month, "yyyy-MM", out DateOnly parsedMonth))
+                return BadRequest(new { message = "Invalid month format. Use yyyy-MM." });
+
+            bool success = await _service.UnmarkFixedBillAsPaidAsync(transactionId, parsedMonth.Year, parsedMonth.Month);
+
+            if (!success)
+                return NotFound(new { message = "Payment record not found." });
+
+            return NoContent();
+        }
+
+        [HttpPost("{id}/settle")]
+        public async Task<IActionResult> SettleInstallments(int id)
+        {
+            bool success = await _service.SettleInstallmentsAsync(id);
+
+            if (!success)
+                return NotFound(new { message = "Transaction not found or has no unpaid installments." });
+
+            return NoContent();
+        }
+
+        [HttpGet("simulation")]
+        public async Task<ActionResult<SimulationReadDto>> GetSimulation()
+        {
+            SimulationReadDto simulation = await _service.GetSimulationAsync();
+            return Ok(simulation);
+        }
+
+        [HttpGet("budget-analysis")]
+        public async Task<ActionResult<BudgetAnalysisDto>> GetBudgetAnalysis([FromQuery] string month)
+        {
+            if (!DateOnly.TryParseExact(month, "yyyy-MM", out DateOnly parsedMonth))
+                return BadRequest(new { message = "Invalid month format. Use yyyy-MM." });
+
+            BudgetAnalysisDto analysis = await _service.GetBudgetAnalysisAsync(parsedMonth.Year, parsedMonth.Month);
+            return Ok(analysis);
+        }
+
+        [HttpGet("debt-summary")]
+        public async Task<ActionResult<DebtSummaryDto>> GetDebtSummary()
+        {
+            DebtSummaryDto summary = await _service.GetDebtSummaryAsync();
+            return Ok(summary);
+        }
+
+        [HttpGet("health-score")]
+        public async Task<ActionResult<HealthScoreDto>> GetHealthScore()
+        {
+            HealthScoreDto healthScore = await _service.GetHealthScoreAsync();
+            return Ok(healthScore);
+        }
+
+        [HttpGet("tips")]
+        public async Task<ActionResult<TipsDto>> GetContextualTips()
+        {
+            TipsDto tips = await _service.GetContextualTipsAsync();
+            return Ok(tips);
         }
     }
 }

@@ -5,6 +5,9 @@ namespace Piggino.Api.Domain.Transactions.Dtos
 {
     public class TransactionUpdateDto
     {
+        public RecurrenceScope? RecurrenceScope { get; set; }
+        public int? InstallmentNumber { get; set; }
+
         [Required]
         [StringLength(150)]
         public required string Description { get; set; }
@@ -35,5 +38,9 @@ namespace Piggino.Api.Domain.Transactions.Dtos
         public bool IsFixed { get; set; }
 
         public int? DayOfMonth { get; set; }
+
+        public bool IsRecurring { get; set; } = false;
+
+        public int? GoalId { get; set; }
     }
 }

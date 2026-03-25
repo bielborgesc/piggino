@@ -41,18 +41,23 @@ namespace Piggino.Api.Domain.Categories.Services
             {
                 Name = createDto.Name,
                 Type = createDto.Type,
-                UserId = userId // Associa a categoria ao utilizador logado
+                Color = createDto.Color ?? "#6b7280",
+                BudgetBucket = createDto.BudgetBucket,
+                IsTitheable = createDto.IsTitheable,
+                UserId = userId
             };
 
             await _repository.AddAsync(newCategory);
             await _repository.SaveChangesAsync();
 
-            // Mapeia a entidade para o DTO de leitura para retornar ao controller
             return new CategoryReadDto
             {
                 Id = newCategory.Id,
                 Name = newCategory.Name,
                 Type = newCategory.Type,
+                Color = newCategory.Color,
+                BudgetBucket = newCategory.BudgetBucket,
+                IsTitheable = newCategory.IsTitheable,
                 UserId = newCategory.UserId
             };
         }
@@ -85,12 +90,14 @@ namespace Piggino.Api.Domain.Categories.Services
             Guid userId = GetCurrentUserId();
             IEnumerable<Category> categories = await _repository.GetAllAsync(userId);
 
-            // Usa LINQ para mapear a lista de entidades para uma lista de DTOs
             return categories.Select(c => new CategoryReadDto
             {
                 Id = c.Id,
                 Name = c.Name,
                 Type = c.Type,
+                Color = c.Color,
+                BudgetBucket = c.BudgetBucket,
+                IsTitheable = c.IsTitheable,
                 UserId = c.UserId
             });
         }
@@ -110,6 +117,9 @@ namespace Piggino.Api.Domain.Categories.Services
                 Id = category.Id,
                 Name = category.Name,
                 Type = category.Type,
+                Color = category.Color,
+                BudgetBucket = category.BudgetBucket,
+                IsTitheable = category.IsTitheable,
                 UserId = category.UserId
             };
         }
@@ -124,9 +134,11 @@ namespace Piggino.Api.Domain.Categories.Services
                 return false;
             }
 
-            // Atualiza as propriedades da entidade com os dados do DTO
             category.Name = updateDto.Name;
             category.Type = updateDto.Type;
+            category.Color = updateDto.Color ?? category.Color;
+            category.BudgetBucket = updateDto.BudgetBucket;
+            category.IsTitheable = updateDto.IsTitheable;
 
             _repository.Update(category);
             return await _repository.SaveChangesAsync();

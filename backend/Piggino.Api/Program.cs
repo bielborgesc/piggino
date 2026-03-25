@@ -1,18 +1,26 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Piggino.Api.Data;
+using Piggino.Api.Infrastructure.Localization;
+using Piggino.Api.Domain.Bot.Interfaces;
+using Piggino.Api.Domain.Bot.Services;
 using Piggino.Api.Domain.Categories.Interfaces;
 using Piggino.Api.Domain.Categories.Services;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
 using Piggino.Api.Domain.FinancialSources.Services;
+using Piggino.Api.Domain.Goals.Interfaces;
+using Piggino.Api.Domain.Goals.Services;
+using Piggino.Api.Domain.Tithe.Interfaces;
+using Piggino.Api.Domain.Tithe.Services;
 using Piggino.Api.Domain.Transactions.Interfaces;
 using Piggino.Api.Domain.Transactions.Services;
 using Piggino.Api.Domain.Users.Interfaces;
 using Piggino.Api.Domain.Users.Services;
+using Piggino.Api.Infrastructure.BackgroundServices;
 using Piggino.Api.Infrastructure.Repositories;
 using Piggino.Api.Resources;
 using Piggino.Api.Settings;
@@ -22,8 +30,13 @@ using System.Text.Json.Serialization;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 // Configure JwtSettings using the options pattern
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
+// Configure BotSettings
+builder.Services.Configure<BotSettings>(builder.Configuration.GetSection("BotSettings"));
 
 builder.Services.AddCors(options =>
 {
@@ -36,15 +49,17 @@ builder.Services.AddCors(options =>
         });
 });
 
-if(!builder.Environment.IsEnvironment("Testing"))
+if (!builder.Environment.IsEnvironment("Testing"))
 {
-    builder.Services.AddDbContext<PigginoDbContext>(options =>
-        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    builder.AddNpgsqlDbContext<PigginoDbContext>("piggino-db");
 }
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+    {
+        options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = false;
+    })
     .AddMvcLocalization(options =>
     {
         options.DataAnnotationLocalizerProvider = (type, factory) =>
@@ -53,7 +68,27 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    }); ;
+    });
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        IEnumerable<string> fieldErrors = context.ModelState
+            .Where(entry => entry.Value?.Errors.Count > 0)
+            .SelectMany(entry => entry.Value!.Errors.Select(e => e.ErrorMessage))
+            .Where(msg => !string.IsNullOrWhiteSpace(msg));
+
+        string message = string.Join(" ", fieldErrors);
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            message = MessageProvider.Get("Required");
+        }
+
+        return new BadRequestObjectResult(new { message });
+    };
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -140,6 +175,13 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IGoalRepository, GoalRepository>();
+builder.Services.AddScoped<IGoalService, GoalService>();
+builder.Services.AddScoped<ITitheRepository, TitheRepository>();
+builder.Services.AddScoped<ITitheService, TitheService>();
+builder.Services.AddScoped<IBotRepository, BotRepository>();
+builder.Services.AddScoped<IBotService, BotService>();
+builder.Services.AddHostedService<TitheMonthlyBackgroundService>();
 builder.Services.AddHttpContextAccessor();
 
 
@@ -190,6 +232,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapDefaultEndpoints();
+app.MapHealthChecks("/api/health");
 
 app.Run();
 

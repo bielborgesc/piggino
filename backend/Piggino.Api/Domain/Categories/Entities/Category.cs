@@ -20,6 +20,13 @@ namespace Piggino.Api.Domain.Categories.Entities
         public Guid UserId { get; set; }
         public User? User { get; set; }
 
+        [MaxLength(7)]
+        public string Color { get; set; } = "#6b7280";
+
+        public BudgetBucket BudgetBucket { get; set; } = BudgetBucket.None;
+
+        public bool IsTitheable { get; set; } = false;
+
         public ICollection<Transaction>? Transactions { get; set; }
     }
 }

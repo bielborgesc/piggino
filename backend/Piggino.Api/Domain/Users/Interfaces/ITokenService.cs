@@ -4,6 +4,7 @@ namespace Piggino.Api.Domain.Users.Interfaces
 {
     public interface ITokenService
     {
-        string GenerateToken(User user);
+        string GenerateAccessToken(User user);
+        string GenerateRefreshToken();
     }
 }

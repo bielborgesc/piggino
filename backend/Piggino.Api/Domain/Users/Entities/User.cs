@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using Piggino.Api.Domain.Bot.Entities;
 using Piggino.Api.Domain.Categories.Entities;
 using Piggino.Api.Domain.FinancialSources.Entities;
+using Piggino.Api.Domain.Goals.Entities;
 using Piggino.Api.Domain.Transactions.Entities;
 
 namespace Piggino.Api.Domain.Users.Entities
@@ -28,8 +28,30 @@ namespace Piggino.Api.Domain.Users.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        public string? RefreshToken { get; set; }
+
+        public DateTime? RefreshTokenExpiry { get; set; }
+
+        public string? PasswordResetToken { get; set; }
+
+        public DateTime? PasswordResetTokenExpiry { get; set; }
+
+        public bool Is503020Enabled { get; set; } = false;
+
+        public bool IsTitheModuleEnabled { get; set; } = false;
+
+        public int? TitheCategoryId { get; set; }
+
+        public int? TitheFinancialSourceId { get; set; }
+
+        public string? TelegramLinkToken { get; set; }
+
+        public DateTime? TelegramLinkTokenExpiry { get; set; }
+
         public ICollection<FinancialSource>? FinancialSources { get; set; }
         public ICollection<Category>? Categories { get; set; }
         public ICollection<Transaction>? Transactions { get; set; }
+        public ICollection<Goal>? Goals { get; set; }
+        public ICollection<UserTelegramConnection> TelegramConnections { get; set; } = [];
     }
 }

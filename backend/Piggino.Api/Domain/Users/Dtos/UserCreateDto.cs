@@ -16,5 +16,8 @@ namespace Piggino.Api.Domain.Users.Dtos
         [Required(ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "PasswordRequired")]
         [StringLength(100, MinimumLength = 6, ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "PasswordLength")]
         public required string Password { get; set; }
+
+        [Required(ErrorMessageResourceType = typeof(Messages), ErrorMessageResourceName = "ConfirmPasswordRequired")]
+        public required string ConfirmPassword { get; set; }
     }
 }

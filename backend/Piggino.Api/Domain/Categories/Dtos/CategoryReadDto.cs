@@ -7,6 +7,10 @@ namespace Piggino.Api.Domain.Categories.Dtos
         public int Id { get; set; }
         public required string Name { get; set; }
         public CategoryType Type { get; set; }
+        public string Color { get; set; } = "#6b7280";
         public Guid UserId { get; set; }
+        public BudgetBucket BudgetBucket { get; set; } = BudgetBucket.None;
+
+        public bool IsTitheable { get; set; } = false;
     }
 }

@@ -1,0 +1,6 @@
+Piggino.Api/appsettings.json
+Piggino.Api/appsettings.Development.json
+Piggino.Api/appsettings.Testing.json
+Piggino.Api/piggino.db
+Piggino.Api/piggino.db-shm
+Piggino.Api/piggino.db-wal

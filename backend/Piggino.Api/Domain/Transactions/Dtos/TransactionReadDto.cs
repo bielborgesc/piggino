@@ -10,17 +10,24 @@ namespace Piggino.Api.Domain.Transactions.Dtos
         public decimal TotalAmount { get; set; }
         public TransactionType TransactionType { get; set; }
         public DateTime PurchaseDate { get; set; }
+        public DateTime OriginalPurchaseDate { get; set; }
         public bool IsInstallment { get; set; }
         public int? InstallmentCount { get; set; }
+        public int? CurrentInstallmentNumber { get; set; }
         public bool IsPaid { get; set; }
         public int CategoryId { get; set; }
         public bool IsFixed { get; set; }
         public int? DayOfMonth { get; set; }
-        public string? CategoryName { get; set; } // ✅ Adicionar
+        public bool IsRecurring { get; set; }
+        public string? CategoryName { get; set; }
+        public string? CategoryColor { get; set; }
+        public BudgetBucket CategoryBudgetBucket { get; set; } = BudgetBucket.None;
         public int FinancialSourceId { get; set; }
-        public string? FinancialSourceName { get; set; } // ✅ Adicionar
+        public string? FinancialSourceName { get; set; }
+        public FinancialSourceType? FinancialSourceType { get; set; }
         public Guid UserId { get; set; }
+        public int? GoalId { get; set; }
+        public string? GoalName { get; set; }
         public ICollection<CardInstallmentReadDto>? CardInstallments { get; set; }
-
     }
 }

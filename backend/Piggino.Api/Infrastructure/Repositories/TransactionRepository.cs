@@ -25,11 +25,10 @@ namespace Piggino.Api.Infrastructure.Repositories
         public async Task<IEnumerable<Transaction>> GetAllAsync(Guid userId)
         {
             return await _context.Transactions
+                .Include(t => t.FinancialSource)
+                .Include(t => t.Category)
                 .Include(t => t.CardInstallments)
-                .Include(t => t.Category) // ✅ Adicionar
-                .Include(t => t.FinancialSource) // ✅ Adicionar
                 .Where(t => t.UserId == userId)
-                .OrderByDescending(t => t.PurchaseDate)
                 .ToListAsync();
         }
 
@@ -64,9 +63,125 @@ namespace Piggino.Api.Infrastructure.Repositories
             return await _context.SaveChangesAsync() > 0;
         }
 
+        public async Task<Transaction?> GetByIdWithInstallmentsAndSourceAsync(int id, Guid userId)
+        {
+            return await _context.Transactions
+                .Include(t => t.CardInstallments)
+                .Include(t => t.FinancialSource)
+                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+        }
+
         public async Task<CardInstallment?> GetCardInstallmentByIdAsync(int installmentId)
         {
             return await _context.CardInstallments.FindAsync(installmentId);
+        }
+
+        public async Task<IEnumerable<Transaction>> GetRecurrenceGroupAsync(Transaction anchor, Guid userId)
+        {
+            return await _context.Transactions
+                .Where(t =>
+                    t.UserId == userId &&
+                    t.IsRecurring &&
+                    t.Description == anchor.Description &&
+                    t.TotalAmount == anchor.TotalAmount &&
+                    t.FinancialSourceId == anchor.FinancialSourceId &&
+                    t.CategoryId == anchor.CategoryId)
+                .ToListAsync();
+        }
+
+        public void DeleteCardInstallment(CardInstallment installment)
+        {
+            _context.CardInstallments.Remove(installment);
+        }
+
+        public async Task<IEnumerable<CardInstallment>> GetInstallmentsForInvoiceAsync(int financialSourceId, int year, int month, Guid userId)
+        {
+            return await _context.CardInstallments
+                .Include(i => i.Transaction)
+                    .ThenInclude(t => t!.Category)
+                .Include(i => i.Transaction)
+                    .ThenInclude(t => t!.FinancialSource)
+                .Where(i =>
+                    i.Transaction != null &&
+                    i.Transaction.UserId == userId &&
+                    i.Transaction.FinancialSourceId == financialSourceId &&
+                    i.DueDate.Year == year &&
+                    i.DueDate.Month == month)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Transaction>> GetFixedTransactionsAsync(Guid userId)
+        {
+            return await _context.Transactions
+                .Include(t => t.Category)
+                .Include(t => t.FinancialSource)
+                .Where(t => t.UserId == userId && t.IsFixed && t.DayOfMonth.HasValue)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<FixedTransactionPayment>> GetFixedPaymentsForMonthAsync(Guid userId, int year, int month)
+        {
+            return await _context.FixedTransactionPayments
+                .Include(p => p.Transaction)
+                .Where(p =>
+                    p.Transaction != null &&
+                    p.Transaction.UserId == userId &&
+                    p.Year == year &&
+                    p.Month == month)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<FixedTransactionPayment>> GetAllFixedPaymentsAsync(Guid userId)
+        {
+            return await _context.FixedTransactionPayments
+                .Include(p => p.Transaction)
+                .Where(p => p.Transaction != null && p.Transaction.UserId == userId && p.IsPaid)
+                .ToListAsync();
+        }
+
+        public async Task<FixedTransactionPayment?> GetFixedPaymentAsync(int transactionId, int year, int month)
+        {
+            return await _context.FixedTransactionPayments
+                .FirstOrDefaultAsync(p =>
+                    p.TransactionId == transactionId &&
+                    p.Year == year &&
+                    p.Month == month);
+        }
+
+        public async Task AddFixedPaymentAsync(FixedTransactionPayment payment)
+        {
+            await _context.FixedTransactionPayments.AddAsync(payment);
+        }
+
+        public void DeleteFixedPayment(FixedTransactionPayment payment)
+        {
+            _context.FixedTransactionPayments.Remove(payment);
+        }
+
+        public async Task<IEnumerable<CardInstallment>> GetUnpaidInstallmentsForMonthAsync(Guid userId, int year, int month)
+        {
+            return await _context.CardInstallments
+                .Include(i => i.Transaction)
+                .Where(i =>
+                    i.Transaction != null &&
+                    i.Transaction.UserId == userId &&
+                    i.DueDate.Year == year &&
+                    i.DueDate.Month == month &&
+                    !i.IsPaid)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Transaction>> GetActiveInstallmentTransactionsAsync(Guid userId)
+        {
+            return await _context.Transactions
+                .Include(t => t.CardInstallments)
+                .Include(t => t.FinancialSource)
+                .Where(t =>
+                    t.UserId == userId &&
+                    t.IsInstallment &&
+                    t.CardInstallments != null &&
+                    t.CardInstallments.Any(i => !i.IsPaid))
+                .ToListAsync();
         }
     }
 }
