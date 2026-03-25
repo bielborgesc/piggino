@@ -1,5 +1,4 @@
 # docker-compose.yml
-version: '3.8'
 
 services:
   piggino-postgres:
@@ -36,9 +35,11 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/health || exit 1"]
       interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    volumes:
+      - dataprotection_keys:/root/.aspnet/DataProtection-Keys
     networks:
       - piggino-net
 
@@ -112,6 +113,7 @@ volumes:
   caddy_config:
   tempo_data:
   grafana_data:
+  dataprotection_keys:
 
 networks:
   piggino-net:
