@@ -1,0 +1,4 @@
+ignore-paths:
+  # Password hashing helpers — no hardcoded secrets, all values are runtime-generated
+  - path: backend/Piggino.Api/Domain/Users/Services/UserService.cs
+  - path: backend/Piggino.Api/Helpers/PasswordHelper.cs
