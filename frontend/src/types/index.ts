@@ -290,6 +290,12 @@ export interface BotLinkTokenResponse {
   expiresAt: string;
 }
 
+export interface TelegramConnection {
+  id: number;
+  chatId: string;
+  connectedAt: string;
+}
+
 export interface CategoryTithePreview {
   categoryId: number;
   categoryName: string;

@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      includeAssets: ['ios/180.png', 'android/launchericon-192x192.png', 'android/launchericon-512x512.png'],
       manifest: {
         name: 'Piggino - Controle Financeiro',
         short_name: 'Piggino',
@@ -21,9 +21,13 @@ export default defineConfig({
         scope: '/',
         start_url: '/',
         icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          { src: 'android/launchericon-48x48.png',   sizes: '48x48',   type: 'image/png' },
+          { src: 'android/launchericon-72x72.png',   sizes: '72x72',   type: 'image/png' },
+          { src: 'android/launchericon-96x96.png',   sizes: '96x96',   type: 'image/png' },
+          { src: 'android/launchericon-144x144.png', sizes: '144x144', type: 'image/png' },
+          { src: 'android/launchericon-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'android/launchericon-512x512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'android/launchericon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
         ]
       },
       workbox: {

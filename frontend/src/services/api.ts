@@ -30,6 +30,7 @@ import {
   TipsData,
   TitheStatus,
   BotLinkTokenResponse,
+  TelegramConnection,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -411,6 +412,15 @@ export const generateBotLinkToken = async (): Promise<BotLinkTokenResponse> => {
 
 export const disconnectTelegram = async (): Promise<void> => {
   await apiClient.post('/Bot/disconnect');
+};
+
+export const getTelegramConnections = async (): Promise<TelegramConnection[]> => {
+  const response = await apiClient.get<TelegramConnection[]>('/Bot/connections');
+  return response.data;
+};
+
+export const disconnectSpecificTelegram = async (id: number): Promise<void> => {
+  await apiClient.delete(`/Bot/connections/${id}`);
 };
 
 // Unused export kept for CategoryType import consumers

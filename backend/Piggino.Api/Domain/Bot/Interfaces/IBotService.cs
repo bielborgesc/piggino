@@ -10,5 +10,7 @@ namespace Piggino.Api.Domain.Bot.Interfaces
         Task<bool> CreateTransactionAsync(BotTransactionDto dto);
         Task<BotSummaryDto?> GetSummaryAsync(string chatId);
         Task DisconnectAsync(Guid userId);
+        Task<List<TelegramConnectionDto>> GetConnectionsAsync(Guid userId);
+        Task DisconnectSpecificAsync(Guid userId, int connectionId);
     }
 }

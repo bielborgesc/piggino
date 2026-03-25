@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Piggino.Api.Domain.Bot.Entities;
 using Piggino.Api.Domain.CardInstallments.Entities;
 using Piggino.Api.Domain.Categories.Entities;
 using Piggino.Api.Domain.FinancialSources.Entities;
@@ -20,6 +21,7 @@ namespace Piggino.Api.Data
         public DbSet<CardInstallment> CardInstallments { get; set; } = null!;
         public DbSet<FixedTransactionPayment> FixedTransactionPayments { get; set; } = null!;
         public DbSet<Goal> Goals { get; set; } = null!;
+        public DbSet<UserTelegramConnection> TelegramConnections { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -82,6 +84,16 @@ namespace Piggino.Api.Data
                 .Entity<Goal>()
                 .Property(g => g.Type)
                 .HasConversion<string>();
+
+            modelBuilder.Entity<UserTelegramConnection>()
+                .HasOne<User>()
+                .WithMany(u => u.TelegramConnections)
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserTelegramConnection>()
+                .HasIndex(c => c.ChatId)
+                .IsUnique();
         }
     }
 }

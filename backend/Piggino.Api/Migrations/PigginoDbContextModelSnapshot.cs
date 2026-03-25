@@ -22,6 +22,34 @@ namespace Piggino.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Piggino.Api.Domain.Bot.Entities.UserTelegramConnection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChatId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ConnectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChatId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TelegramConnections");
+                });
+
             modelBuilder.Entity("Piggino.Api.Domain.CardInstallments.Entities.CardInstallment", b =>
                 {
                     b.Property<int>("Id")
@@ -317,9 +345,6 @@ namespace Piggino.Api.Migrations
                     b.Property<DateTime?>("RefreshTokenExpiry")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("TelegramChatId")
-                        .HasColumnType("text");
-
                     b.Property<string>("TelegramLinkToken")
                         .HasColumnType("text");
 
@@ -335,6 +360,15 @@ namespace Piggino.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Piggino.Api.Domain.Bot.Entities.UserTelegramConnection", b =>
+                {
+                    b.HasOne("Piggino.Api.Domain.Users.Entities.User", null)
+                        .WithMany("TelegramConnections")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Piggino.Api.Domain.CardInstallments.Entities.CardInstallment", b =>
@@ -448,6 +482,8 @@ namespace Piggino.Api.Migrations
                     b.Navigation("FinancialSources");
 
                     b.Navigation("Goals");
+
+                    b.Navigation("TelegramConnections");
 
                     b.Navigation("Transactions");
                 });

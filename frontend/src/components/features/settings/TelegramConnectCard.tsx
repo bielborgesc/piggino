@@ -1,5 +1,6 @@
-import { Send, CheckCircle, Copy, RefreshCw, Loader2, Unlink } from 'lucide-react';
+import { Send, CheckCircle, Copy, RefreshCw, Loader2, Unlink, PlusCircle, X } from 'lucide-react';
 import { useTelegramConnect } from '../../../hooks/useTelegramConnect';
+import { TelegramConnection } from '../../../types';
 
 const SECONDS_PER_MINUTE = 60;
 
@@ -7,6 +8,14 @@ function formatCountdown(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / SECONDS_PER_MINUTE);
   const seconds = totalSeconds % SECONDS_PER_MINUTE;
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function formatConnectionDate(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 }
 
 function StepNumber({ number }: { number: number }) {
@@ -30,56 +39,30 @@ function CopyButton({ onClick, label }: { onClick: () => void; label: string }) 
   );
 }
 
-function ConnectedState({
+function ConnectionItem({
+  connection,
+  index,
   onDisconnect,
-  isDisconnecting,
 }: {
-  onDisconnect: () => void;
-  isDisconnecting: boolean;
+  connection: TelegramConnection;
+  index: number;
+  onDisconnect: (id: number) => void;
 }) {
-  const commands = [
-    'Envie uma mensagem como "gastei 50 no mercado" para registrar um gasto',
-    '/resumo — ver resumo do mes atual',
-    '/start — ver todos os comandos disponiveis',
-  ];
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <CheckCircle size={20} className="text-green-400 flex-shrink-0" />
+    <div className="flex items-center justify-between py-2 px-3 bg-slate-700/50 rounded-lg">
+      <div className="flex items-center gap-2">
+        <CheckCircle size={14} className="text-green-400 flex-shrink-0" />
         <div>
-          <p className="text-white font-semibold">Telegram conectado</p>
-          <p className="text-slate-400 text-sm mt-0.5">
-            Sua conta esta vinculada. Voce pode registrar gastos diretamente pelo Telegram.
-          </p>
+          <p className="text-slate-200 text-sm font-medium">Conta Telegram #{index + 1}</p>
+          <p className="text-slate-500 text-xs">Conectada em {formatConnectionDate(connection.connectedAt)}</p>
         </div>
       </div>
-
-      <div className="bg-slate-700/50 rounded-lg p-3 space-y-2">
-        <p className="text-slate-300 text-xs font-semibold uppercase tracking-wide">
-          Comandos disponiveis
-        </p>
-        <ul className="space-y-1.5">
-          {commands.map((command) => (
-            <li key={command} className="flex items-start gap-2 text-slate-400 text-sm">
-              <span className="text-blue-400 mt-0.5">•</span>
-              {command}
-            </li>
-          ))}
-        </ul>
-      </div>
-
       <button
-        onClick={onDisconnect}
-        disabled={isDisconnecting}
-        className="flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+        onClick={() => onDisconnect(connection.id)}
+        aria-label="Desconectar esta conta"
+        className="text-slate-500 hover:text-red-400 transition-colors p-1 rounded"
       >
-        {isDisconnecting ? (
-          <Loader2 size={14} className="animate-spin" />
-        ) : (
-          <Unlink size={14} />
-        )}
-        Desconectar
+        <X size={14} />
       </button>
     </div>
   );
@@ -178,7 +161,7 @@ function TokenDisplay({
   );
 }
 
-function DisconnectedState({
+function AddConnectionFlow({
   onGenerateToken,
   isGenerating,
   token,
@@ -186,6 +169,7 @@ function DisconnectedState({
   onCopyToken,
   onCopyCommand,
   botUsername,
+  hasExistingConnections,
 }: {
   onGenerateToken: () => void;
   isGenerating: boolean;
@@ -194,6 +178,7 @@ function DisconnectedState({
   onCopyToken: () => void;
   onCopyCommand: () => void;
   botUsername: string;
+  hasExistingConnections: boolean;
 }) {
   if (token && secondsRemaining > 0) {
     return (
@@ -205,6 +190,23 @@ function DisconnectedState({
         onRegenerateToken={onGenerateToken}
         botUsername={botUsername}
       />
+    );
+  }
+
+  if (hasExistingConnections) {
+    return (
+      <button
+        onClick={onGenerateToken}
+        disabled={isGenerating}
+        className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors"
+      >
+        {isGenerating ? (
+          <Loader2 size={14} className="animate-spin" />
+        ) : (
+          <PlusCircle size={14} />
+        )}
+        Adicionar outra conta
+      </button>
     );
   }
 
@@ -241,6 +243,7 @@ export function TelegramConnectCard() {
   const {
     isConnected,
     isLoadingStatus,
+    connections,
     token,
     secondsRemaining,
     isGenerating,
@@ -248,9 +251,16 @@ export function TelegramConnectCard() {
     botUsername,
     generateToken,
     disconnect,
+    disconnectSpecific,
     copyToken,
     copyCommand,
   } = useTelegramConnect();
+
+  const commands = [
+    'Envie uma mensagem como "gastei 50 no mercado" para registrar um gasto',
+    '/resumo — ver resumo do mes atual',
+    '/start — ver todos os comandos disponiveis',
+  ];
 
   if (isLoadingStatus) {
     return (
@@ -260,21 +270,82 @@ export function TelegramConnectCard() {
     );
   }
 
-  if (isConnected) {
-    return (
-      <ConnectedState onDisconnect={disconnect} isDisconnecting={isDisconnecting} />
-    );
-  }
-
   return (
-    <DisconnectedState
-      onGenerateToken={generateToken}
-      isGenerating={isGenerating}
-      token={token}
-      secondsRemaining={secondsRemaining}
-      onCopyToken={copyToken}
-      onCopyCommand={copyCommand}
-      botUsername={botUsername}
-    />
+    <div className="space-y-5">
+      {isConnected && (
+        <>
+          <div className="space-y-2">
+            <p className="text-slate-300 text-xs font-semibold uppercase tracking-wide">
+              Contas conectadas
+            </p>
+            <div className="space-y-2">
+              {connections.map((connection, index) => (
+                <ConnectionItem
+                  key={connection.id}
+                  connection={connection}
+                  index={index}
+                  onDisconnect={disconnectSpecific}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-slate-700/50 rounded-lg p-3 space-y-2">
+            <p className="text-slate-300 text-xs font-semibold uppercase tracking-wide">
+              Comandos disponiveis
+            </p>
+            <ul className="space-y-1.5">
+              {commands.map((command) => (
+                <li key={command} className="flex items-start gap-2 text-slate-400 text-sm">
+                  <span className="text-blue-400 mt-0.5">•</span>
+                  {command}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="border-t border-slate-700 pt-4 space-y-3">
+            <AddConnectionFlow
+              onGenerateToken={generateToken}
+              isGenerating={isGenerating}
+              token={token}
+              secondsRemaining={secondsRemaining}
+              onCopyToken={copyToken}
+              onCopyCommand={copyCommand}
+              botUsername={botUsername}
+              hasExistingConnections={true}
+            />
+
+            {connections.length > 1 && (
+              <button
+                onClick={disconnect}
+                disabled={isDisconnecting}
+                className="flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+              >
+                {isDisconnecting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Unlink size={14} />
+                )}
+                Desconectar tudo
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      {!isConnected && (
+        <AddConnectionFlow
+          onGenerateToken={generateToken}
+          isGenerating={isGenerating}
+          token={token}
+          secondsRemaining={secondsRemaining}
+          onCopyToken={copyToken}
+          onCopyCommand={copyCommand}
+          botUsername={botUsername}
+          hasExistingConnections={false}
+        />
+      )}
+    </div>
   );
 }

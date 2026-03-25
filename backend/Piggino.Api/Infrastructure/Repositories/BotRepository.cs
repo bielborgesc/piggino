@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Piggino.Api.Data;
 using Piggino.Api.Domain.Bot.Dtos;
+using Piggino.Api.Domain.Bot.Entities;
 using Piggino.Api.Domain.Bot.Interfaces;
 using Piggino.Api.Domain.Users.Entities;
 using Piggino.Api.Enum;
@@ -18,8 +19,15 @@ namespace Piggino.Api.Infrastructure.Repositories
 
         public async Task<User?> GetUserByTelegramChatIdAsync(string chatId)
         {
-            return await _context.Users
-                .FirstOrDefaultAsync(u => u.TelegramChatId == chatId);
+            Guid? userId = await _context.TelegramConnections
+                .Where(c => c.ChatId == chatId)
+                .Select(c => (Guid?)c.UserId)
+                .FirstOrDefaultAsync();
+
+            if (userId == null)
+                return null;
+
+            return await _context.Users.FindAsync(userId.Value);
         }
 
         public async Task<User?> GetUserByLinkTokenAsync(string token)
@@ -49,7 +57,21 @@ namespace Piggino.Api.Infrastructure.Repositories
             if (user == null)
                 return;
 
-            user.TelegramChatId = chatId;
+            bool alreadyLinked = await _context.TelegramConnections
+                .AnyAsync(c => c.ChatId == chatId);
+
+            if (!alreadyLinked)
+            {
+                UserTelegramConnection connection = new UserTelegramConnection
+                {
+                    UserId = userId,
+                    ChatId = chatId,
+                    ConnectedAt = DateTime.UtcNow
+                };
+
+                await _context.TelegramConnections.AddAsync(connection);
+            }
+
             user.TelegramLinkToken = null;
             user.TelegramLinkTokenExpiry = null;
 
@@ -84,15 +106,38 @@ namespace Piggino.Api.Infrastructure.Repositories
 
         public async Task DisconnectTelegramAsync(Guid userId)
         {
-            User? user = await _context.Users.FindAsync(userId);
+            List<UserTelegramConnection> connections = await _context.TelegramConnections
+                .Where(c => c.UserId == userId)
+                .ToListAsync();
 
-            if (user == null)
+            _context.TelegramConnections.RemoveRange(connections);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<UserTelegramConnection>> GetConnectionsAsync(Guid userId)
+        {
+            return await _context.TelegramConnections
+                .Where(c => c.UserId == userId)
+                .OrderBy(c => c.ConnectedAt)
+                .ToListAsync();
+        }
+
+        public async Task DisconnectSpecificAsync(Guid userId, int connectionId)
+        {
+            UserTelegramConnection? connection = await _context.TelegramConnections
+                .FirstOrDefaultAsync(c => c.Id == connectionId && c.UserId == userId);
+
+            if (connection == null)
                 return;
 
-            user.TelegramChatId = null;
-
-            _context.Users.Update(user);
+            _context.TelegramConnections.Remove(connection);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> HasAnyConnectionAsync(Guid userId)
+        {
+            return await _context.TelegramConnections
+                .AnyAsync(c => c.UserId == userId);
         }
 
         public async Task<BotSummaryDto> GetMonthlySummaryAsync(Guid userId, int year, int month)

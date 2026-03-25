@@ -1,4 +1,5 @@
-﻿using Piggino.Api.Domain.Users.Dtos;
+﻿using Piggino.Api.Domain.Bot.Interfaces;
+using Piggino.Api.Domain.Users.Dtos;
 using Piggino.Api.Domain.Users.Entities;
 using Piggino.Api.Domain.Users.Interfaces;
 using Piggino.Api.Helpers;
@@ -9,10 +10,12 @@ namespace Piggino.Api.Domain.Users.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _repository;
+        private readonly IBotRepository _botRepository;
 
-        public UserService(IUserRepository repository)
+        public UserService(IUserRepository repository, IBotRepository botRepository)
         {
             _repository = repository;
+            _botRepository = botRepository;
         }
 
         public async Task<IEnumerable<UserReadDto>> GetAllAsync()
@@ -169,13 +172,15 @@ namespace Piggino.Api.Domain.Users.Services
             if (user == null)
                 return null;
 
+            bool isTelegramConnected = await _botRepository.HasAnyConnectionAsync(userId);
+
             return new UserSettingsDto
             {
                 Is503020Enabled = user.Is503020Enabled,
                 IsTitheModuleEnabled = user.IsTitheModuleEnabled,
                 TitheCategoryId = user.TitheCategoryId,
                 TitheFinancialSourceId = user.TitheFinancialSourceId,
-                IsTelegramConnected = user.TelegramChatId != null
+                IsTelegramConnected = isTelegramConnected
             };
         }
 
@@ -191,13 +196,15 @@ namespace Piggino.Api.Domain.Users.Services
             user.TitheFinancialSourceId = dto.TitheFinancialSourceId;
             await _repository.UpdateUserAsync(user);
 
+            bool isTelegramConnected = await _botRepository.HasAnyConnectionAsync(userId);
+
             return new UserSettingsDto
             {
                 Is503020Enabled = user.Is503020Enabled,
                 IsTitheModuleEnabled = user.IsTitheModuleEnabled,
                 TitheCategoryId = user.TitheCategoryId,
                 TitheFinancialSourceId = user.TitheFinancialSourceId,
-                IsTelegramConnected = user.TelegramChatId != null
+                IsTelegramConnected = isTelegramConnected
             };
         }
 
@@ -210,13 +217,15 @@ namespace Piggino.Api.Domain.Users.Services
             user.IsTitheModuleEnabled = enabled;
             await _repository.UpdateUserAsync(user);
 
+            bool isTelegramConnected = await _botRepository.HasAnyConnectionAsync(userId);
+
             return new UserSettingsDto
             {
                 Is503020Enabled = user.Is503020Enabled,
                 IsTitheModuleEnabled = user.IsTitheModuleEnabled,
                 TitheCategoryId = user.TitheCategoryId,
                 TitheFinancialSourceId = user.TitheFinancialSourceId,
-                IsTelegramConnected = user.TelegramChatId != null
+                IsTelegramConnected = isTelegramConnected
             };
         }
     }

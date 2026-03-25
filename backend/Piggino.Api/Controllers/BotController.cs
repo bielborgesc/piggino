@@ -48,6 +48,34 @@ namespace Piggino.Api.Controllers
 
             await _botService.DisconnectAsync(userId);
 
+            return Ok(new { message = "All Telegram accounts disconnected successfully." });
+        }
+
+        [Authorize]
+        [HttpGet("connections")]
+        public async Task<IActionResult> GetConnections()
+        {
+            string? userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!Guid.TryParse(userIdClaim, out Guid userId))
+                return Unauthorized();
+
+            var connections = await _botService.GetConnectionsAsync(userId);
+
+            return Ok(connections);
+        }
+
+        [Authorize]
+        [HttpDelete("connections/{id:int}")]
+        public async Task<IActionResult> DisconnectSpecific(int id)
+        {
+            string? userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!Guid.TryParse(userIdClaim, out Guid userId))
+                return Unauthorized();
+
+            await _botService.DisconnectSpecificAsync(userId, id);
+
             return Ok(new { message = "Telegram account disconnected successfully." });
         }
 

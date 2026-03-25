@@ -3,9 +3,24 @@
 ## Project Summary
 
 Piggino is a full-stack personal finance tracker.
-- **Backend:** ASP.NET 8 · C# · EF Core · SQLite · JWT
-- **Frontend:** React 19 · TypeScript · Vite · Tailwind CSS · Axios
-- **Infra:** Docker · Docker Compose · Caddy · GitHub Actions
+- **Backend:** ASP.NET 9 · C# · EF Core · PostgreSQL · JWT
+- **Frontend:** React 19 · TypeScript · Vite · Tailwind CSS · Axios · PWA
+- **Infra:** .NET Aspire · Docker · Caddy · GitHub Actions
+
+## Modules
+
+| Module | Description |
+|--------|-------------|
+| Transactions | Income/expense with installments, fixed bills, recurrence, and optional Goal link |
+| Categories | User-defined categories with titheable flag |
+| Financial Sources | Bank accounts, wallets, credit cards |
+| Invoice | Credit card invoice management |
+| Goals | Savings goals with contribution tracking |
+| Debt Planning | Avalanche and Snowball payoff strategies |
+| Tithe | Optional 10% tithe module with configurable category and financial source |
+| Telegram Bot | Multi-account Telegram integration for natural language transaction entry |
+| Wealth Projection | CDI vs Poupança simulator with IR/IOF breakdown, auto-fetches rate from BACEN |
+| 50/30/20 | Budget analysis by needs/wants/savings buckets |
 
 ---
 
@@ -77,6 +92,14 @@ chore(ci): add docker layer caching to GitHub Actions
 - `fix/<name>` → bug fixes
 
 ---
+
+## Migrations
+
+Never write migration files manually. Always generate via:
+```bash
+cd backend/Piggino.Api
+dotnet ef migrations add <MigrationName>
+```
 
 ## Agent
 

@@ -1,4 +1,5 @@
 using Piggino.Api.Domain.Bot.Dtos;
+using Piggino.Api.Domain.Bot.Entities;
 using Piggino.Api.Domain.Users.Entities;
 
 namespace Piggino.Api.Domain.Bot.Interfaces
@@ -13,5 +14,8 @@ namespace Piggino.Api.Domain.Bot.Interfaces
         Task<List<BotFinancialSourceDto>> GetUserFinancialSourcesAsync(Guid userId);
         Task<BotSummaryDto> GetMonthlySummaryAsync(Guid userId, int year, int month);
         Task DisconnectTelegramAsync(Guid userId);
+        Task<List<UserTelegramConnection>> GetConnectionsAsync(Guid userId);
+        Task DisconnectSpecificAsync(Guid userId, int connectionId);
+        Task<bool> HasAnyConnectionAsync(Guid userId);
     }
 }

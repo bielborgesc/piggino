@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { generateBotLinkToken, disconnectTelegram, getUserSettings } from '../services/api';
+import {
+  generateBotLinkToken,
+  disconnectTelegram,
+  disconnectSpecificTelegram,
+  getTelegramConnections,
+} from '../services/api';
+import { TelegramConnection } from '../types';
 import { extractErrorMessage } from '../utils/errors';
 
 const TELEGRAM_BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'PigginoBot';
@@ -9,6 +15,7 @@ const CONNECT_COMMAND_PREFIX = '/conectar';
 interface UseTelegramConnectResult {
   isConnected: boolean;
   isLoadingStatus: boolean;
+  connections: TelegramConnection[];
   token: string | null;
   expiresAt: Date | null;
   secondsRemaining: number;
@@ -17,12 +24,13 @@ interface UseTelegramConnectResult {
   botUsername: string;
   generateToken: () => Promise<void>;
   disconnect: () => Promise<void>;
+  disconnectSpecific: (id: number) => Promise<void>;
   copyToken: () => Promise<void>;
   copyCommand: () => Promise<void>;
 }
 
 export function useTelegramConnect(): UseTelegramConnectResult {
-  const [isConnected, setIsConnected] = useState(false);
+  const [connections, setConnections] = useState<TelegramConnection[]>([]);
   const [isLoadingStatus, setIsLoadingStatus] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
@@ -61,8 +69,8 @@ export function useTelegramConnect(): UseTelegramConnectResult {
   );
 
   useEffect(() => {
-    getUserSettings()
-      .then((settings) => setIsConnected(settings.isTelegramConnected))
+    getTelegramConnections()
+      .then((data) => setConnections(data))
       .catch(() => {
         toast.error('Nao foi possivel verificar o status do Telegram.');
       })
@@ -90,17 +98,27 @@ export function useTelegramConnect(): UseTelegramConnectResult {
     setIsDisconnecting(true);
     try {
       await disconnectTelegram();
-      setIsConnected(false);
+      setConnections([]);
       setToken(null);
       setExpiresAt(null);
       stopCountdown();
-      toast.success('Telegram desconectado com sucesso.');
+      toast.success('Todas as contas do Telegram foram desconectadas.');
     } catch (error) {
       toast.error(extractErrorMessage(error, 'Erro ao desconectar o Telegram.'));
     } finally {
       setIsDisconnecting(false);
     }
   }, [stopCountdown]);
+
+  const disconnectSpecific = useCallback(async (id: number) => {
+    try {
+      await disconnectSpecificTelegram(id);
+      setConnections((previous) => previous.filter((c) => c.id !== id));
+      toast.success('Conta do Telegram desconectada.');
+    } catch (error) {
+      toast.error(extractErrorMessage(error, 'Erro ao desconectar a conta do Telegram.'));
+    }
+  }, []);
 
   const copyToken = useCallback(async () => {
     if (!token) return;
@@ -123,8 +141,9 @@ export function useTelegramConnect(): UseTelegramConnectResult {
   }, [token]);
 
   return {
-    isConnected,
+    isConnected: connections.length > 0,
     isLoadingStatus,
+    connections,
     token,
     expiresAt,
     secondsRemaining,
@@ -133,6 +152,7 @@ export function useTelegramConnect(): UseTelegramConnectResult {
     botUsername: TELEGRAM_BOT_USERNAME,
     generateToken,
     disconnect,
+    disconnectSpecific,
     copyToken,
     copyCommand,
   };

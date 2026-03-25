@@ -1,4 +1,5 @@
 using Piggino.Api.Domain.Bot.Dtos;
+using Piggino.Api.Domain.Bot.Entities;
 using Piggino.Api.Domain.Bot.Interfaces;
 using Piggino.Api.Domain.Transactions.Entities;
 using Piggino.Api.Domain.Transactions.Interfaces;
@@ -108,6 +109,23 @@ namespace Piggino.Api.Domain.Bot.Services
         public async Task DisconnectAsync(Guid userId)
         {
             await _botRepository.DisconnectTelegramAsync(userId);
+        }
+
+        public async Task<List<TelegramConnectionDto>> GetConnectionsAsync(Guid userId)
+        {
+            List<UserTelegramConnection> connections = await _botRepository.GetConnectionsAsync(userId);
+
+            return connections.Select(c => new TelegramConnectionDto
+            {
+                Id = c.Id,
+                ChatId = c.ChatId,
+                ConnectedAt = c.ConnectedAt
+            }).ToList();
+        }
+
+        public async Task DisconnectSpecificAsync(Guid userId, int connectionId)
+        {
+            await _botRepository.DisconnectSpecificAsync(userId, connectionId);
         }
 
         private static string GenerateSecureToken()
