@@ -5,8 +5,6 @@ using Piggino.Api.Domain.FinancialSources.Entities;
 using Piggino.Api.Domain.Goals.Entities;
 using Piggino.Api.Domain.Transactions.Entities;
 using Piggino.Api.Domain.Users.Entities;
-using System.Collections.Generic;
-using System.Reflection.Emit;
 
 namespace Piggino.Api.Data
 {
@@ -15,13 +13,13 @@ namespace Piggino.Api.Data
         public PigginoDbContext(DbContextOptions<PigginoDbContext> options)
             : base(options) { }
 
-        public DbSet<User> Users { get; set; }
-        public DbSet<FinancialSource> FinancialSources { get; set; }
-        public DbSet<Category> Categories { get; set; }
-        public DbSet<Transaction> Transactions { get; set; }
-        public DbSet<CardInstallment> CardInstallments { get; set; }
-        public DbSet<FixedTransactionPayment> FixedTransactionPayments { get; set; }
-        public DbSet<Goal> Goals { get; set; }
+        public DbSet<User> Users { get; set; } = null!;
+        public DbSet<FinancialSource> FinancialSources { get; set; } = null!;
+        public DbSet<Category> Categories { get; set; } = null!;
+        public DbSet<Transaction> Transactions { get; set; } = null!;
+        public DbSet<CardInstallment> CardInstallments { get; set; } = null!;
+        public DbSet<FixedTransactionPayment> FixedTransactionPayments { get; set; } = null!;
+        public DbSet<Goal> Goals { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,9 +39,19 @@ namespace Piggino.Api.Data
                 .Property(t => t.TransactionType)
                 .HasConversion<string>();
 
+            modelBuilder.Entity<Transaction>()
+                .HasOne(t => t.Goal)
+                .WithMany()
+                .HasForeignKey(t => t.GoalId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             modelBuilder
                 .Entity<Transaction>()
                 .Ignore(t => t.CurrentInstallmentNumber);
+
+            modelBuilder
+                .Entity<Transaction>()
+                .Ignore(t => t.OriginalPurchaseDate);
 
             modelBuilder.Entity<FixedTransactionPayment>()
                 .HasOne(p => p.Transaction)

@@ -146,7 +146,7 @@ export function FixedBillsPage() {
         <p className="text-slate-400">Acompanhe e marque o pagamento das suas despesas mensais fixas.</p>
       </div>
 
-      <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6 flex items-center">
+      <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6 flex flex-wrap items-center gap-3">
         <MonthNavigator
           currentDate={currentDate}
           onPreviousMonth={handlePreviousMonth}

@@ -18,9 +18,7 @@ import {
   TooltipProps,
 } from 'recharts';
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
-import { LoaderCircle, TrendingUp, TrendingDown, Scale, AlertCircle, ChevronLeft, ChevronRight, Target, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { TransactionModal } from '../components/features/transactions/TransactionModal';
-import { TitheModuleCard } from '../components/features/dashboard/TitheModuleCard';
+import { LoaderCircle, TrendingUp, TrendingDown, Scale, AlertCircle, ChevronLeft, ChevronRight, Target, X, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { useDashboard } from '../hooks/useDashboard';
 import { useBudgetAnalysis } from '../hooks/useBudgetAnalysis';
 import { useGoals } from '../hooks/useGoals';
@@ -119,11 +117,11 @@ function KpiCard({ title, value, icon, valueClassName, trend }: KpiCardProps) {
     : null;
 
   return (
-    <div className="bg-slate-800 p-5 rounded-lg border border-slate-700 flex items-start gap-4">
+    <div className="bg-slate-800 p-4 sm:p-5 rounded-lg border border-slate-700 flex items-start gap-3 sm:gap-4">
       <div className="mt-1 text-slate-400">{icon}</div>
-      <div>
-        <p className="text-slate-400 text-sm">{title}</p>
-        <p className={`text-2xl font-bold mt-1 ${valueClassName}`}>{value}</p>
+      <div className="min-w-0">
+        <p className="text-slate-400 text-xs sm:text-sm">{title}</p>
+        <p className={`text-xl sm:text-2xl font-bold mt-1 ${valueClassName}`}>{value}</p>
         {trend && trend.percent !== 0 && (
           <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${trendColor}`}>
             <TrendIcon size={12} />
@@ -423,14 +421,14 @@ function CategoryPieChart({ categories, categoryColorMap }: CategoryPieChartProp
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: ValueType) => [formatBRL(Number(value)), '']}
+              formatter={(value: ValueType, name: NameType) => [formatBRL(Number(value)), name]}
               contentStyle={{ backgroundColor: '#334155', border: '1px solid #475569', borderRadius: 8, fontSize: 12 }}
               labelStyle={{ color: '#f1f5f9' }}
               itemStyle={{ color: '#f1f5f9' }}
             />
           </PieChart>
         </ResponsiveContainer>
-        <ul className="flex flex-col gap-1 text-xs w-full sm:w-auto sm:min-w-[140px]">
+        <ul className="flex flex-col gap-1 text-xs w-full sm:w-auto sm:max-w-[160px]">
           {data.map((entry, index) => (
             <li key={entry.name} className="flex items-center gap-2">
               <span
@@ -525,11 +523,11 @@ function BucketBar({ label, actual, target, color, categories }: BucketBarProps)
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-0.5 text-sm">
         <span className="text-white font-semibold">{label}</span>
-        <span className={isOverTarget ? 'text-red-400 font-semibold' : 'text-slate-300'}>
+        <span className={`text-xs sm:text-sm ${isOverTarget ? 'text-red-400 font-semibold' : 'text-slate-300'}`}>
           {formatBRL(actual)} / {formatBRL(target)}
-          <span className={`ml-2 text-xs ${isOverTarget ? 'text-red-400' : 'text-slate-400'}`}>
+          <span className={`ml-1 text-xs ${isOverTarget ? 'text-red-400' : 'text-slate-400'}`}>
             ({isOverTarget ? `+${formatBRL(Math.abs(surplus))}` : `-${formatBRL(Math.abs(surplus))}`})
           </span>
         </span>
@@ -574,7 +572,7 @@ function BudgetAnalysisSection({ month, onMonthChange, onNavigateToCategories }:
 
   return (
     <div className="bg-slate-800 rounded-lg border border-slate-700">
-      <div className="flex items-center justify-between p-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5">
         <button
           onClick={toggleCollapsed}
           className="flex items-center gap-2 text-left"
@@ -592,7 +590,7 @@ function BudgetAnalysisSection({ month, onMonthChange, onNavigateToCategories }:
           >
             <ChevronLeft size={18} />
           </button>
-          <span className="text-slate-300 text-sm font-medium w-36 text-center capitalize">
+          <span className="text-slate-300 text-sm font-medium min-w-0 w-32 sm:w-36 text-center capitalize truncate">
             {formatMonthKeyLabel(month)}
           </span>
           <button
@@ -761,8 +759,9 @@ function OverspendingAlerts({ analysis, onNavigateToCategories }: OverspendingAl
 
       {showUnclassified && (
         <div className="flex items-start justify-between gap-3 bg-blue-900/30 border border-blue-700 rounded-lg px-4 py-3">
-          <span className="text-blue-300 text-sm">
-            [i] {formatBRL(analysis.unclassifiedActual)} em gastos nao classificados —{' '}
+          <span className="text-blue-300 text-sm flex items-center gap-1.5">
+            <Info size={14} className="shrink-0 mt-0.5" />
+            {formatBRL(analysis.unclassifiedActual)} em gastos nao classificados —{' '}
             <button
               onClick={onNavigateToCategories}
               className="underline text-blue-200 hover:text-white"
@@ -860,11 +859,9 @@ function GoalsMiniWidget({ goals, onNavigateToGoals }: GoalsMiniWidgetProps) {
 interface DashboardPageProps {
   onNavigateToCategories: () => void;
   onNavigateToGoals: () => void;
-  onNavigateToOnboarding: () => void;
 }
 
-export function DashboardPage({ onNavigateToCategories, onNavigateToGoals, onNavigateToOnboarding }: DashboardPageProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: DashboardPageProps) {
   const [categoryColorMap, setCategoryColorMap] = useState<Map<string, string>>(new Map());
   const [is503020Enabled, setIs503020Enabled] = useState(false);
   const [budgetMonth, setBudgetMonth] = useState<string>(getCurrentMonthKey());
@@ -911,41 +908,17 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals, onNav
     );
   }
 
-  const handleTransactionSaved = () => {
-    setIsModalOpen(false);
-    refetch();
-  };
-
-  const hasNoActivity = summary.monthlySummaries.every(
-    (s) => s.totalIncome === 0 && s.totalExpenses === 0
-  );
 
   return (
     <>
       <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6">
-        {hasNoActivity && (
-          <div className="flex items-center justify-between gap-4 bg-green-900/30 border border-green-700 rounded-xl p-4">
-            <div>
-              <p className="text-green-300 font-semibold text-sm">Bem-vindo ao Piggino!</p>
-              <p className="text-green-400 text-xs mt-0.5">
-                Voce ainda nao tem transacoes. Siga o assistente de configuracao para comecar.
-              </p>
-            </div>
-            <button
-              onClick={onNavigateToOnboarding}
-              className="shrink-0 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition-colors"
-            >
-              Iniciar Configuracao
-            </button>
-          </div>
-        )}
         {is503020Enabled && (
           <BudgetAlertsBanner
             budgetMonth={budgetMonth}
             onNavigateToCategories={onNavigateToCategories}
           />
         )}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             title="Receitas do Mes"
             value={formatBRL(summary.currentMonthIncome)}
@@ -986,8 +959,6 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals, onNav
           <TopExpensesList expenses={summary.topExpenses} />
         </div>
 
-        <TitheModuleCard />
-
         {is503020Enabled && (
           <BudgetAnalysisSection
             month={budgetMonth}
@@ -1000,17 +971,7 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals, onNav
 
         <GoalsMiniWidget goals={goals} onNavigateToGoals={onNavigateToGoals} />
 
-        <div className="flex justify-end">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-300"
-          >
-            + Adicionar Transacao
-          </button>
-        </div>
       </div>
-
-      <TransactionModal isOpen={isModalOpen} onClose={handleTransactionSaved} />
     </>
   );
 }

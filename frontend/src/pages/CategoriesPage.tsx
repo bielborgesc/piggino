@@ -7,6 +7,7 @@ import { Category } from '../types';
 import { CategoryModal } from '../components/features/categories/CategoryModal';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { extractErrorMessage } from '../utils/errors';
+import { useUserSettings } from '../hooks/useUserSettings';
 
 interface DeleteConfirmState {
   id: number;
@@ -19,6 +20,7 @@ export function CategoriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState | null>(null);
+  const { settings } = useUserSettings();
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -89,6 +91,7 @@ export function CategoriesPage() {
           </div>
         ) : (
           <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-slate-700/50">
                 <tr>
@@ -141,6 +144,7 @@ export function CategoriesPage() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>
@@ -150,6 +154,7 @@ export function CategoriesPage() {
         onClose={() => setIsModalOpen(false)}
         onSaveSuccess={fetchCategories}
         categoryToEdit={editingCategory}
+        is503020Enabled={settings.is503020Enabled}
       />
       <ConfirmModal
         isOpen={deleteConfirm !== null}

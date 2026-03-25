@@ -64,20 +64,14 @@ namespace Piggino.Api.Domain.Tithe.Services
 
         public async Task<int> GenerateMonthlyTitheAsync(Guid userId, int year, int month)
         {
+            var user = await _userRepository.GetUserByIdAsync(userId);
+            if (user == null)
+                return 0;
+
             var categoriesWithIncome = await _titheRepository.GetTitheableCategoriesWithIncomeAsync(
                 userId, year, month);
 
             if (categoriesWithIncome.Count == 0)
-                return 0;
-
-            Category? titheCategory = await _titheRepository.FindTitheCategoryAsync(userId)
-                ?? await _titheRepository.FindFirstExpenseCategoryAsync(userId);
-
-            if (titheCategory == null)
-                return 0;
-
-            FinancialSource? financialSource = await _titheRepository.FindFirstFinancialSourceAsync(userId);
-            if (financialSource == null)
                 return 0;
 
             int createdCount = 0;
@@ -90,23 +84,12 @@ namespace Piggino.Api.Domain.Tithe.Services
                 if (alreadyExists)
                     continue;
 
-                decimal titheAmount = income * TithePercentage;
-                string description = BuildTitheDescription(category.Name!, year, month);
+                bool created = await CreateTitheTransactionAsync(
+                    userId, category, income, year, month,
+                    user.TitheCategoryId, user.TitheFinancialSourceId);
 
-                var titheTransaction = new Transaction
-                {
-                    Description = description,
-                    TotalAmount = titheAmount,
-                    TransactionType = TransactionType.Expense,
-                    PurchaseDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc),
-                    CategoryId = titheCategory.Id,
-                    FinancialSourceId = financialSource.Id,
-                    UserId = userId,
-                    IsPaid = true
-                };
-
-                await _titheRepository.AddTransactionAsync(titheTransaction);
-                createdCount++;
+                if (created)
+                    createdCount++;
             }
 
             if (createdCount > 0)
@@ -128,6 +111,10 @@ namespace Piggino.Api.Domain.Tithe.Services
 
         public async Task RecalculateTitheForCategoryAsync(Guid userId, int categoryId, int year, int month)
         {
+            var user = await _userRepository.GetUserByIdAsync(userId);
+            if (user == null || !user.IsTitheModuleEnabled)
+                return;
+
             Category? category = await _categoryRepository.GetByIdAsync(categoryId, userId);
 
             if (category == null || !category.IsTitheable || category.Type != CategoryType.Income)
@@ -147,7 +134,13 @@ namespace Piggino.Api.Domain.Tithe.Services
 
             if (totalIncome > 0 && existingTithe == null)
             {
-                await CreateTitheTransactionAsync(userId, category, totalIncome, year, month);
+                bool created = await CreateTitheTransactionAsync(
+                    userId, category, totalIncome, year, month,
+                    user.TitheCategoryId, user.TitheFinancialSourceId);
+
+                if (created)
+                    await _titheRepository.SaveChangesAsync();
+
                 return;
             }
 
@@ -158,18 +151,35 @@ namespace Piggino.Api.Domain.Tithe.Services
             }
         }
 
-        private async Task CreateTitheTransactionAsync(
-            Guid userId, Category incomeCategory, decimal income, int year, int month)
+        private async Task<bool> CreateTitheTransactionAsync(
+            Guid userId,
+            Category incomeCategory,
+            decimal income,
+            int year,
+            int month,
+            int? titheCategoryId,
+            int? titheFinancialSourceId)
         {
-            Category? titheCategory = await _titheRepository.FindTitheCategoryAsync(userId)
+            Category? titheCategory = null;
+
+            if (titheCategoryId.HasValue)
+                titheCategory = await _categoryRepository.GetByIdAsync(titheCategoryId.Value, userId);
+
+            titheCategory ??= await _titheRepository.FindTitheCategoryAsync(userId)
                 ?? await _titheRepository.FindFirstExpenseCategoryAsync(userId);
 
             if (titheCategory == null)
-                return;
+                return false;
 
-            FinancialSource? financialSource = await _titheRepository.FindFirstFinancialSourceAsync(userId);
+            FinancialSource? financialSource = null;
+
+            if (titheFinancialSourceId.HasValue)
+                financialSource = await _titheRepository.FindFinancialSourceByIdAsync(userId, titheFinancialSourceId.Value);
+
+            financialSource ??= await _titheRepository.FindFirstFinancialSourceAsync(userId);
+
             if (financialSource == null)
-                return;
+                return false;
 
             var titheTransaction = new Transaction
             {
@@ -180,11 +190,11 @@ namespace Piggino.Api.Domain.Tithe.Services
                 CategoryId = titheCategory.Id,
                 FinancialSourceId = financialSource.Id,
                 UserId = userId,
-                IsPaid = true
+                IsPaid = false
             };
 
             await _titheRepository.AddTransactionAsync(titheTransaction);
-            await _titheRepository.SaveChangesAsync();
+            return true;
         }
 
         private static string BuildTitheDescription(string categoryName, int year, int month)

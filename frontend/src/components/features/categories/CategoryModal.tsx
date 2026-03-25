@@ -10,9 +10,10 @@ interface CategoryModalProps {
   onClose: () => void;
   onSaveSuccess: () => void;
   categoryToEdit?: Category | null;
+  is503020Enabled: boolean;
 }
 
-export function CategoryModal({ isOpen, onClose, onSaveSuccess, categoryToEdit }: CategoryModalProps) {
+export function CategoryModal({ isOpen, onClose, onSaveSuccess, categoryToEdit, is503020Enabled }: CategoryModalProps) {
   const [isSaving, setIsSaving] = useState(false);
 
   if (!isOpen) {
@@ -67,6 +68,7 @@ export function CategoryModal({ isOpen, onClose, onSaveSuccess, categoryToEdit }
           onCancel={onClose}
           initialData={categoryToEdit}
           isSaving={isSaving}
+          is503020Enabled={is503020Enabled}
         />
       </div>
     </div>

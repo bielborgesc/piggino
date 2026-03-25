@@ -189,6 +189,11 @@ export const getTransactions = async (): Promise<Transaction[]> => {
   return response.data;
 };
 
+export const getTransactionById = async (id: number): Promise<Transaction> => {
+  const response = await apiClient.get<Transaction>(`/Transactions/${id}`);
+  return response.data;
+};
+
 export const createTransaction = async (transactionData: TransactionData): Promise<Transaction> => {
   const response = await apiClient.post<Transaction>('/Transactions', transactionData);
   return response.data;

@@ -26,6 +26,8 @@ namespace Piggino.Api.Domain.Transactions.Dtos
         public string? FinancialSourceName { get; set; }
         public FinancialSourceType? FinancialSourceType { get; set; }
         public Guid UserId { get; set; }
+        public int? GoalId { get; set; }
+        public string? GoalName { get; set; }
         public ICollection<CardInstallmentReadDto>? CardInstallments { get; set; }
     }
 }

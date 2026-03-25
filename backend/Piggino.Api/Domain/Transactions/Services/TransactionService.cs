@@ -3,6 +3,7 @@ using Piggino.Api.Domain.CardInstallments.Entities;
 using Piggino.Api.Domain.Categories.Interfaces;
 using Piggino.Api.Domain.FinancialSources.Entities;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
+using Piggino.Api.Domain.Goals.Entities;
 using Piggino.Api.Domain.Goals.Interfaces;
 using Piggino.Api.Domain.Tithe.Interfaces;
 using Piggino.Api.Domain.Transactions.Dtos;
@@ -63,6 +64,9 @@ namespace Piggino.Api.Domain.Transactions.Services
             if (newTransaction.TransactionType == TransactionType.Income)
                 await _titheService.RecalculateTitheForCategoryAsync(
                     userId, newTransaction.CategoryId, newTransaction.PurchaseDate.Year, newTransaction.PurchaseDate.Month);
+
+            if (createDto.GoalId.HasValue)
+                await ApplyGoalContributionAsync(createDto.GoalId.Value, newTransaction.TotalAmount, userId);
 
             return MapToReadDto(newTransaction);
         }
@@ -1128,6 +1132,7 @@ namespace Piggino.Api.Domain.Transactions.Services
             transaction.InstallmentCount = updateDto.InstallmentCount;
             transaction.TotalAmount = updateDto.TotalAmount;
             transaction.IsRecurring = updateDto.IsRecurring;
+            transaction.GoalId = updateDto.GoalId;
         }
 
         // --- Mapping ---
@@ -1157,6 +1162,8 @@ namespace Piggino.Api.Domain.Transactions.Services
                 FinancialSourceName = transaction.FinancialSource?.Name,
                 FinancialSourceType = transaction.FinancialSource?.Type,
                 UserId = transaction.UserId,
+                GoalId = transaction.GoalId,
+                GoalName = transaction.Goal?.Name,
                 CardInstallments = transaction.CardInstallments?
                     .Select(MapCardInstallmentToReadDto)
                     .ToList()
@@ -1206,6 +1213,22 @@ namespace Piggino.Api.Domain.Transactions.Services
             };
         }
 
+        // --- Goal contribution ---
+
+        private async Task ApplyGoalContributionAsync(int goalId, decimal amount, Guid userId)
+        {
+            Goal? goal = await _goalRepository.GetByIdAsync(goalId, userId);
+            if (goal == null) return;
+
+            goal.CurrentAmount += amount;
+
+            if (goal.CurrentAmount >= goal.TargetAmount)
+                goal.IsCompleted = true;
+
+            _goalRepository.Update(goal);
+            await _goalRepository.SaveChangesAsync();
+        }
+
         // --- Utility ---
 
         private Guid GetCurrentUserId()
@@ -1235,7 +1258,8 @@ namespace Piggino.Api.Domain.Transactions.Services
                 CardInstallments = new List<CardInstallment>(),
                 IsFixed = createDto.IsFixed,
                 DayOfMonth = createDto.IsFixed ? createDto.DayOfMonth : null,
-                IsRecurring = createDto.IsRecurring
+                IsRecurring = createDto.IsRecurring,
+                GoalId = createDto.GoalId
             };
         }
 

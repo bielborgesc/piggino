@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import { getUserSettings, updateUserSettings } from '../../../services/api';
-import { UserSettings } from '../../../types';
+import { X, KeyRound } from 'lucide-react';
+import { getUserSettings, updateUserSettings, getCategories, getFinancialSources } from '../../../services/api';
+import { UserSettings, Category, FinancialSource } from '../../../types';
 import toast from 'react-hot-toast';
 import { extractErrorMessage } from '../../../utils/errors';
 import { TelegramConnectCard } from './TelegramConnectCard';
@@ -9,12 +9,15 @@ import { TelegramConnectCard } from './TelegramConnectCard';
 interface UserSettingsModalProps {
   onClose: () => void;
   onNavigateToCategories: () => void;
+  onChangePassword: () => void;
 }
 
-export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSettingsModalProps) {
+export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePassword }: UserSettingsModalProps) {
   const [settings, setSettings] = useState<UserSettings>({ is503020Enabled: false, isTitheModuleEnabled: false, isTelegramConnected: false });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
+  const [financialSources, setFinancialSources] = useState<FinancialSource[]>([]);
 
   useEffect(() => {
     getUserSettings()
@@ -24,6 +27,19 @@ export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSetti
       })
       .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!settings.isTitheModuleEnabled) return;
+
+    Promise.all([getCategories(), getFinancialSources()])
+      .then(([categories, sources]) => {
+        setExpenseCategories(categories.filter(c => c.type === 'Expense'));
+        setFinancialSources(sources);
+      })
+      .catch(() => {
+        toast.error('Nao foi possivel carregar categorias e fontes financeiras.');
+      });
+  }, [settings.isTitheModuleEnabled]);
 
   const handleToggle503020 = async () => {
     const updated: UserSettings = { ...settings, is503020Enabled: !settings.is503020Enabled };
@@ -55,6 +71,36 @@ export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSetti
     }
   };
 
+  const handleTitheCategoryChange = async (value: string) => {
+    const titheCategoryId = value ? Number(value) : null;
+    const updated: UserSettings = { ...settings, titheCategoryId };
+    setIsSaving(true);
+
+    try {
+      const saved = await updateUserSettings(updated);
+      setSettings(saved);
+    } catch (error) {
+      toast.error(extractErrorMessage(error, 'Erro ao salvar categoria do dizimo.'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTitheFinancialSourceChange = async (value: string) => {
+    const titheFinancialSourceId = value ? Number(value) : null;
+    const updated: UserSettings = { ...settings, titheFinancialSourceId };
+    setIsSaving(true);
+
+    try {
+      const saved = await updateUserSettings(updated);
+      setSettings(saved);
+    } catch (error) {
+      toast.error(extractErrorMessage(error, 'Erro ao salvar fonte financeira do dizimo.'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleCategoriesLink = () => {
     onClose();
     onNavigateToCategories();
@@ -62,8 +108,8 @@ export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSetti
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md border border-slate-700">
-        <div className="flex items-center justify-between p-6 border-b border-slate-700">
+      <div className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md border border-slate-700 flex flex-col max-h-[90dvh]">
+        <div className="flex items-center justify-between p-6 border-b border-slate-700 shrink-0">
           <h2 className="text-lg font-bold text-white">Configuracoes</h2>
           <button
             onClick={onClose}
@@ -74,7 +120,7 @@ export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSetti
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-y-auto">
           {isLoading ? (
             <p className="text-slate-400 text-sm text-center">Carregando...</p>
           ) : (
@@ -123,9 +169,44 @@ export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSetti
                     Gera automaticamente uma transacao de 10% da sua receita mensal como dizimo.
                   </p>
                   {settings.isTitheModuleEnabled && (
-                    <p className="text-slate-500 text-xs mt-2">
-                      Visivel no Dashboard para acompanhar e gerar o dizimo do mes.
-                    </p>
+                    <>
+                      <p className="text-slate-500 text-xs mt-2">
+                        Visivel no Dashboard para acompanhar e gerar o dizimo do mes.
+                      </p>
+                      <div className="mt-3 space-y-3">
+                        <div>
+                          <label className="block text-slate-400 text-xs mb-1">Categoria do dizimo</label>
+                          <select
+                            value={settings.titheCategoryId ?? ''}
+                            onChange={e => handleTitheCategoryChange(e.target.value)}
+                            disabled={isSaving}
+                            className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm disabled:opacity-50"
+                          >
+                            <option value="">Selecione uma categoria</option>
+                            {expenseCategories.map(c => (
+                              <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-slate-400 text-xs mb-1">Fonte financeira</label>
+                          <select
+                            value={settings.titheFinancialSourceId ?? ''}
+                            onChange={e => handleTitheFinancialSourceChange(e.target.value)}
+                            disabled={isSaving}
+                            className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm disabled:opacity-50"
+                          >
+                            <option value="">Selecione uma fonte financeira</option>
+                            {financialSources.map(s => (
+                              <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <p className="text-slate-500 text-xs">
+                          Se nao configurado, o sistema usara a categoria 'Dizimo' ou a primeira disponivel.
+                        </p>
+                      </div>
+                    </>
                   )}
                 </div>
                 <button
@@ -149,6 +230,16 @@ export function UserSettingsModal({ onClose, onNavigateToCategories }: UserSetti
                   Integracao Telegram
                 </p>
                 <TelegramConnectCard />
+              </div>
+
+              <div className="border-t border-slate-700 pt-4">
+                <button
+                  onClick={onChangePassword}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold transition-colors"
+                >
+                  <KeyRound size={16} />
+                  Alterar Senha
+                </button>
               </div>
             </div>
           )}

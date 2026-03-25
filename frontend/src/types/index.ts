@@ -56,6 +56,8 @@ export interface Transaction {
   financialSourceName?: string;
   financialSourceType?: FinancialSourceType;
   userId: string;
+  goalId?: number;
+  goalName?: string;
   cardInstallments?: CardInstallment[];
 }
 
@@ -92,6 +94,7 @@ export interface TransactionData {
     purchaseDate: string;
     isRecurring: boolean;
     recurrenceScope?: RecurrenceScope;
+    goalId?: number;
 }
 
 export interface UserRegistrationData {
@@ -230,24 +233,6 @@ export interface TopExpense {
   categoryName: string | null;
 }
 
-export interface SimulationItem {
-  transactionId: number;
-  description: string;
-  financialSourceName: string;
-  totalAmount: number;
-  installmentCount: number;
-  paidInstallments: number;
-  remainingInstallments: number;
-  remainingAmount: number;
-  monthlyAmount: number;
-  nextDueDate: string;
-}
-
-export interface Simulation {
-  items: SimulationItem[];
-  totalRemainingAmount: number;
-  totalMonthlyCommitment: number;
-}
 
 export interface DashboardSummary {
   monthlySummaries: MonthlySummary[];
@@ -295,6 +280,8 @@ export interface TipsData {
 export interface UserSettings {
   is503020Enabled: boolean;
   isTitheModuleEnabled: boolean;
+  titheCategoryId?: number | null;
+  titheFinancialSourceId?: number | null;
   isTelegramConnected: boolean;
 }
 

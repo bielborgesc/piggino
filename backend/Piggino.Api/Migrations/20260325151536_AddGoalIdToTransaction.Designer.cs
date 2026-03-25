@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Piggino.Api.Data;
@@ -11,9 +12,11 @@ using Piggino.Api.Data;
 namespace Piggino.Api.Migrations
 {
     [DbContext(typeof(PigginoDbContext))]
-    partial class PigginoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260325151536_AddGoalIdToTransaction")]
+    partial class AddGoalIdToTransaction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -325,12 +328,6 @@ namespace Piggino.Api.Migrations
 
                     b.Property<DateTime?>("TelegramLinkTokenExpiry")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("TitheCategoryId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TitheFinancialSourceId")
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getCategories, getFinancialSources } from '../../../services/api';
 import { Category, FinancialSource, CategoryType, TransactionData, Transaction } from '../../../types';
+import { useGoals } from '../../../hooks/useGoals';
 import { InlineCreateForm } from './InlineCreateForm';
 
 function toLocalDateInputValue(date: Date): string {
@@ -41,6 +42,9 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
   const [isFixed, setIsFixed] = useState(false);
   const [dayOfMonth, setDayOfMonth] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
+  const [goalId, setGoalId] = useState<string>('');
+
+  const { goals, isLoading: isLoadingGoals } = useGoals();
 
   const [openInlinePanel, setOpenInlinePanel] = useState<InlinePanel>(null);
 
@@ -64,7 +68,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
     if (initialData) {
       setDescription(initialData.description);
       setAmount(String(initialData.totalAmount));
-      setPurchaseDate(toLocalDateInputValue(new Date(initialData.purchaseDate)));
+      setPurchaseDate(toLocalDateInputValue(new Date(initialData.originalPurchaseDate)));
       setSourceId(String(initialData.financialSourceId));
       setCategoryId(String(initialData.categoryId));
       setTransactionType(initialData.transactionType);
@@ -73,6 +77,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       setIsFixed(initialData.isFixed);
       setDayOfMonth(initialData.dayOfMonth ? String(initialData.dayOfMonth) : '');
       setIsRecurring(initialData.isRecurring);
+      setGoalId(initialData.goalId ? String(initialData.goalId) : '');
     } else {
       setDescription('');
       setAmount('');
@@ -85,6 +90,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       setIsFixed(false);
       setDayOfMonth('');
       setIsRecurring(false);
+      setGoalId('');
     }
   }, [initialData]);
 
@@ -127,6 +133,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       isFixed,
       dayOfMonth: isFixed ? parseInt(dayOfMonth) : undefined,
       isRecurring: isInstallment ? isRecurring : false,
+      goalId: goalId ? parseInt(goalId) : undefined,
     };
     onSave(transactionData, initialData?.id);
   };
@@ -349,6 +356,26 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
             </div>
           )}
         </div>
+
+        {transactionType === 'Expense' && (
+          <div>
+            <label htmlFor="goal" className="block text-sm font-medium text-gray-400 mb-1">
+              Investir em Meta <span className="text-gray-500 font-normal">(opcional)</span>
+            </label>
+            <select
+              id="goal"
+              value={goalId}
+              onChange={(e) => setGoalId(e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md p-2"
+              disabled={isLoadingGoals}
+            >
+              <option value="">{isLoadingGoals ? 'Carregando...' : 'Nenhuma meta'}</option>
+              {goals.filter(g => !g.isCompleted).map(goal => (
+                <option key={goal.id} value={goal.id}>{goal.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="pt-4">
           <button

@@ -173,6 +173,8 @@ namespace Piggino.Api.Domain.Users.Services
             {
                 Is503020Enabled = user.Is503020Enabled,
                 IsTitheModuleEnabled = user.IsTitheModuleEnabled,
+                TitheCategoryId = user.TitheCategoryId,
+                TitheFinancialSourceId = user.TitheFinancialSourceId,
                 IsTelegramConnected = user.TelegramChatId != null
             };
         }
@@ -185,12 +187,16 @@ namespace Piggino.Api.Domain.Users.Services
 
             user.Is503020Enabled = dto.Is503020Enabled;
             user.IsTitheModuleEnabled = dto.IsTitheModuleEnabled;
+            user.TitheCategoryId = dto.TitheCategoryId;
+            user.TitheFinancialSourceId = dto.TitheFinancialSourceId;
             await _repository.UpdateUserAsync(user);
 
             return new UserSettingsDto
             {
                 Is503020Enabled = user.Is503020Enabled,
                 IsTitheModuleEnabled = user.IsTitheModuleEnabled,
+                TitheCategoryId = user.TitheCategoryId,
+                TitheFinancialSourceId = user.TitheFinancialSourceId,
                 IsTelegramConnected = user.TelegramChatId != null
             };
         }
@@ -208,6 +214,8 @@ namespace Piggino.Api.Domain.Users.Services
             {
                 Is503020Enabled = user.Is503020Enabled,
                 IsTitheModuleEnabled = user.IsTitheModuleEnabled,
+                TitheCategoryId = user.TitheCategoryId,
+                TitheFinancialSourceId = user.TitheFinancialSourceId,
                 IsTelegramConnected = user.TelegramChatId != null
             };
         }

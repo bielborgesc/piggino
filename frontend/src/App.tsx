@@ -7,7 +7,6 @@ import { CategoriesPage } from './pages/CategoriesPage';
 import { FinancialSourcesPage } from './pages/FinancialSourcesPage';
 import { InvoicePage } from './pages/InvoicePage';
 import { FixedBillsPage } from './pages/FixedBillsPage';
-import { SimulationPage } from './pages/SimulationPage';
 import { GoalsPage } from './pages/GoalsPage';
 import { WealthProjectionPage } from './pages/WealthProjectionPage';
 import { DebtPlanningPage } from './pages/DebtPlanningPage';
@@ -17,7 +16,7 @@ import { ChangePasswordModal } from './components/features/auth/ChangePasswordMo
 import { UserSettingsModal } from './components/features/settings/UserSettingsModal';
 import { useAuth } from './hooks/useAuth';
 
-type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation' | 'goals' | 'projection' | 'debts' | 'onboarding';
+type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'goals' | 'projection' | 'debts' | 'onboarding';
 
 const TOAST_STYLES = { style: { background: '#334155', color: '#f1f5f9' } };
 
@@ -41,22 +40,21 @@ function App() {
           <UserSettingsModal
             onClose={() => setIsSettingsOpen(false)}
             onNavigateToCategories={() => setCurrentPage('categories')}
+            onChangePassword={() => { setIsSettingsOpen(false); setIsChangePasswordOpen(true); }}
           />
         )}
         <MainLayout
           activePage={currentPage}
           onNavigate={setCurrentPage}
           onLogout={onLogout}
-          onChangePassword={() => setIsChangePasswordOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
         >
-          {currentPage === 'dashboard' && <DashboardPage onNavigateToCategories={() => setCurrentPage('categories')} onNavigateToGoals={() => setCurrentPage('goals')} onNavigateToOnboarding={() => setCurrentPage('onboarding')} />}
+          {currentPage === 'dashboard' && <DashboardPage onNavigateToCategories={() => setCurrentPage('categories')} onNavigateToGoals={() => setCurrentPage('goals')} />}
           {currentPage === 'transactions' && <TransactionsPage />}
           {currentPage === 'categories' && <CategoriesPage />}
           {currentPage === 'financial-sources' && <FinancialSourcesPage />}
           {currentPage === 'invoices' && <InvoicePage />}
           {currentPage === 'fixed-bills' && <FixedBillsPage />}
-          {currentPage === 'simulation' && <SimulationPage />}
           {currentPage === 'goals' && <GoalsPage />}
           {currentPage === 'projection' && <WealthProjectionPage />}
           {currentPage === 'debts' && <DebtPlanningPage />}

@@ -40,5 +40,7 @@ namespace Piggino.Api.Domain.Transactions.Dtos
         public int? DayOfMonth { get; set; }
 
         public bool IsRecurring { get; set; } = false;
+
+        public int? GoalId { get; set; }
     }
 }

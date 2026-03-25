@@ -12,6 +12,7 @@ namespace Piggino.Api.Domain.Tithe.Interfaces
         Task<Category?> FindTitheCategoryAsync(Guid userId);
         Task<Category?> FindFirstExpenseCategoryAsync(Guid userId);
         Task<FinancialSource?> FindFirstFinancialSourceAsync(Guid userId);
+        Task<FinancialSource?> FindFinancialSourceByIdAsync(Guid userId, int financialSourceId);
         Task<decimal> GetTotalIncomeForCategoryAsync(Guid userId, int categoryId, int year, int month);
         Task AddTransactionAsync(Transaction transaction);
         void DeleteTransactionAsync(Transaction transaction);

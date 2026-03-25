@@ -1,6 +1,7 @@
 ﻿using Piggino.Api.Domain.CardInstallments.Entities;
 using Piggino.Api.Domain.Categories.Entities;
 using Piggino.Api.Domain.FinancialSources.Entities;
+using Piggino.Api.Domain.Goals.Entities;
 using Piggino.Api.Domain.Users.Entities;
 using Piggino.Api.Enum;
 using System.ComponentModel.DataAnnotations;
@@ -46,6 +47,9 @@ namespace Piggino.Api.Domain.Transactions.Entities
         public Guid UserId { get; set; }
         public User? User { get; set; }
 
+        public int? GoalId { get; set; }
+        public Goal? Goal { get; set; }
+
         public ICollection<CardInstallment>? CardInstallments { get; set; }
 
         /// <summary>
@@ -53,5 +57,11 @@ namespace Piggino.Api.Domain.Transactions.Entities
         /// Carries the installment number of the specific CardInstallment this row represents.
         /// </summary>
         public int? CurrentInstallmentNumber { get; set; }
+
+        /// <summary>
+        /// Populated only for projected credit card rows. Not persisted to the database.
+        /// Carries the original purchase date before the PurchaseDate is replaced by the installment DueDate.
+        /// </summary>
+        public DateTime? OriginalPurchaseDate { get; set; }
     }
 }

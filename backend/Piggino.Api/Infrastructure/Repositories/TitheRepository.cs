@@ -134,6 +134,12 @@ namespace Piggino.Api.Infrastructure.Repositories
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<FinancialSource?> FindFinancialSourceByIdAsync(Guid userId, int financialSourceId)
+        {
+            return await _context.FinancialSources
+                .FirstOrDefaultAsync(fs => fs.UserId == userId && fs.Id == financialSourceId);
+        }
+
         public async Task AddTransactionAsync(Transaction transaction)
         {
             await _context.Transactions.AddAsync(transaction);

@@ -231,7 +231,7 @@ export function DebtPlanningPage() {
             />
           </div>
 
-          <div className="flex gap-2 mb-5">
+          <div className="flex flex-wrap gap-2 mb-5">
             {(Object.keys(STRATEGY_LABELS) as DebtStrategy[]).map((key) => (
               <button
                 key={key}

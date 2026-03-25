@@ -22,9 +22,10 @@ interface CategoryFormProps {
   onCancel: () => void;
   initialData?: Category | null;
   isSaving: boolean;
+  is503020Enabled: boolean;
 }
 
-export function CategoryForm({ onSave, onCancel, initialData, isSaving }: CategoryFormProps) {
+export function CategoryForm({ onSave, onCancel, initialData, isSaving, is503020Enabled }: CategoryFormProps) {
   const [name, setName] = useState('');
   const [type, setType] = useState<CategoryType>('Expense');
   const [color, setColor] = useState(DEFAULT_COLOR);
@@ -49,7 +50,8 @@ export function CategoryForm({ onSave, onCancel, initialData, isSaving }: Catego
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    onSave({ name, type, color, budgetBucket, isTitheable });
+    const resolvedBudgetBucket: BudgetBucket = is503020Enabled ? budgetBucket : DEFAULT_BUDGET_BUCKET;
+    onSave({ name, type, color, budgetBucket: resolvedBudgetBucket, isTitheable });
   };
 
   return (
@@ -119,31 +121,33 @@ export function CategoryForm({ onSave, onCancel, initialData, isSaving }: Catego
         </div>
       )}
 
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <label className="block text-sm font-medium text-slate-300">
-            Metodo 50/30/20
-          </label>
-          <span className="text-xs text-slate-500 italic">Usado pelo metodo 50/30/20</span>
+      {is503020Enabled && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <label className="block text-sm font-medium text-slate-300">
+              Metodo 50/30/20
+            </label>
+            <span className="text-xs text-slate-500 italic">Classifique esta categoria no metodo 50/30/20</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {BUDGET_BUCKET_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setBudgetBucket(option.value)}
+                disabled={isSaving}
+                className={`p-2 rounded-md font-semibold transition-colors text-sm border ${
+                  budgetBucket === option.value
+                    ? `${option.activeClassName} border-transparent`
+                    : 'border-slate-600 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          {BUDGET_BUCKET_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => setBudgetBucket(option.value)}
-              disabled={isSaving}
-              className={`p-2 rounded-md font-semibold transition-colors text-sm border ${
-                budgetBucket === option.value
-                  ? `${option.activeClassName} border-transparent`
-                  : 'border-slate-600 text-slate-300 hover:bg-slate-700'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
       <div>
         <label htmlFor="color" className="block text-sm font-medium text-slate-300 mb-2">

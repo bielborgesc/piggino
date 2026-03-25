@@ -35,9 +35,7 @@ function InlineCategoryFields({
   const [color, setColor] = useState(DEFAULT_CATEGORY_COLOR);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
+  const handleSubmit = async () => {
     if (name.trim().length < 2) {
       toast.error('O nome deve ter pelo menos 2 caracteres.');
       return;
@@ -56,7 +54,7 @@ function InlineCategoryFields({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <div className="space-y-3">
       <div>
         <label className="block text-xs font-medium text-slate-400 mb-1">Nome</label>
         <input
@@ -65,7 +63,6 @@ function InlineCategoryFields({
           onChange={(e) => setName(e.target.value)}
           className="w-full bg-slate-600 border border-slate-500 rounded-md p-2 text-sm text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-green-500"
           placeholder="Ex: Supermercado"
-          required
           disabled={isSaving}
           autoFocus
         />
@@ -121,14 +118,15 @@ function InlineCategoryFields({
           Cancelar
         </button>
         <button
-          type="submit"
+          type="button"
+          onClick={handleSubmit}
           disabled={isSaving}
           className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 rounded-md font-semibold transition disabled:bg-slate-500"
         >
           {isSaving ? 'Criando...' : 'Criar'}
         </button>
       </div>
-    </form>
+    </div>
   );
 }
 
@@ -145,9 +143,7 @@ function InlineFinancialSourceFields({
   const [dueDay, setDueDay] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
+  const handleSubmit = async () => {
     if (name.trim().length < 2) {
       toast.error('O nome deve ter pelo menos 2 caracteres.');
       return;
@@ -171,7 +167,7 @@ function InlineFinancialSourceFields({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <div className="space-y-3">
       <div>
         <label className="block text-xs font-medium text-slate-400 mb-1">Nome</label>
         <input
@@ -180,7 +176,6 @@ function InlineFinancialSourceFields({
           onChange={(e) => setName(e.target.value)}
           className="w-full bg-slate-600 border border-slate-500 rounded-md p-2 text-sm text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-green-500"
           placeholder="Ex: Nubank"
-          required
           disabled={isSaving}
           autoFocus
         />
@@ -241,14 +236,15 @@ function InlineFinancialSourceFields({
           Cancelar
         </button>
         <button
-          type="submit"
+          type="button"
+          onClick={handleSubmit}
           disabled={isSaving}
           className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 rounded-md font-semibold transition disabled:bg-slate-500"
         >
           {isSaving ? 'Criando...' : 'Criar'}
         </button>
       </div>
-    </form>
+    </div>
   );
 }
 

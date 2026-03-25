@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck, Calculator, KeyRound, Settings, Target, TrendingUp, CreditCard } from 'lucide-react';
+import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck, Settings, Target, TrendingUp, CreditCard } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../../types';
 import { getAccessToken } from '../../services/api';
 
-type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'simulation' | 'goals' | 'projection' | 'debts' | 'onboarding';
+type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'goals' | 'projection' | 'debts' | 'onboarding';
 
 interface MainLayoutProps {
   children: React.ReactNode;
   activePage: PageType;
   onNavigate: (page: PageType) => void;
   onLogout: () => Promise<void>;
-  onChangePassword: () => void;
   onOpenSettings: () => void;
 }
 
@@ -42,12 +41,6 @@ const NAV_SECTIONS: NavSection[] = [
       { page: 'goals', label: 'Metas', icon: <Target className="h-5 w-5" /> },
       { page: 'debts', label: 'Dividas', icon: <CreditCard className="h-5 w-5" /> },
       { page: 'projection', label: 'Projecao de Patrimonio', icon: <TrendingUp className="h-5 w-5" /> },
-    ],
-  },
-  {
-    label: 'Analise',
-    items: [
-      { page: 'simulation', label: 'Simulacao', icon: <Calculator className="h-5 w-5" /> },
     ],
   },
   {
@@ -117,12 +110,10 @@ function Sidebar({ activePage, onNavigate, onClose }: { activePage: string; onNa
 function Header({
   onOpenSidebar,
   onLogout,
-  onChangePassword,
   onOpenSettings,
 }: {
   onOpenSidebar: () => void;
   onLogout: () => Promise<void>;
-  onChangePassword: () => void;
   onOpenSettings: () => void;
 }) {
   const [userName, setUserName] = useState('Usuario');
@@ -161,14 +152,6 @@ function Header({
           <Settings className="h-5 w-5" />
           <span className="hidden sm:inline">Configuracoes</span>
         </button>
-        <button
-          onClick={onChangePassword}
-          className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors"
-          aria-label="Alterar senha"
-        >
-          <KeyRound className="h-5 w-5" />
-          <span className="hidden sm:inline">Alterar senha</span>
-        </button>
         <button onClick={onLogout} className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
           <LogOut className="h-5 w-5 hidden sm:block" />
           <span>Sair</span>
@@ -178,7 +161,7 @@ function Header({
   );
 }
 
-export function MainLayout({ children, activePage, onNavigate, onLogout, onChangePassword, onOpenSettings }: MainLayoutProps) {
+export function MainLayout({ children, activePage, onNavigate, onLogout, onOpenSettings }: MainLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -198,7 +181,6 @@ export function MainLayout({ children, activePage, onNavigate, onLogout, onChang
         <Header
           onOpenSidebar={() => setIsSidebarOpen(true)}
           onLogout={onLogout}
-          onChangePassword={onChangePassword}
           onOpenSettings={onOpenSettings}
         />
         {children}

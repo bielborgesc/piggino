@@ -284,7 +284,7 @@ export function GoalsPage() {
         </div>
 
         {!hasEmergencyFund && (
-          <div className="flex items-center justify-between gap-4 bg-amber-900/30 border border-amber-700 rounded-xl p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-900/30 border border-amber-700 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <span className="text-amber-400 text-lg shrink-0">[!]</span>
               <div>
