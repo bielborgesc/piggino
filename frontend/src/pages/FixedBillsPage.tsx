@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { useState, useMemo, useCallback } from 'react';
+import { CheckCircle, XCircle, Receipt } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useFixedBills } from '../hooks/useFixedBills';
 import { FixedBill } from '../types';
 import { formatBRL } from '../utils/formatters';
@@ -42,17 +43,18 @@ function FixedBillCard({ bill, onTogglePaid }: {
   bill: FixedBill;
   onTogglePaid: (transactionId: number, currentlyPaid: boolean) => void;
 }) {
+  const isCard = bill.financialSourceType === 'Card';
   return (
     <div className={`p-4 rounded-lg border transition-colors ${bill.isPaid ? 'bg-green-900/20 border-green-800/20' : 'bg-slate-800 border-slate-700'}`}>
       <div className="flex gap-3 items-start">
         <button
           onClick={() => onTogglePaid(bill.transactionId, bill.isPaid)}
           className="mt-0.5 flex-shrink-0 rounded-full hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-green-500"
-          title={bill.isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
+          title={isCard ? 'Pague pelo menu Fatura' : bill.isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
         >
           {bill.isPaid
             ? <CheckCircle className="text-green-400" size={20} />
-            : <XCircle className="text-slate-500" size={20} />}
+            : <XCircle className={isCard ? 'text-slate-600' : 'text-slate-500'} size={20} />}
         </button>
         <div className="flex-1">
           <p className={`font-semibold ${bill.isPaid ? 'line-through text-slate-400' : 'text-white'}`}>
@@ -77,17 +79,18 @@ function FixedBillRow({ bill, onTogglePaid }: {
   bill: FixedBill;
   onTogglePaid: (transactionId: number, currentlyPaid: boolean) => void;
 }) {
+  const isCard = bill.financialSourceType === 'Card';
   return (
     <tr className={`border-b border-slate-700 last:border-b-0 transition-colors ${bill.isPaid ? 'bg-green-900/20 text-slate-500' : 'hover:bg-slate-700/30'}`}>
       <td className="p-4 text-center">
         <button
           onClick={() => onTogglePaid(bill.transactionId, bill.isPaid)}
           className="inline-flex items-center justify-center rounded-full hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-green-500"
-          title={bill.isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
+          title={isCard ? 'Pague pelo menu Fatura' : bill.isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
         >
           {bill.isPaid
             ? <CheckCircle className="text-green-400" size={20} />
-            : <XCircle className="text-slate-500" size={20} />}
+            : <XCircle className={isCard ? 'text-slate-600' : 'text-slate-500'} size={20} />}
         </button>
       </td>
       <td className={`p-4 ${bill.isPaid ? 'line-through' : 'text-slate-100'}`}>
@@ -118,6 +121,15 @@ export function FixedBillsPage() {
   const monthKey = useMemo(() => formatMonthKey(currentDate), [currentDate]);
 
   const { data, isLoading, error, togglePaid } = useFixedBills(monthKey);
+
+  const handleTogglePaid = useCallback((transactionId: number, currentlyPaid: boolean) => {
+    const bill = data?.items.find(b => b.transactionId === transactionId);
+    if (bill?.financialSourceType === 'Card') {
+      toast('Contas de cartao sao pagas na tela Fatura.', { icon: '💳' });
+      return;
+    }
+    togglePaid(transactionId, currentlyPaid);
+  }, [data, togglePaid]);
 
   const handlePreviousMonth = () => {
     setCurrentDate(prev => new Date(Date.UTC(prev.getUTCFullYear(), prev.getUTCMonth() - 1, 1)));
@@ -160,14 +172,18 @@ export function FixedBillsPage() {
       {isLoading && <LoadingSpinner />}
 
       {!isLoading && data && data.items.length === 0 && (
-        <EmptyState message="Nenhuma conta fixa cadastrada. Crie uma transacao com Fixa ativado." />
+        <EmptyState
+          icon={<Receipt size={40} />}
+          title="Nenhuma conta fixa cadastrada"
+          description="Crie uma transacao com a opcao Fixa ativada para ela aparecer aqui."
+        />
       )}
 
       {!isLoading && data && data.items.length > 0 && (
         <>
           <div className="space-y-4 md:hidden">
             {data.items.map(bill => (
-              <FixedBillCard key={bill.transactionId} bill={bill} onTogglePaid={togglePaid} />
+              <FixedBillCard key={bill.transactionId} bill={bill} onTogglePaid={handleTogglePaid} />
             ))}
           </div>
 
@@ -185,7 +201,7 @@ export function FixedBillsPage() {
               </thead>
               <tbody>
                 {data.items.map(bill => (
-                  <FixedBillRow key={bill.transactionId} bill={bill} onTogglePaid={togglePaid} />
+                  <FixedBillRow key={bill.transactionId} bill={bill} onTogglePaid={handleTogglePaid} />
                 ))}
               </tbody>
             </table>

@@ -20,6 +20,7 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         Task<IEnumerable<CardInstallment>> GetInstallmentsForInvoiceAsync(int financialSourceId, int year, int month, Guid userId);
         Task<IEnumerable<Transaction>> GetFixedTransactionsAsync(Guid userId);
         Task<IEnumerable<FixedTransactionPayment>> GetFixedPaymentsForMonthAsync(Guid userId, int year, int month);
+        Task<IEnumerable<FixedTransactionPayment>> GetAllFixedPaymentsAsync(Guid userId);
         Task<FixedTransactionPayment?> GetFixedPaymentAsync(int transactionId, int year, int month);
         Task AddFixedPaymentAsync(FixedTransactionPayment payment);
         void DeleteFixedPayment(FixedTransactionPayment payment);

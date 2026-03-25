@@ -6,7 +6,7 @@ import { InstallmentBreakdown } from '../components/features/transactions/Instal
 import { RecurrenceScopeModal } from '../components/features/transactions/RecurrenceScopeModal';
 import { MonthNavigator } from '../components/ui/MonthNavigator';
 import { CategoryBadge } from '../components/ui/CategoryBadge';
-import { getTransactions, deleteTransaction, deleteInstallmentsByScope, getCategories, getFinancialSources, toggleInstallmentPaidStatus, toggleTransactionPaidStatus, settleInstallments } from '../services/api';
+import { getTransactions, getTransactionById, deleteTransaction, deleteInstallmentsByScope, getCategories, getFinancialSources, toggleInstallmentPaidStatus, toggleTransactionPaidStatus, settleInstallments, payFixedBill, unpayFixedBill } from '../services/api';
 import { Transaction, Category, FinancialSource, RecurrenceScope } from '../types';
 import { formatBRL } from '../utils/formatters';
 import toast from 'react-hot-toast';
@@ -16,6 +16,10 @@ const TRANSACTIONS_MONTH_FORMAT: Intl.DateTimeFormatOptions = {
   month: 'long',
   timeZone: 'UTC',
 };
+
+function isCardTransaction(item: Transaction): boolean {
+  return item.isInstallment === true || item.financialSourceType === 'Card';
+}
 
 function resolveInstallmentAmount(item: Transaction): number {
   if (item.isInstallment && item.installmentCount && item.installmentCount > 0) {
@@ -45,7 +49,10 @@ function renderAmountCell(item: Transaction & { displayAmount: number }): React.
 
 export function TransactionsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() => {
+    const now = new Date();
+    return new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
+  });
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
@@ -95,14 +102,14 @@ export function TransactionsPage() {
     fetchPageData();
   }, [fetchPageData]);
 
-  const handlePreviousMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
-  const handleNextMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  const handlePreviousMonth = () => setCurrentDate(prev => new Date(Date.UTC(prev.getUTCFullYear(), prev.getUTCMonth() - 1, 1)));
+  const handleNextMonth = () => setCurrentDate(prev => new Date(Date.UTC(prev.getUTCFullYear(), prev.getUTCMonth() + 1, 1)));
 
   const monthlyItems = useMemo(() => {
     const items = allTransactions.filter(t => {
       const date = new Date(t.purchaseDate);
-      const viewYear = currentDate.getFullYear();
-      const viewMonth = currentDate.getMonth();
+      const viewYear = currentDate.getUTCFullYear();
+      const viewMonth = currentDate.getUTCMonth();
       return date.getUTCFullYear() === viewYear && date.getUTCMonth() === viewMonth;
     }).map(t => ({
       ...t,
@@ -141,22 +148,51 @@ export function TransactionsPage() {
     return { totalAmount, paidAmount, pendingAmount };
   }, [monthlyItems]);
 
+  const buildMonthParam = (date: Date): string => {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  };
+
   const handleTogglePaid = async (item: Transaction & { displayAmount: number; syntheticId?: string; isInstallmentItem?: boolean; installmentId?: number }) => {
+    if (isCardTransaction(item)) {
+      toast('Parcelas de cartao sao pagas na tela Fatura.', { icon: '💳' });
+      return;
+    }
+
     const toastId = toast.loading('Atualizando status...');
+
+    setAllTransactions(prev =>
+      prev.map(t =>
+        t.id === item.id && t.purchaseDate === item.purchaseDate
+          ? { ...t, isPaid: !item.isPaid }
+          : t
+      )
+    );
+
     try {
       if (item.isInstallmentItem && item.installmentId) {
         await toggleInstallmentPaidStatus(item.installmentId);
       } else if (item.isFixed) {
-        toast.error('Status de transacoes fixas sera uma funcionalidade futura!');
-        toast.dismiss(toastId);
-        return;
+        const monthParam = buildMonthParam(currentDate);
+        if (item.isPaid) {
+          await unpayFixedBill(item.id, monthParam);
+        } else {
+          await payFixedBill(item.id, monthParam);
+        }
       } else {
         await toggleTransactionPaidStatus(item.id);
       }
       toast.success('Status atualizado!', { id: toastId });
-      const data = await getTransactions();
-      setAllTransactions(data);
+      getTransactions().then(data => setAllTransactions(data)).catch(() => {});
     } catch (toggleError) {
+      setAllTransactions(prev =>
+        prev.map(t =>
+          t.id === item.id && t.purchaseDate === item.purchaseDate
+            ? { ...t, isPaid: item.isPaid }
+            : t
+        )
+      );
       const message = extractErrorMessage(toggleError, 'Nao foi possivel atualizar o status.');
       toast.error(message, { id: toastId });
     }
@@ -183,7 +219,7 @@ export function TransactionsPage() {
 
     const original = resolveOriginalTransaction(item);
 
-    if (original.isRecurring) {
+    if (original.isFixed || original.isRecurring) {
       setPendingScopeItem(original);
       setScopeModalAction('edit');
       setIsScopeModalOpen(true);
@@ -213,7 +249,7 @@ export function TransactionsPage() {
 
     const original = resolveOriginalTransaction(item);
 
-    if (original.isRecurring) {
+    if (original.isFixed || original.isRecurring) {
       setPendingScopeItem(original);
       setScopeModalAction('delete');
       setIsScopeModalOpen(true);
@@ -268,24 +304,30 @@ export function TransactionsPage() {
     }
   };
 
-  const handleInstallmentScopeConfirm = (scope: RecurrenceScope) => {
+  const handleInstallmentScopeConfirm = async (scope: RecurrenceScope) => {
     setIsInstallmentScopeModalOpen(false);
 
     if (pendingInstallmentItem === null || pendingInstallmentItem.currentInstallmentNumber === undefined) return;
 
     const installmentNumber = pendingInstallmentItem.currentInstallmentNumber;
-
-    if (installmentScopeModalAction === 'delete') {
-      executeInstallmentDelete(pendingInstallmentItem.id, installmentNumber, scope);
-    } else {
-      const originalForEdit = resolveOriginalTransaction(pendingInstallmentItem);
-      setPendingInstallmentEditScope(scope);
-      setPendingInstallmentNumber(installmentNumber);
-      setEditingTransaction(originalForEdit);
-      setIsModalOpen(true);
-    }
+    const transactionId = pendingInstallmentItem.id;
 
     setPendingInstallmentItem(null);
+
+    if (installmentScopeModalAction === 'delete') {
+      executeInstallmentDelete(transactionId, installmentNumber, scope);
+      return;
+    }
+
+    try {
+      const originalTransaction = await getTransactionById(transactionId);
+      setPendingInstallmentEditScope(scope);
+      setPendingInstallmentNumber(installmentNumber);
+      setEditingTransaction(originalTransaction);
+      setIsModalOpen(true);
+    } catch {
+      toast.error('Nao foi possivel carregar os dados da transacao para edicao.');
+    }
   };
 
   const handleInstallmentScopeCancel = () => {
@@ -408,8 +450,11 @@ export function TransactionsPage() {
                     <div key={rowId} className={`p-4 rounded-lg border transition-colors ${item.isPaid ? 'bg-green-900/20 border-green-800/20 text-slate-500' : 'bg-slate-800 border-slate-700'}`}>
                       <div className="flex gap-4">
                         <div className="flex flex-col items-center justify-center">
-                          <button onClick={() => handleTogglePaid(item as any)} title={item.isPaid ? 'Marcar como pendente' : 'Marcar como pago'}>
-                            {item.isPaid ? <CheckCircle className="text-green-400" /> : <XCircle className="text-slate-500 hover:text-slate-300" />}
+                          <button
+                            onClick={() => handleTogglePaid(item as any)}
+                            title={isCardTransaction(item) ? 'Pague pelo menu Fatura' : item.isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
+                          >
+                            {item.isPaid ? <CheckCircle className="text-green-400" /> : <XCircle className={isCardTransaction(item) ? 'text-slate-600 cursor-default' : 'text-slate-500 hover:text-slate-300'} />}
                           </button>
                         </div>
                         <div className="flex-1">
@@ -500,8 +545,11 @@ export function TransactionsPage() {
                         <React.Fragment key={rowId}>
                           <tr className={`border-b border-slate-700 transition-colors ${!isExpanded ? 'last:border-b-0' : ''} ${item.isPaid ? 'bg-green-900/20 hover:bg-green-800/30 text-slate-500' : 'hover:bg-slate-700/30'}`}>
                             <td className="p-4 text-center">
-                              <button onClick={() => handleTogglePaid(item as any)} title={item.isPaid ? 'Marcar como pendente' : 'Marcar como pago'}>
-                                {item.isPaid ? <CheckCircle className="text-green-400" /> : <XCircle className="text-slate-500 hover:text-slate-300" />}
+                              <button
+                                onClick={() => handleTogglePaid(item as any)}
+                                title={isCardTransaction(item) ? 'Pague pelo menu Fatura' : item.isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
+                              >
+                                {item.isPaid ? <CheckCircle className="text-green-400" /> : <XCircle className={isCardTransaction(item) ? 'text-slate-600 cursor-default' : 'text-slate-500 hover:text-slate-300'} />}
                               </button>
                             </td>
                             <td className={`p-4 ${item.isPaid ? 'line-through' : 'text-slate-100'}`}>

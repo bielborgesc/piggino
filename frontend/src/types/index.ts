@@ -42,6 +42,7 @@ export interface Transaction {
   totalAmount: number;
   transactionType: CategoryType;
   purchaseDate: string;
+  originalPurchaseDate: string;
   isInstallment: boolean;
   installmentCount?: number;
   currentInstallmentNumber?: number;
@@ -53,6 +54,7 @@ export interface Transaction {
   categoryName?: string;
   financialSourceId: number;
   financialSourceName?: string;
+  financialSourceType?: FinancialSourceType;
   userId: string;
   cardInstallments?: CardInstallment[];
 }
@@ -194,6 +196,7 @@ export interface FixedBill {
   totalAmount: number;
   categoryName: string | null;
   financialSourceName: string | null;
+  financialSourceType?: FinancialSourceType;
   dayOfMonth: number;
   isPaid: boolean;
   paymentId: number | null;

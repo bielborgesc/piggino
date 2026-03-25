@@ -159,13 +159,19 @@ namespace Piggino.Api.Domain.Transactions.Services
         public async Task<IEnumerable<TransactionReadDto>> GetAllAsync()
         {
             Guid userId = GetCurrentUserId();
+
             IEnumerable<Transaction> allTransactions = await _transactionRepository.GetAllAsync(userId);
+            IEnumerable<FixedTransactionPayment> fixedPayments = await _transactionRepository.GetAllFixedPaymentsAsync(userId);
+
+            HashSet<(int transactionId, int year, int month)> paidFixedBillKeys = fixedPayments
+                .Select(p => (p.TransactionId, p.Year, p.Month))
+                .ToHashSet();
 
             List<Transaction> projected = new List<Transaction>();
 
             projected.AddRange(GetNormalTransactions(allTransactions));
             projected.AddRange(ProjectCreditCardTransactions(allTransactions));
-            projected.AddRange(ProjectFixedTransactions(allTransactions));
+            projected.AddRange(ProjectFixedTransactions(allTransactions, paidFixedBillKeys));
 
             return projected
                 .OrderByDescending(t => t.PurchaseDate)
@@ -402,6 +408,8 @@ namespace Piggino.Api.Domain.Transactions.Services
 
             if (existing != null)
             {
+                if (existing.IsPaid) return true;
+
                 existing.IsPaid = true;
                 existing.PaidAt = DateTime.UtcNow;
             }
@@ -576,7 +584,7 @@ namespace Piggino.Api.Domain.Transactions.Services
             if (transaction == null || !transaction.IsFixed) return false;
 
             FixedTransactionPayment? existing = await _transactionRepository.GetFixedPaymentAsync(transactionId, year, month);
-            if (existing == null) return false;
+            if (existing == null) return true;
 
             _transactionRepository.DeleteFixedPayment(existing);
             return await _transactionRepository.SaveChangesAsync();
@@ -806,6 +814,7 @@ namespace Piggino.Api.Domain.Transactions.Services
                 TotalAmount = transaction.TotalAmount,
                 CategoryName = transaction.Category?.Name,
                 FinancialSourceName = transaction.FinancialSource?.Name,
+                FinancialSourceType = transaction.FinancialSource?.Type,
                 DayOfMonth = transaction.DayOfMonth ?? 1,
                 IsPaid = payment?.IsPaid ?? false,
                 PaymentId = payment?.Id
@@ -949,7 +958,8 @@ namespace Piggino.Api.Domain.Transactions.Services
                 TotalAmount = installment.Amount,
                 TransactionType = source.TransactionType,
                 PurchaseDate = installment.DueDate,
-                IsInstallment = true,
+                OriginalPurchaseDate = source.PurchaseDate,
+                IsInstallment = source.IsInstallment,
                 IsFixed = false,
                 IsRecurring = source.IsRecurring,
                 IsPaid = installment.IsPaid,
@@ -963,7 +973,9 @@ namespace Piggino.Api.Domain.Transactions.Services
             };
         }
 
-        private static IEnumerable<Transaction> ProjectFixedTransactions(IEnumerable<Transaction> transactions)
+        private static IEnumerable<Transaction> ProjectFixedTransactions(
+            IEnumerable<Transaction> transactions,
+            HashSet<(int transactionId, int year, int month)> paidFixedBillKeys)
         {
             var fixedTransactions = transactions
                 .Where(t => t.IsFixed && t.DayOfMonth.HasValue)
@@ -984,14 +996,15 @@ namespace Piggino.Api.Domain.Transactions.Services
 
                     if (projectedDate.Date < fixedTransaction.PurchaseDate.Date) continue;
 
-                    projected.Add(ProjectFixedTransactionToMonth(fixedTransaction, projectedDate));
+                    bool isPaid = paidFixedBillKeys.Contains((fixedTransaction.Id, month.Year, month.Month));
+                    projected.Add(ProjectFixedTransactionToMonth(fixedTransaction, projectedDate, isPaid));
                 }
             }
 
             return projected;
         }
 
-        private static Transaction ProjectFixedTransactionToMonth(Transaction source, DateTime projectedDate)
+        private static Transaction ProjectFixedTransactionToMonth(Transaction source, DateTime projectedDate, bool isPaid)
         {
             return new Transaction
             {
@@ -1003,7 +1016,7 @@ namespace Piggino.Api.Domain.Transactions.Services
                 IsInstallment = false,
                 IsFixed = true,
                 IsRecurring = false,
-                IsPaid = false,
+                IsPaid = isPaid,
                 CategoryId = source.CategoryId,
                 Category = source.Category,
                 FinancialSourceId = source.FinancialSourceId,
@@ -1092,10 +1105,13 @@ namespace Piggino.Api.Domain.Transactions.Services
                 ? existing.TotalAmount / existing.InstallmentCount!.Value
                 : existing.TotalAmount;
 
+            bool purchaseDateChanged = existing.PurchaseDate.Date != updateDto.PurchaseDate.Date;
+
             return existing.IsInstallment != updateDto.IsInstallment
                 || existing.InstallmentCount != updateDto.InstallmentCount
                 || existing.FinancialSourceId != updateDto.FinancialSourceId
-                || currentInstallmentAmount != updateDto.TotalAmount;
+                || currentInstallmentAmount != updateDto.TotalAmount
+                || purchaseDateChanged;
         }
 
         private static void ApplyUpdateFields(Transaction transaction, TransactionUpdateDto updateDto)
@@ -1125,6 +1141,7 @@ namespace Piggino.Api.Domain.Transactions.Services
                 TotalAmount = transaction.TotalAmount,
                 TransactionType = transaction.TransactionType,
                 PurchaseDate = transaction.PurchaseDate,
+                OriginalPurchaseDate = transaction.OriginalPurchaseDate ?? transaction.PurchaseDate,
                 IsInstallment = transaction.IsInstallment,
                 InstallmentCount = transaction.InstallmentCount,
                 CurrentInstallmentNumber = transaction.CurrentInstallmentNumber,
@@ -1138,6 +1155,7 @@ namespace Piggino.Api.Domain.Transactions.Services
                 CategoryBudgetBucket = transaction.Category?.BudgetBucket ?? Piggino.Api.Enum.BudgetBucket.None,
                 FinancialSourceId = transaction.FinancialSourceId,
                 FinancialSourceName = transaction.FinancialSource?.Name,
+                FinancialSourceType = transaction.FinancialSource?.Type,
                 UserId = transaction.UserId,
                 CardInstallments = transaction.CardInstallments?
                     .Select(MapCardInstallmentToReadDto)

@@ -131,6 +131,14 @@ namespace Piggino.Api.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<FixedTransactionPayment>> GetAllFixedPaymentsAsync(Guid userId)
+        {
+            return await _context.FixedTransactionPayments
+                .Include(p => p.Transaction)
+                .Where(p => p.Transaction != null && p.Transaction.UserId == userId && p.IsPaid)
+                .ToListAsync();
+        }
+
         public async Task<FixedTransactionPayment?> GetFixedPaymentAsync(int transactionId, int year, int month)
         {
             return await _context.FixedTransactionPayments
