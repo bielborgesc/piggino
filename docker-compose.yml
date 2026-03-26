@@ -32,7 +32,7 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__piggino-db=Host=piggino-postgres;Port=5432;Database=piggino;Username=piggino;Password=${POSTGRES_PASSWORD:-piggino}
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 10
