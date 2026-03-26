@@ -28,6 +28,8 @@ services:
         condition: service_healthy
     environment:
       - JwtSettings__Key=${JWT_KEY}
+      - JwtSettings__Issuer=PigginoApi
+      - JwtSettings__Audience=PigginoUsers
       - BotSettings__Secret=${BOT_SECRET}
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__piggino-db=Host=piggino-postgres;Port=5432;Database=piggino;Username=piggino;Password=${POSTGRES_PASSWORD:-piggino}
