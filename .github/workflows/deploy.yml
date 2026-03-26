@@ -103,7 +103,7 @@ jobs:
         run: |
           echo "Waiting for the API to become healthy..."
           for i in $(seq 1 12); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.SSH_HOST }}/api/health || true)
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://piggino.duckdns.org/api/health || true)
             if [ "$STATUS" = "200" ]; then
               echo "Health check passed (HTTP 200)."
               exit 0
