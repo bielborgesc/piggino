@@ -52,7 +52,7 @@ services:
       - piggino-net
 
   piggino-bot:
-    build: ./bot
+    image: bielborgesc/piggino-bot:latest
     container_name: piggino-bot
     restart: unless-stopped
     environment:

@@ -71,6 +71,14 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/piggino-frontend:latest
 
+      - name: Build and push bot image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./bot
+          file: ./bot/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/piggino-bot:latest
+
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
