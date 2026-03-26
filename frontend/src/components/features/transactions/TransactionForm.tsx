@@ -68,11 +68,8 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
   useEffect(() => {
     if (initialData) {
       setDescription(initialData.description);
-      const isEditingInstallment = initialData.isInstallment && initialData.installmentCount && initialData.installmentCount > 0;
-      const displayAmount = isEditingInstallment
-        ? initialData.totalAmount / initialData.installmentCount!
-        : initialData.totalAmount;
-      setAmount(String(displayAmount));
+      // totalAmount from the list API is already the per-installment amount — do not divide again
+      setAmount(String(initialData.totalAmount));
       setAmountMode('per-installment');
       setPurchaseDate(toLocalDateInputValue(new Date(initialData.originalPurchaseDate)));
       setSourceId(String(initialData.financialSourceId));
