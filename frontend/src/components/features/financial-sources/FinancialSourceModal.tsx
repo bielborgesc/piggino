@@ -33,7 +33,7 @@ export function FinancialSourceModal({ isOpen, onClose, onSaveSuccess, sourceToE
       onClose();
     } catch (error) {
       console.error('Falha ao salvar fonte financeira:', error);
-      toast.error('Nao foi possivel salvar a fonte financeira.', { id: toastId });
+      toast.error('Não foi possível salvar a fonte financeira.', { id: toastId });
     } finally {
       setIsSaving(false);
     }

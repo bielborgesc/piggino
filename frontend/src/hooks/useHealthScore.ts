@@ -23,7 +23,7 @@ export function useHealthScore(): UseHealthScoreResult {
       const data = await getHealthScore();
       setHealthScore(data);
     } catch (fetchError) {
-      const message = extractErrorMessage(fetchError, 'Nao foi possivel carregar o score de saude financeira.');
+      const message = extractErrorMessage(fetchError, 'Não foi possível carregar o score de saúde financeira.');
       setError(message);
       setHealthScore(null);
     } finally {

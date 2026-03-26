@@ -23,7 +23,7 @@ export function useContextualTips(): UseContextualTipsResult {
       const data = await getTips();
       setTipsData(data);
     } catch (fetchError) {
-      const message = extractErrorMessage(fetchError, 'Nao foi possivel carregar as dicas personalizadas.');
+      const message = extractErrorMessage(fetchError, 'Não foi possível carregar as dicas personalizadas.');
       setError(message);
       setTipsData(null);
     } finally {

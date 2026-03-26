@@ -23,7 +23,7 @@ export function useBudgetAnalysis(month: string): UseBudgetAnalysisResult {
       const data = await getBudgetAnalysis(month);
       setAnalysis(data);
     } catch (fetchError) {
-      const message = extractErrorMessage(fetchError, 'Nao foi possivel carregar a analise orcamentaria.');
+      const message = extractErrorMessage(fetchError, 'Não foi possível carregar a análise orçamentária.');
       setError(message);
       setAnalysis(null);
     } finally {

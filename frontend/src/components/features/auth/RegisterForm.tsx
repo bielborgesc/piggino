@@ -43,7 +43,7 @@ export function RegisterForm({ onNavigateToLogin }: RegisterFormProps) {
     event.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error('As senhas nao coincidem.');
+      toast.error('As senhas não coincidem.');
       return;
     }
 
@@ -53,7 +53,7 @@ export function RegisterForm({ onNavigateToLogin }: RegisterFormProps) {
 
     try {
       await registerUser(userData);
-      toast.success('Conta criada com sucesso! Faca login para continuar.');
+      toast.success('Conta criada com sucesso! Faça login para continuar.');
       setName('');
       setEmail('');
       setPassword('');
@@ -76,7 +76,7 @@ export function RegisterForm({ onNavigateToLogin }: RegisterFormProps) {
           className="w-24 h-auto mb-4 rounded-lg shadow-lg"
         />
         <h1 className="text-3xl font-bold text-slate-100">Crie a sua conta</h1>
-        <p className="text-slate-400 mt-1">Comece a organizar as suas financas hoje mesmo.</p>
+        <p className="text-slate-400 mt-1">Comece a organizar as suas finanças hoje mesmo.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -123,7 +123,7 @@ export function RegisterForm({ onNavigateToLogin }: RegisterFormProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-slate-700 border-slate-600 rounded-md p-3 pr-11 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
-              placeholder="•••••••• (minimo 6 caracteres)"
+              placeholder="•••••••• (mínimo 6 caracteres)"
               required
               disabled={isLoading}
             />
@@ -163,13 +163,13 @@ export function RegisterForm({ onNavigateToLogin }: RegisterFormProps) {
               onClick={() => setShowConfirmPassword((prev) => !prev)}
               className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-200 transition-colors"
               tabIndex={-1}
-              aria-label={showConfirmPassword ? 'Esconder confirmacao de senha' : 'Mostrar confirmacao de senha'}
+              aria-label={showConfirmPassword ? 'Esconder confirmação de senha' : 'Mostrar confirmação de senha'}
             >
               {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
           {passwordsDoNotMatch && (
-            <p className="text-red-400 text-xs mt-1">As senhas nao coincidem.</p>
+            <p className="text-red-400 text-xs mt-1">As senhas não coincidem.</p>
           )}
         </div>
 
@@ -189,7 +189,7 @@ export function RegisterForm({ onNavigateToLogin }: RegisterFormProps) {
           onClick={onNavigateToLogin}
           className="text-sm text-green-400 hover:text-green-300 bg-transparent border-none cursor-pointer"
         >
-          Ja tem uma conta? Faca login aqui.
+          Já tem uma conta? Faça login aqui.
         </button>
       </div>
     </div>

@@ -51,7 +51,7 @@ export function FinancialSourceForm({ onSave, onCancel, initialData, isSaving }:
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full bg-slate-700 border-slate-600 rounded-md p-3 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-green-500 transition"
-          placeholder="Ex: Cartao Nubank"
+          placeholder="Ex: Cartão Nubank"
           required
           disabled={isSaving}
         />
@@ -69,7 +69,7 @@ export function FinancialSourceForm({ onSave, onCancel, initialData, isSaving }:
           disabled={isSaving}
         >
           <option value="Account">Conta Corrente</option>
-          <option value="Card">Cartao de Credito</option>
+          <option value="Card">Cartão de Crédito</option>
           <option value="Cash">Dinheiro</option>
         </select>
       </div>

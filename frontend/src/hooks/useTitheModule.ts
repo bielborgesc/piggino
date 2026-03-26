@@ -28,7 +28,7 @@ export function useTitheModule(): UseTitheModuleResult {
       const data = await getTitheStatus();
       setStatus(data);
     } catch (fetchError) {
-      const message = extractErrorMessage(fetchError, 'Nao foi possivel carregar o modulo dizimo.');
+      const message = extractErrorMessage(fetchError, 'Não foi possível carregar o módulo dízimo.');
       setError(message);
     } finally {
       setIsLoading(false);
@@ -45,7 +45,7 @@ export function useTitheModule(): UseTitheModuleResult {
       await toggleTitheModule(enabled);
       setStatus((prev) => prev ? { ...prev, isEnabled: enabled } : prev);
     } catch (toggleError) {
-      const message = extractErrorMessage(toggleError, 'Erro ao alterar modulo dizimo.');
+      const message = extractErrorMessage(toggleError, 'Erro ao alterar módulo dízimo.');
       setError(message);
       throw toggleError;
     } finally {
@@ -59,7 +59,7 @@ export function useTitheModule(): UseTitheModuleResult {
       await generateMonthlyTithe();
       await fetchStatus();
     } catch (generateError) {
-      const message = extractErrorMessage(generateError, 'Erro ao gerar transacao de dizimo.');
+      const message = extractErrorMessage(generateError, 'Erro ao gerar transação de dízimo.');
       setError(message);
       throw generateError;
     } finally {

@@ -23,7 +23,7 @@ export function useDebtSummary(): UseDebtSummaryResult {
       const data = await getDebtSummary();
       setDebtSummary(data);
     } catch (err) {
-      setError(extractErrorMessage(err, 'Nao foi possivel carregar o resumo de dividas.'));
+      setError(extractErrorMessage(err, 'Não foi possível carregar o resumo de dívidas.'));
       setDebtSummary(null);
     } finally {
       setIsLoading(false);

@@ -188,7 +188,7 @@ export function FixedBillsPage() {
   const handleTogglePaid = useCallback((transactionId: number, currentlyPaid: boolean) => {
     const bill = data?.items.find(b => b.transactionId === transactionId);
     if (bill?.financialSourceType === 'Card') {
-      toast('Contas de cartao sao pagas na tela Fatura.');
+      toast('Contas de cartão são pagas na tela Fatura.');
       return;
     }
     togglePaid(transactionId, currentlyPaid);
@@ -241,7 +241,7 @@ export function FixedBillsPage() {
     const toastId = toast.loading('Excluindo conta fixa...');
     try {
       await deleteFixedBillScoped(transactionId, scope, anchorMonth);
-      toast.success('Conta fixa excluida!', { id: toastId });
+      toast.success('Conta fixa excluída!', { id: toastId });
       refetch();
     } catch (deleteError) {
       const message = extractErrorMessage(deleteError, 'Falha ao excluir a conta fixa.');
@@ -252,7 +252,7 @@ export function FixedBillsPage() {
   const handleEditSave = async (updateData: FixedBillUpdateData) => {
     if (editBill === null) return;
 
-    const toastId = toast.loading('Salvando alteracoes...');
+    const toastId = toast.loading('Salvando alterações...');
     try {
       await updateFixedBillScoped(editBill.transactionId, updateData);
       toast.success('Conta fixa atualizada!', { id: toastId });
@@ -307,7 +307,7 @@ export function FixedBillsPage() {
         <EmptyState
           icon={<Receipt size={40} />}
           title="Nenhuma conta fixa cadastrada"
-          description="Crie uma transacao com a opcao Fixa ativada para ela aparecer aqui."
+          description="Crie uma transação com a opção Fixa ativada para ela aparecer aqui."
         />
       )}
 
@@ -330,12 +330,12 @@ export function FixedBillsPage() {
               <thead className="bg-slate-700/50">
                 <tr>
                   <th className="p-4 font-semibold w-12 text-center">Status</th>
-                  <th className="p-4 font-semibold">Descricao</th>
+                  <th className="p-4 font-semibold">Descrição</th>
                   <th className="p-4 font-semibold">Categoria</th>
                   <th className="p-4 font-semibold">Fonte</th>
                   <th className="p-4 font-semibold">Vencimento</th>
                   <th className="p-4 font-semibold text-right">Valor</th>
-                  <th className="p-4 font-semibold w-20 text-center">Acoes</th>
+                  <th className="p-4 font-semibold w-20 text-center">Ações</th>
                 </tr>
               </thead>
               <tbody>

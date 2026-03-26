@@ -26,7 +26,7 @@ export function MonthNavigator({
       <button
         onClick={onPreviousMonth}
         className="p-2 rounded-md hover:bg-slate-600 transition-colors"
-        aria-label="Mes anterior"
+        aria-label="Mês anterior"
       >
         <ChevronLeft size={20} />
       </button>
@@ -36,7 +36,7 @@ export function MonthNavigator({
       <button
         onClick={onNextMonth}
         className="p-2 rounded-md hover:bg-slate-600 transition-colors"
-        aria-label="Proximo mes"
+        aria-label="Próximo mês"
       >
         <ChevronRight size={20} />
       </button>

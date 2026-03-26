@@ -27,7 +27,7 @@ function measurePasswordStrength(password: string): PasswordStrength {
 
 const STRENGTH_LABEL: Record<PasswordStrength, string> = {
   weak: 'Fraca',
-  medium: 'Media',
+  medium: 'Média',
   strong: 'Forte',
 };
 
@@ -56,7 +56,7 @@ function StrengthIndicator({ password }: { password: string }) {
         />
       </div>
       <p className={`text-xs mt-1 ${STRENGTH_COLOR[strength].replace('bg-', 'text-')}`}>
-        Forca da senha: {STRENGTH_LABEL[strength]}
+        Força da senha: {STRENGTH_LABEL[strength]}
       </p>
     </div>
   );
@@ -138,7 +138,7 @@ export function ChangePasswordModal({ onClose, onLogout }: ChangePasswordModalPr
     event.preventDefault();
 
     if (newPassword !== confirmNewPassword) {
-      toast.error('As senhas nao coincidem.');
+      toast.error('As senhas não coincidem.');
       return;
     }
 
@@ -190,7 +190,7 @@ export function ChangePasswordModal({ onClose, onLogout }: ChangePasswordModalPr
             label="Nova senha"
             value={newPassword}
             onChange={setNewPassword}
-            placeholder="Minimo 8 caracteres, 1 maiuscula, 1 numero"
+            placeholder="Mínimo 8 caracteres, 1 maiúscula, 1 número"
             disabled={isLoading}
             showStrength
           />
@@ -205,7 +205,7 @@ export function ChangePasswordModal({ onClose, onLogout }: ChangePasswordModalPr
             hasError={passwordsDoNotMatch}
           />
           {passwordsDoNotMatch && (
-            <p className="text-red-400 text-xs -mt-3">As senhas nao coincidem.</p>
+            <p className="text-red-400 text-xs -mt-3">As senhas não coincidem.</p>
           )}
 
         </div>

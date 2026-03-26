@@ -28,7 +28,7 @@ export function CategoriesPage() {
       setCategories(data);
     } catch (error) {
       console.error('Falha ao buscar categorias:', error);
-      toast.error('Nao foi possivel carregar as categorias.');
+      toast.error('Não foi possível carregar as categorias.');
     } finally {
       setIsLoading(false);
     }
@@ -60,10 +60,10 @@ export function CategoriesPage() {
     const toastId = toast.loading('Excluindo...');
     try {
       await deleteCategory(id);
-      toast.success('Categoria excluida!', { id: toastId });
+      toast.success('Categoria excluída!', { id: toastId });
       fetchCategories();
     } catch (error: unknown) {
-      const message = extractErrorMessage(error, 'Nao foi possivel excluir a categoria.');
+      const message = extractErrorMessage(error, 'Não foi possível excluir a categoria.');
       toast.error(message, { id: toastId });
     }
   };
@@ -97,7 +97,7 @@ export function CategoriesPage() {
                 <tr>
                   <th className="p-4 font-semibold">Nome</th>
                   <th className="p-4 font-semibold">Tipo</th>
-                  <th className="p-4 font-semibold text-right">Acoes</th>
+                  <th className="p-4 font-semibold text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,7 +136,7 @@ export function CategoriesPage() {
                       <EmptyState
                         icon={<Shapes size={40} />}
                         title="Nenhuma categoria ainda"
-                        description="Categorias ajudam a organizar suas receitas e despesas. Crie a primeira para comecar."
+                        description="Categorias ajudam a organizar suas receitas e despesas. Crie a primeira para começar."
                         action={{ label: 'Criar Categoria', onClick: handleOpenCreateModal }}
                       />
                     </td>
@@ -159,7 +159,7 @@ export function CategoriesPage() {
       <ConfirmModal
         isOpen={deleteConfirm !== null}
         title="Excluir Categoria"
-        message={`Tem certeza que deseja excluir "${deleteConfirm?.name}"? Esta acao nao pode ser desfeita.`}
+        message={`Tem certeza que deseja excluir "${deleteConfirm?.name}"? Esta ação não pode ser desfeita.`}
         confirmLabel="Excluir"
         confirmVariant="danger"
         onConfirm={handleDeleteConfirm}

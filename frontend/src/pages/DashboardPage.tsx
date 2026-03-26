@@ -126,7 +126,7 @@ function KpiCard({ title, value, icon, valueClassName, trend }: KpiCardProps) {
         {trend && trend.percent !== 0 && (
           <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${trendColor}`}>
             <TrendIcon size={12} />
-            <span>{trendLabel} vs. mes anterior</span>
+            <span>{trendLabel} vs. mês anterior</span>
           </div>
         )}
       </div>
@@ -162,7 +162,7 @@ function HealthScoreWidget() {
         className="w-full flex items-center justify-between p-5 text-left"
         aria-expanded={!isCollapsed}
       >
-        <h3 className="text-base font-semibold text-white">Score de Saude Financeira</h3>
+        <h3 className="text-base font-semibold text-white">Score de Saúde Financeira</h3>
         {isCollapsed ? <ChevronDown size={18} className="text-slate-400" /> : <ChevronUp size={18} className="text-slate-400" />}
       </button>
 
@@ -243,7 +243,7 @@ function HealthScoreWidget() {
           )}
           {healthScore.warnings.length > 0 && (
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-amber-400 uppercase tracking-wide">Pontos de Atencao</p>
+              <p className="text-xs font-semibold text-amber-400 uppercase tracking-wide">Pontos de Atenção</p>
               <ul className="space-y-1">
                 {healthScore.warnings.map((w, i) => (
                   <li key={i} className="text-xs text-slate-300 flex items-start gap-1">
@@ -459,7 +459,7 @@ function BalanceTrendChart({ monthlySummaries }: BalanceTrendChartProps) {
 
   return (
     <div className="bg-slate-800 p-5 rounded-lg border border-slate-700">
-      <h3 className="text-base font-semibold text-white mb-4">Tendencia de Saldo</h3>
+      <h3 className="text-base font-semibold text-white mb-4">Tendência de Saldo</h3>
       <ResponsiveContainer width="100%" height={220}>
         <ComposedChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <XAxis dataKey="month" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
@@ -482,7 +482,7 @@ function TopExpensesList({ expenses }: TopExpensesListProps) {
   if (expenses.length === 0) {
     return (
       <div className="bg-slate-800 p-5 rounded-lg border border-slate-700">
-        <h3 className="text-base font-semibold text-white mb-4">Maiores Gastos do Mes</h3>
+        <h3 className="text-base font-semibold text-white mb-4">Maiores Gastos do Mês</h3>
         <p className="text-slate-400 text-sm">Nenhum gasto registrado.</p>
       </div>
     );
@@ -490,7 +490,7 @@ function TopExpensesList({ expenses }: TopExpensesListProps) {
 
   return (
     <div className="bg-slate-800 p-5 rounded-lg border border-slate-700">
-      <h3 className="text-base font-semibold text-white mb-4">Maiores Gastos do Mes</h3>
+      <h3 className="text-base font-semibold text-white mb-4">Maiores Gastos do Mês</h3>
       <ol className="space-y-3">
         {expenses.map((expense, index) => (
           <li key={`${expense.description}-${index}`} className="flex items-center gap-3">
@@ -579,7 +579,7 @@ function BudgetAnalysisSection({ month, onMonthChange, onNavigateToCategories }:
           className="flex items-center gap-2 text-left"
           aria-expanded={!isCollapsed}
         >
-          <h3 className="text-base font-semibold text-white">Analise 50/30/20</h3>
+          <h3 className="text-base font-semibold text-white">Análise 50/30/20</h3>
           {isCollapsed ? <ChevronDown size={18} className="text-slate-400" /> : <ChevronUp size={18} className="text-slate-400" />}
         </button>
         {!isCollapsed && (
@@ -587,7 +587,7 @@ function BudgetAnalysisSection({ month, onMonthChange, onNavigateToCategories }:
           <button
             onClick={() => onMonthChange(shiftMonth(month, -1))}
             className="text-slate-400 hover:text-white transition-colors"
-            aria-label="Mes anterior"
+            aria-label="Mês anterior"
           >
             <ChevronLeft size={18} />
           </button>
@@ -597,7 +597,7 @@ function BudgetAnalysisSection({ month, onMonthChange, onNavigateToCategories }:
           <button
             onClick={() => onMonthChange(shiftMonth(month, 1))}
             className="text-slate-400 hover:text-white transition-colors"
-            aria-label="Proximo mes"
+            aria-label="Próximo mês"
           >
             <ChevronRight size={18} />
           </button>
@@ -622,14 +622,14 @@ function BudgetAnalysisSection({ month, onMonthChange, onNavigateToCategories }:
         <>
           {hasMissingIncome && (
             <div className="bg-amber-900/30 border border-amber-700 rounded-lg p-3 text-amber-300 text-sm">
-              Nenhuma receita registrada neste mes. Adicione receitas para ver a analise.
+              Nenhuma receita registrada neste mês. Adicione receitas para ver a análise.
             </div>
           )}
 
           {analysis.unclassifiedActual > 0 && (
             <div className="bg-amber-900/30 border border-amber-700 rounded-lg p-3 text-amber-300 text-sm flex items-start justify-between gap-3">
               <span>
-                {formatBRL(analysis.unclassifiedActual)} em despesas sem classificacao 50/30/20.
+                {formatBRL(analysis.unclassifiedActual)} em despesas sem classificação 50/30/20.
               </span>
               <button
                 onClick={onNavigateToCategories}
@@ -731,7 +731,7 @@ function OverspendingAlerts({ analysis, onNavigateToCategories }: OverspendingAl
       {visibleExceeded.map((bucket) => (
         <div key={bucket.label} className="flex items-start justify-between gap-3 bg-red-900/30 border border-red-700 rounded-lg px-4 py-3">
           <span className="text-red-300 text-sm">
-            [!] Voce ultrapassou o orcamento em {bucket.label} — excedeu {formatBRL(bucket.actual - bucket.target)}
+            [!] Você ultrapassou o orçamento em {bucket.label} — excedeu {formatBRL(bucket.actual - bucket.target)}
           </span>
           <button
             onClick={() => dismiss(`exceeded-${bucket.label}`)}
@@ -746,7 +746,7 @@ function OverspendingAlerts({ analysis, onNavigateToCategories }: OverspendingAl
       {visibleNearLimit.map((bucket) => (
         <div key={bucket.label} className="flex items-start justify-between gap-3 bg-amber-900/30 border border-amber-700 rounded-lg px-4 py-3">
           <span className="text-amber-300 text-sm">
-            [/\] Voce esta proximo do limite em {bucket.label} — {Math.round(bucket.usagePercentage)}% usado
+            [/\] Você está próximo do limite em {bucket.label} — {Math.round(bucket.usagePercentage)}% usado
           </span>
           <button
             onClick={() => dismiss(`near-${bucket.label}`)}
@@ -762,14 +762,14 @@ function OverspendingAlerts({ analysis, onNavigateToCategories }: OverspendingAl
         <div className="flex items-start justify-between gap-3 bg-blue-900/30 border border-blue-700 rounded-lg px-4 py-3">
           <span className="text-blue-300 text-sm flex items-center gap-1.5">
             <Info size={14} className="shrink-0 mt-0.5" />
-            {formatBRL(analysis.unclassifiedActual)} em gastos nao classificados —{' '}
+            {formatBRL(analysis.unclassifiedActual)} em gastos não classificados —{' '}
             <button
               onClick={onNavigateToCategories}
               className="underline text-blue-200 hover:text-white"
             >
               classifique suas categorias
             </button>{' '}
-            para uma analise completa.
+            para uma análise completa.
           </span>
           <button
             onClick={() => dismiss('unclassified')}
@@ -828,7 +828,7 @@ function GoalsMiniWidget({ goals, onNavigateToGoals }: GoalsMiniWidgetProps) {
       </div>
 
       {activeGoals.length === 0 && (
-        <p className="text-slate-400 text-sm">Nenhuma meta ativa. Crie uma meta para comecar.</p>
+        <p className="text-slate-400 text-sm">Nenhuma meta ativa. Crie uma meta para começar.</p>
       )}
 
       <ul className="space-y-3">
@@ -921,7 +921,7 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: Das
     return (
       <div className="flex-1 flex flex-col justify-center items-center gap-4 text-slate-400">
         <AlertCircle size={40} />
-        <p>{error ?? 'Nao foi possivel carregar o dashboard.'}</p>
+        <p>{error ?? 'Não foi possível carregar o dashboard.'}</p>
         <button
           onClick={refetch}
           className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold transition-colors"
@@ -949,21 +949,21 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: Das
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
-            title="Receitas do Mes"
+            title="Receitas do Mês"
             value={formatBRL(summary.currentMonthIncome)}
             icon={<TrendingUp size={20} />}
             valueClassName="text-green-400"
             trend={{ percent: summary.incomeChangePercent, positiveIsGood: true }}
           />
           <KpiCard
-            title="Gastos do Mes"
+            title="Gastos do Mês"
             value={formatBRL(summary.currentMonthExpenses)}
             icon={<TrendingDown size={20} />}
             valueClassName="text-red-400"
             trend={{ percent: summary.expensesChangePercent, positiveIsGood: false }}
           />
           <KpiCard
-            title="Saldo do Mes"
+            title="Saldo do Mês"
             value={formatBRL(summary.currentMonthBalance)}
             icon={<Scale size={20} />}
             valueClassName={summary.currentMonthBalance >= 0 ? 'text-white' : 'text-red-400'}

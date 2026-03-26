@@ -13,7 +13,7 @@ interface DeleteConfirmState {
 }
 
 const FINANCIAL_SOURCE_TYPE_LABELS: Record<string, string> = {
-  Card: 'Cartao de Credito',
+  Card: 'Cartão de Crédito',
   Account: 'Conta Corrente',
   Cash: 'Dinheiro',
 };
@@ -34,7 +34,7 @@ export function FinancialSourcesPage() {
       const data = await getFinancialSources();
       setSources(data);
     } catch (error) {
-      toast.error('Nao foi possivel carregar as fontes financeiras.');
+      toast.error('Não foi possível carregar as fontes financeiras.');
     } finally {
       setIsLoading(false);
     }
@@ -66,10 +66,10 @@ export function FinancialSourcesPage() {
     const toastId = toast.loading('Excluindo...');
     try {
       await deleteFinancialSource(id);
-      toast.success('Fonte excluida!', { id: toastId });
+      toast.success('Fonte excluída!', { id: toastId });
       fetchSources();
     } catch (error: unknown) {
-      const message = extractErrorMessage(error, 'Nao foi possivel excluir a fonte.');
+      const message = extractErrorMessage(error, 'Não foi possível excluir a fonte.');
       toast.error(message, { id: toastId });
     }
   };
@@ -80,7 +80,7 @@ export function FinancialSourcesPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white">Fontes Financeiras</h2>
-            <p className="text-slate-400">Gerencie suas contas, cartoes e dinheiro.</p>
+            <p className="text-slate-400">Gerencie suas contas, cartões e dinheiro.</p>
           </div>
           <button
             onClick={handleOpenCreateModal}
@@ -102,7 +102,7 @@ export function FinancialSourcesPage() {
                 <tr>
                   <th className="p-4 font-semibold">Nome</th>
                   <th className="p-4 font-semibold">Tipo</th>
-                  <th className="p-4 font-semibold text-right">Acoes</th>
+                  <th className="p-4 font-semibold text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -130,7 +130,7 @@ export function FinancialSourcesPage() {
       <ConfirmModal
         isOpen={deleteConfirm !== null}
         title="Excluir Fonte Financeira"
-        message={`Tem certeza que deseja excluir "${deleteConfirm?.name}"? Esta acao nao pode ser desfeita.`}
+        message={`Tem certeza que deseja excluir "${deleteConfirm?.name}"? Esta ação não pode ser desfeita.`}
         confirmLabel="Excluir"
         confirmVariant="danger"
         onConfirm={handleDeleteConfirm}

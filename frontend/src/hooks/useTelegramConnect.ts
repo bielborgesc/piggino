@@ -72,7 +72,7 @@ export function useTelegramConnect(): UseTelegramConnectResult {
     getTelegramConnections()
       .then((data) => setConnections(data))
       .catch(() => {
-        toast.error('Nao foi possivel verificar o status do Telegram.');
+        toast.error('Não foi possível verificar o status do Telegram.');
       })
       .finally(() => setIsLoadingStatus(false));
 
@@ -88,7 +88,7 @@ export function useTelegramConnect(): UseTelegramConnectResult {
       setExpiresAt(expiry);
       startCountdown(expiry);
     } catch (error) {
-      toast.error(extractErrorMessage(error, 'Erro ao gerar codigo de conexao.'));
+      toast.error(extractErrorMessage(error, 'Erro ao gerar código de conexão.'));
     } finally {
       setIsGenerating(false);
     }
@@ -124,9 +124,9 @@ export function useTelegramConnect(): UseTelegramConnectResult {
     if (!token) return;
     try {
       await navigator.clipboard.writeText(token);
-      toast.success('Codigo copiado!');
+      toast.success('Código copiado!');
     } catch {
-      toast.error('Nao foi possivel copiar o codigo.');
+      toast.error('Não foi possível copiar o código.');
     }
   }, [token]);
 
@@ -136,7 +136,7 @@ export function useTelegramConnect(): UseTelegramConnectResult {
       await navigator.clipboard.writeText(`${CONNECT_COMMAND_PREFIX} ${token}`);
       toast.success('Comando copiado!');
     } catch {
-      toast.error('Nao foi possivel copiar o comando.');
+      toast.error('Não foi possível copiar o comando.');
     }
   }, [token]);
 

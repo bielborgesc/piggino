@@ -47,7 +47,7 @@ function InlineCategoryFields({
       toast.success(`Categoria "${created.name}" criada!`);
       onCreated(created);
     } catch {
-      toast.error('Nao foi possivel criar a categoria.');
+      toast.error('Não foi possível criar a categoria.');
     } finally {
       setIsSaving(false);
     }
@@ -160,7 +160,7 @@ function InlineFinancialSourceFields({
       toast.success(`Origem "${created.name}" criada!`);
       onCreated(created);
     } catch {
-      toast.error('Nao foi possivel criar a origem financeira.');
+      toast.error('Não foi possível criar a origem financeira.');
     } finally {
       setIsSaving(false);
     }
@@ -190,7 +190,7 @@ function InlineFinancialSourceFields({
           disabled={isSaving}
         >
           <option value="Account">Conta Corrente</option>
-          <option value="Card">Cartao de Credito</option>
+          <option value="Card">Cartão de Crédito</option>
           <option value="Cash">Dinheiro</option>
         </select>
       </div>

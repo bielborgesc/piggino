@@ -27,7 +27,7 @@ export function useGoals(): UseGoalsResult {
       const data = await getGoals();
       setGoals(data);
     } catch (fetchError) {
-      const message = extractErrorMessage(fetchError, 'Nao foi possivel carregar as metas.');
+      const message = extractErrorMessage(fetchError, 'Não foi possível carregar as metas.');
       setError(message);
     } finally {
       setIsLoading(false);

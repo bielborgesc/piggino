@@ -101,7 +101,7 @@ export function TransactionsPage() {
       setCategories(categoriesData);
       setFinancialSources(sourcesData);
     } catch (fetchError) {
-      const message = extractErrorMessage(fetchError, 'Nao foi possivel carregar os dados da pagina.');
+      const message = extractErrorMessage(fetchError, 'Não foi possível carregar os dados da página.');
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -174,7 +174,7 @@ export function TransactionsPage() {
 
   const handleTogglePaid = async (item: Transaction & { displayAmount: number; syntheticId?: string }) => {
     if (isCardTransaction(item)) {
-      toast('Parcelas de cartao sao pagas na tela Fatura.', { icon: '💳' });
+      toast('Parcelas de cartão são pagas na tela Fatura.', { icon: '💳' });
       return;
     }
 
@@ -185,7 +185,7 @@ export function TransactionsPage() {
     if (isAccountInstallmentRow) {
       const installmentId = resolveInstallmentId(item.id, item.currentInstallmentNumber!);
       if (!installmentId) {
-        toast.error('Nao foi possivel identificar a parcela.');
+        toast.error('Não foi possível identificar a parcela.');
         return;
       }
       const toastId = toast.loading('Atualizando status...');
@@ -194,7 +194,7 @@ export function TransactionsPage() {
         toast.success('Status atualizado!', { id: toastId });
         getTransactions().then(data => setAllTransactions(data)).catch(() => {});
       } catch (toggleError) {
-        const message = extractErrorMessage(toggleError, 'Nao foi possivel atualizar o status.');
+        const message = extractErrorMessage(toggleError, 'Não foi possível atualizar o status.');
         toast.error(message, { id: toastId });
       }
       return;
@@ -231,7 +231,7 @@ export function TransactionsPage() {
             : t
         )
       );
-      const message = extractErrorMessage(toggleError, 'Nao foi possivel atualizar o status.');
+      const message = extractErrorMessage(toggleError, 'Não foi possível atualizar o status.');
       toast.error(message, { id: toastId });
     }
   };
@@ -315,10 +315,10 @@ export function TransactionsPage() {
     const toastId = toast.loading('Excluindo...');
     try {
       await deleteTransaction(id, scope);
-      toast.success('Transacao excluida!', { id: toastId });
+      toast.success('Transação excluída!', { id: toastId });
       fetchPageData();
     } catch (deleteError) {
-      const message = extractErrorMessage(deleteError, 'Falha ao excluir a transacao.');
+      const message = extractErrorMessage(deleteError, 'Falha ao excluir a transação.');
       toast.error(message, { id: toastId });
     }
   };
@@ -348,7 +348,7 @@ export function TransactionsPage() {
     const toastId = toast.loading('Excluindo parcelas...');
     try {
       await deleteInstallmentsByScope(transactionId, installmentNumber, scope);
-      toast.success('Parcelas excluidas!', { id: toastId });
+      toast.success('Parcelas excluídas!', { id: toastId });
       fetchPageData();
     } catch (deleteError) {
       const message = extractErrorMessage(deleteError, 'Falha ao excluir as parcelas.');
@@ -378,7 +378,7 @@ export function TransactionsPage() {
       setEditingTransaction(originalTransaction);
       setIsModalOpen(true);
     } catch {
-      toast.error('Nao foi possivel carregar os dados da transacao para edicao.');
+      toast.error('Não foi possível carregar os dados da transação para edição.');
     }
   };
 
@@ -399,7 +399,7 @@ export function TransactionsPage() {
       const toastId = toast.loading('Excluindo conta fixa...');
       try {
         await deleteFixedBillScoped(item.id, scope, anchorMonth);
-        toast.success('Conta fixa excluida!', { id: toastId });
+        toast.success('Conta fixa excluída!', { id: toastId });
         fetchPageData();
       } catch (deleteError) {
         const message = extractErrorMessage(deleteError, 'Falha ao excluir a conta fixa.');
@@ -434,7 +434,7 @@ export function TransactionsPage() {
   const handleFixedBillEditSave = async (updateData: FixedBillUpdateData) => {
     if (fixedBillEditTarget === null) return;
 
-    const toastId = toast.loading('Salvando alteracoes...');
+    const toastId = toast.loading('Salvando alterações...');
     try {
       await updateFixedBillScoped(fixedBillEditTarget.transactionId, updateData);
       toast.success('Conta fixa atualizada!', { id: toastId });
@@ -465,7 +465,7 @@ export function TransactionsPage() {
       toast.success('Parcelas quitadas com sucesso!', { id: toastId });
       fetchPageData();
     } catch (settleError) {
-      const message = extractErrorMessage(settleError, 'Nao foi possivel quitar as parcelas.');
+      const message = extractErrorMessage(settleError, 'Não foi possível quitar as parcelas.');
       toast.error(message, { id: toastId });
     } finally {
       setSettlingId(null);
@@ -483,21 +483,21 @@ export function TransactionsPage() {
       <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-white">Minhas Transacoes</h2>
-            <p className="text-slate-400">Veja e gerencie todos os seus lancamentos.</p>
+            <h2 className="text-2xl font-bold text-white">Minhas Transações</h2>
+            <p className="text-slate-400">Veja e gerencie todos os seus lançamentos.</p>
           </div>
           <button
             onClick={() => handleOpenModal(null)}
             className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg"
           >
             <PlusCircle size={20} />
-            Adicionar Transacao
+            Adicionar Transação
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-            <h4 className="text-slate-400 text-sm">Total de Despesas do Mes</h4>
+            <h4 className="text-slate-400 text-sm">Total de Despesas do Mês</h4>
             <p className="text-2xl font-bold text-white mt-1">{formatBRL(summary.totalAmount)}</p>
           </div>
           <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
@@ -634,9 +634,9 @@ export function TransactionsPage() {
               ) : (
                 <EmptyState
                   icon={<ArrowRightLeft size={40} />}
-                  title="Nenhuma transacao encontrada"
-                  description="Nenhuma transacao corresponde aos filtros atuais. Tente ajustar os filtros ou adicione uma nova transacao."
-                  action={{ label: 'Adicionar Transacao', onClick: () => handleOpenModal(null) }}
+                  title="Nenhuma transação encontrada"
+                  description="Nenhuma transação corresponde aos filtros atuais. Tente ajustar os filtros ou adicione uma nova transação."
+                  action={{ label: 'Adicionar Transação', onClick: () => handleOpenModal(null) }}
                 />
               )}
             </div>
@@ -646,11 +646,11 @@ export function TransactionsPage() {
                 <thead className="bg-slate-700/50">
                   <tr>
                     <th className="p-4 font-semibold w-12 text-center">Status</th>
-                    <th className="p-4 font-semibold">Descricao</th>
+                    <th className="p-4 font-semibold">Descrição</th>
                     <th className="p-4 font-semibold">Valor</th>
                     <th className="p-4 font-semibold">Categoria</th>
                     <th className="p-4 font-semibold">Fonte</th>
-                    <th className="p-4 font-semibold text-right">Acoes</th>
+                    <th className="p-4 font-semibold text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -711,8 +711,8 @@ export function TransactionsPage() {
                                   {settlingId === item.id ? '...' : 'Quitar'}
                                 </button>
                               )}
-                              <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-white p-2" title="Editar Transacao Original"><Edit size={18} /></button>
-                              <button onClick={() => handleDelete(item)} className="text-slate-400 hover:text-red-400 p-2" title="Excluir Transacao Original"><Trash2 size={18} /></button>
+                              <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-white p-2" title="Editar Transação Original"><Edit size={18} /></button>
+                              <button onClick={() => handleDelete(item)} className="text-slate-400 hover:text-red-400 p-2" title="Excluir Transação Original"><Trash2 size={18} /></button>
                             </td>
                           </tr>
                           {isExpanded && hasInstallments && (
@@ -730,9 +730,9 @@ export function TransactionsPage() {
                       <td colSpan={6}>
                         <EmptyState
                           icon={<ArrowRightLeft size={40} />}
-                          title="Nenhuma transacao encontrada"
-                          description="Nenhuma transacao corresponde aos filtros atuais. Tente ajustar os filtros ou adicione uma nova transacao."
-                          action={{ label: 'Adicionar Transacao', onClick: () => handleOpenModal(null) }}
+                          title="Nenhuma transação encontrada"
+                          description="Nenhuma transação corresponde aos filtros atuais. Tente ajustar os filtros ou adicione uma nova transação."
+                          action={{ label: 'Adicionar Transação', onClick: () => handleOpenModal(null) }}
                         />
                       </td>
                     </tr>

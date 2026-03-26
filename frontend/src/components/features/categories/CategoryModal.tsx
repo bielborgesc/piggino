@@ -36,7 +36,7 @@ export function CategoryModal({ isOpen, onClose, onSaveSuccess, categoryToEdit, 
       onClose();
     } catch (error) {
       console.error('Falha ao salvar categoria:', error);
-      toast.error('Nao foi possivel salvar a categoria.', { id: toastId });
+      toast.error('Não foi possível salvar a categoria.', { id: toastId });
     } finally {
       setIsSaving(false);
     }

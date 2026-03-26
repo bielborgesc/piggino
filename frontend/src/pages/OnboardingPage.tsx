@@ -59,7 +59,7 @@ function StepCategory({ onNext, onSkip }: { onNext: (categoryId: number) => void
       toast.success('Categoria criada!');
       onNext(created.id);
     } catch (error) {
-      toast.error(extractErrorMessage(error, 'Nao foi possivel criar a categoria.'));
+      toast.error(extractErrorMessage(error, 'Não foi possível criar a categoria.'));
     } finally {
       setIsSaving(false);
     }
@@ -169,7 +169,7 @@ function StepFinancialSource({ onNext, onSkip }: { onNext: (financialSourceId: n
       toast.success('Fonte financeira criada!');
       onNext(created.id);
     } catch (error) {
-      toast.error(extractErrorMessage(error, 'Nao foi possivel criar a fonte financeira.'));
+      toast.error(extractErrorMessage(error, 'Não foi possível criar a fonte financeira.'));
     } finally {
       setIsSaving(false);
     }
@@ -179,7 +179,7 @@ function StepFinancialSource({ onNext, onSkip }: { onNext: (financialSourceId: n
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
         <h2 className="text-white text-xl font-bold mb-1">Adicione uma fonte financeira</h2>
-        <p className="text-slate-400 text-sm">Uma fonte financeira e uma conta bancaria, cartao de credito ou carteira.</p>
+        <p className="text-slate-400 text-sm">Uma fonte financeira é uma conta bancária, cartão de crédito ou carteira.</p>
       </div>
 
       <div>
@@ -208,7 +208,7 @@ function StepFinancialSource({ onNext, onSkip }: { onNext: (financialSourceId: n
           className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
         >
           <option value="Account">Conta Corrente</option>
-          <option value="Card">Cartao de Credito</option>
+          <option value="Card">Cartão de Crédito</option>
           <option value="Cash">Dinheiro</option>
         </select>
       </div>
@@ -267,10 +267,10 @@ function StepTransaction({ categoryId, financialSourceId, onFinish, onSkip }: St
         isRecurring: false,
       };
       await createTransaction(data);
-      toast.success('Primeira transacao registrada!');
+      toast.success('Primeira transação registrada!');
       onFinish();
     } catch (error) {
-      toast.error(extractErrorMessage(error, 'Nao foi possivel criar a transacao. Voce pode adicioná-la depois na pagina de Transacoes.'));
+      toast.error(extractErrorMessage(error, 'Não foi possível criar a transação. Você pode adicioná-la depois na página de Transações.'));
       onFinish();
     } finally {
       setIsSaving(false);
@@ -280,13 +280,13 @@ function StepTransaction({ categoryId, financialSourceId, onFinish, onSkip }: St
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <h2 className="text-white text-xl font-bold mb-1">Registre sua primeira transacao</h2>
-        <p className="text-slate-400 text-sm">Adicione qualquer despesa ou receita recente para comecar a acompanhar.</p>
+        <h2 className="text-white text-xl font-bold mb-1">Registre sua primeira transação</h2>
+        <p className="text-slate-400 text-sm">Adicione qualquer despesa ou receita recente para começar a acompanhar.</p>
       </div>
 
       <div>
         <label htmlFor="tx-description" className="block text-sm font-medium text-slate-300 mb-1">
-          Descricao
+          Descrição
         </label>
         <input
           id="tx-description"
@@ -330,7 +330,7 @@ function StepTransaction({ categoryId, financialSourceId, onFinish, onSkip }: St
           disabled={isSaving}
           className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-2 px-5 rounded-lg text-sm transition-colors"
         >
-          {isSaving ? 'Salvando...' : 'Concluir configuracao'}
+          {isSaving ? 'Salvando...' : 'Concluir configuração'}
           <CheckCircle size={16} />
         </button>
       </div>
@@ -338,7 +338,7 @@ function StepTransaction({ categoryId, financialSourceId, onFinish, onSkip }: St
   );
 }
 
-const STEP_LABELS = ['Criar Categoria', 'Adicionar Fonte Financeira', 'Primeira Transacao'];
+const STEP_LABELS = ['Criar Categoria', 'Adicionar Fonte Financeira', 'Primeira Transação'];
 
 export function OnboardingPage({ onFinish }: OnboardingPageProps) {
   const [currentStep, setCurrentStep] = useState(1);
@@ -360,7 +360,7 @@ export function OnboardingPage({ onFinish }: OnboardingPageProps) {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-white text-2xl font-bold mb-2">Bem-vindo ao Piggino!</h1>
-          <p className="text-slate-400 text-sm">Vamos configurar sua conta em 3 passos rapidos.</p>
+          <p className="text-slate-400 text-sm">Vamos configurar sua conta em 3 passos rápidos.</p>
         </div>
 
         <ProgressIndicator currentStep={currentStep} />

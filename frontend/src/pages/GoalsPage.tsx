@@ -8,17 +8,17 @@ import { formatBRL } from '../utils/formatters';
 import { extractErrorMessage } from '../utils/errors';
 
 const GOAL_TYPE_LABELS: Record<GoalType, string> = {
-  EmergencyFund: 'Emergencia',
-  Savings: 'Poupanca',
+  EmergencyFund: 'Emergência',
+  Savings: 'Poupança',
   Investment: 'Investimento',
-  Debt: 'Divida',
+  Debt: 'Dívida',
   Travel: 'Viagem',
   Custom: 'Personalizado',
 };
 
 const EMERGENCY_FUND_TEMPLATE: GoalData = {
-  name: 'Fundo de Emergencia',
-  description: '3 a 6 vezes o salario mensal para cobrir imprevistos',
+  name: 'Fundo de Emergência',
+  description: '3 a 6 vezes o salário mensal para cobrir imprevistos',
   targetAmount: 0,
   currentAmount: 0,
   color: '#f59e0b',
@@ -146,7 +146,7 @@ function GoalCard({ goal, onEdit, onDelete, onContribute }: GoalCardProps) {
         </div>
         {goal.monthsToGoal !== undefined && goal.monthsToGoal !== null && !isComplete && (
           <p className="text-slate-500 text-xs">
-            Estimativa: {goal.monthsToGoal} {goal.monthsToGoal === 1 ? 'mes' : 'meses'} restantes
+            Estimativa: {goal.monthsToGoal} {goal.monthsToGoal === 1 ? 'mês' : 'meses'} restantes
           </p>
         )}
         {isComplete && (
@@ -221,7 +221,7 @@ export function GoalsPage() {
   const handleDelete = async (goal: Goal) => {
     try {
       await remove(goal.id);
-      toast.success('Meta excluida.');
+      toast.success('Meta excluída.');
     } catch (deleteError) {
       toast.error(extractErrorMessage(deleteError, 'Erro ao excluir a meta.'));
     }
@@ -286,8 +286,8 @@ export function GoalsPage() {
         <div className="flex items-start gap-3 bg-slate-800/60 border border-slate-700 rounded-xl p-4">
           <Info className="text-slate-400 shrink-0 mt-0.5" size={16} />
           <p className="text-slate-400 text-xs leading-relaxed">
-            Acompanhe seus objetivos financeiros aqui. Voce pode adicionar valores manualmente ou vincular transacoes a uma meta.
-            O progresso de uma meta so e atualizado quando a transacao vinculada esta marcada como paga.
+            Acompanhe seus objetivos financeiros aqui. Você pode adicionar valores manualmente ou vincular transações a uma meta.
+            O progresso de uma meta só é atualizado quando a transação vinculada está marcada como paga.
           </p>
         </div>
 
@@ -296,8 +296,8 @@ export function GoalsPage() {
             <div className="flex items-start gap-3">
               <span className="text-amber-400 text-lg shrink-0">[!]</span>
               <div>
-                <p className="text-amber-300 font-semibold text-sm">Crie seu fundo de emergencia</p>
-                <p className="text-amber-400 text-xs mt-0.5">Recomendado: 3 a 6 vezes o seu salario mensal para situacoes inesperadas.</p>
+                <p className="text-amber-300 font-semibold text-sm">Crie seu fundo de emergência</p>
+                <p className="text-amber-400 text-xs mt-0.5">Recomendado: 3 a 6 vezes o seu salário mensal para situações inesperadas.</p>
               </div>
             </div>
             <button

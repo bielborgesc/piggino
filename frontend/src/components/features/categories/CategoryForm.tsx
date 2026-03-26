@@ -99,8 +99,8 @@ export function CategoryForm({ onSave, onCancel, initialData, isSaving, is503020
       {type === 'Income' && (
         <div className="flex items-center justify-between rounded-lg bg-slate-900 px-4 py-3">
           <div>
-            <p className="text-sm font-medium text-slate-300">Incluir no dizimo</p>
-            <p className="text-xs text-slate-500 mt-0.5">10% desta receita sera calculado como dizimo</p>
+            <p className="text-sm font-medium text-slate-300">Incluir no dízimo</p>
+            <p className="text-xs text-slate-500 mt-0.5">10% desta receita será calculado como dízimo</p>
           </div>
           <button
             type="button"
@@ -125,9 +125,9 @@ export function CategoryForm({ onSave, onCancel, initialData, isSaving, is503020
         <div>
           <div className="flex items-center gap-2 mb-2">
             <label className="block text-sm font-medium text-slate-300">
-              Metodo 50/30/20
+              Método 50/30/20
             </label>
-            <span className="text-xs text-slate-500 italic">Classifique esta categoria no metodo 50/30/20</span>
+            <span className="text-xs text-slate-500 italic">Classifique esta categoria no método 50/30/20</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             {BUDGET_BUCKET_OPTIONS.map((option) => (

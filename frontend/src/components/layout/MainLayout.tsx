@@ -30,7 +30,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Principal',
     items: [
       { page: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-      { page: 'transactions', label: 'Transacoes', icon: <ArrowRightLeft className="h-5 w-5" /> },
+      { page: 'transactions', label: 'Transações', icon: <ArrowRightLeft className="h-5 w-5" /> },
       { page: 'invoices', label: 'Fatura', icon: <Receipt className="h-5 w-5" /> },
       { page: 'fixed-bills', label: 'Contas Fixas', icon: <CalendarCheck className="h-5 w-5" /> },
     ],
@@ -39,12 +39,12 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Planejamento',
     items: [
       { page: 'goals', label: 'Metas', icon: <Target className="h-5 w-5" /> },
-      { page: 'debts', label: 'Dividas', icon: <CreditCard className="h-5 w-5" /> },
-      { page: 'projection', label: 'Projecao de Patrimonio', icon: <TrendingUp className="h-5 w-5" /> },
+      { page: 'debts', label: 'Dívidas', icon: <CreditCard className="h-5 w-5" /> },
+      { page: 'projection', label: 'Projeção de Patrimônio', icon: <TrendingUp className="h-5 w-5" /> },
     ],
   },
   {
-    label: 'Configuracoes',
+    label: 'Configurações',
     items: [
       { page: 'categories', label: 'Categorias', icon: <Shapes className="h-5 w-5" /> },
       { page: 'financial-sources', label: 'Fontes Financeiras', icon: <Wallet className="h-5 w-5" /> },
@@ -116,7 +116,7 @@ function Header({
   onLogout: () => Promise<void>;
   onOpenSettings: () => void;
 }) {
-  const [userName, setUserName] = useState('Usuario');
+  const [userName, setUserName] = useState('Usuário');
 
   useEffect(() => {
     const token = getAccessToken();
@@ -139,7 +139,7 @@ function Header({
           <Menu size={24} />
         </button>
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">Ola, {userName}!</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Olá, {userName}!</h1>
           <p className="text-slate-400 text-sm sm:text-base">Bem-vindo de volta.</p>
         </div>
       </div>
@@ -147,10 +147,10 @@ function Header({
         <button
           onClick={onOpenSettings}
           className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors"
-          aria-label="Configuracoes"
+          aria-label="Configurações"
         >
           <Settings className="h-5 w-5" />
-          <span className="hidden sm:inline">Configuracoes</span>
+          <span className="hidden sm:inline">Configurações</span>
         </button>
         <button onClick={onLogout} className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
           <LogOut className="h-5 w-5 hidden sm:block" />

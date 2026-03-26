@@ -33,7 +33,7 @@ export function TransactionModal({
 
   const handleSave = async (data: TransactionData, id?: number) => {
     setIsSaving(true);
-    const toastId = toast.loading(id ? 'Atualizando transacao...' : 'Salvando transacao...');
+    const toastId = toast.loading(id ? 'Atualizando transação...' : 'Salvando transação...');
 
     try {
       if (id && isInstallmentEdit) {
@@ -42,14 +42,14 @@ export function TransactionModal({
       } else if (id) {
         const dataWithScope: TransactionData = { ...data, recurrenceScope };
         await updateTransaction(id, dataWithScope);
-        toast.success('Transacao atualizada!', { id: toastId });
+        toast.success('Transação atualizada!', { id: toastId });
       } else {
         await createTransaction(data);
-        toast.success('Transacao salva!', { id: toastId });
+        toast.success('Transação salva!', { id: toastId });
       }
       onClose();
     } catch (error) {
-      const message = extractErrorMessage(error, 'Falha ao salvar a transacao. Tente novamente.');
+      const message = extractErrorMessage(error, 'Falha ao salvar a transação. Tente novamente.');
       toast.error(message, { id: toastId });
     } finally {
       setIsSaving(false);
@@ -64,7 +64,7 @@ export function TransactionModal({
       >
         <div className="flex justify-between items-center px-6 pt-6 pb-4 shrink-0">
           <h2 className="text-xl font-bold text-white">
-            {transactionToEdit ? 'Editar Transacao' : 'Adicionar Transacao'}
+            {transactionToEdit ? 'Editar Transação' : 'Adicionar Transação'}
           </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
             <X size={24} />

@@ -148,7 +148,7 @@ export function InvoicePage() {
           setSelectedSourceId(cards[0].id);
         }
       } catch (sourceError) {
-        const message = extractErrorMessage(sourceError, 'Nao foi possivel carregar os cartoes de credito.');
+        const message = extractErrorMessage(sourceError, 'Não foi possível carregar os cartões de crédito.');
         toast.error(message);
       } finally {
         setIsLoadingSources(false);
@@ -182,7 +182,7 @@ export function InvoicePage() {
       toast.success('Fatura paga com sucesso.', { id: toastId });
       refetch();
     } catch (payError) {
-      const message = extractErrorMessage(payError, 'Nao foi possivel pagar a fatura. Tente novamente.');
+      const message = extractErrorMessage(payError, 'Não foi possível pagar a fatura. Tente novamente.');
       toast.error(message, { id: toastId });
     } finally {
       setIsPayingInvoice(false);
@@ -196,7 +196,7 @@ export function InvoicePage() {
       toast.success('Status atualizado.', { id: toastId });
       refetch();
     } catch (toggleError) {
-      const message = extractErrorMessage(toggleError, 'Nao foi possivel atualizar o status do item.');
+      const message = extractErrorMessage(toggleError, 'Não foi possível atualizar o status do item.');
       toast.error(message, { id: toastId });
     }
   };
@@ -217,8 +217,8 @@ export function InvoicePage() {
     <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">Fatura do Cartao</h2>
-          <p className="text-slate-400">Veja os lancamentos da fatura do seu cartao de credito.</p>
+          <h2 className="text-2xl font-bold text-white">Fatura do Cartão</h2>
+          <p className="text-slate-400">Veja os lançamentos da fatura do seu cartão de crédito.</p>
         </div>
         {isFullyPaid && (
           <span className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-900/40 border border-green-700 text-green-300 font-semibold text-sm">
@@ -259,7 +259,7 @@ export function InvoicePage() {
             onChange={handleSourceChange}
             className="w-full sm:w-auto bg-slate-700 border-slate-600 rounded-md p-2 text-slate-100 focus:ring-2 focus:ring-green-500"
           >
-            <option value="">Selecione um cartao</option>
+            <option value="">Selecione um cartão</option>
             {cardSources.map(source => (
               <option key={source.id} value={source.id}>{source.name}</option>
             ))}
@@ -291,13 +291,13 @@ export function InvoicePage() {
 
       {!isLoading && selectedSourceId === null && (
         <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">
-          Selecione um cartao de credito para ver a fatura.
+          Selecione um cartão de crédito para ver a fatura.
         </div>
       )}
 
       {!isLoading && selectedSourceId !== null && invoice && invoice.items.length === 0 && (
         <div className="text-center p-8 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">
-          Nenhum lancamento encontrado nesta fatura.
+          Nenhum lançamento encontrado nesta fatura.
         </div>
       )}
 
@@ -314,7 +314,7 @@ export function InvoicePage() {
               <thead className="bg-slate-700/50">
                 <tr>
                   <th className="p-4 font-semibold w-12 text-center">Status</th>
-                  <th className="p-4 font-semibold">Descricao</th>
+                  <th className="p-4 font-semibold">Descrição</th>
                   <th className="p-4 font-semibold">Data da Compra</th>
                   <th className="p-4 font-semibold">Categoria</th>
                   <th className="p-4 font-semibold text-right">Valor</th>

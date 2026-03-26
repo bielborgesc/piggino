@@ -271,15 +271,15 @@ function HeroComparisonCard({
       </div>
       <div className="divide-y divide-slate-700">
         <div className="flex items-center justify-between px-4 py-4">
-          <span className="text-slate-300 text-sm">No CDI, voce teria ganho</span>
+          <span className="text-slate-300 text-sm">No CDI, você teria ganho</span>
           <span className="text-green-400 font-bold text-lg">{formatBRL(cdiEarnings)}</span>
         </div>
         <div className="flex items-center justify-between px-4 py-4">
-          <span className="text-slate-300 text-sm">Na poupanca, voce ganharia</span>
+          <span className="text-slate-300 text-sm">Na poupança, você ganharia</span>
           <span className="text-blue-400 font-bold text-lg">{formatBRL(poupancaEarnings)}</span>
         </div>
         <div className="flex items-center justify-between px-4 py-4 bg-emerald-950/40">
-          <span className="text-emerald-300 text-sm font-medium">Diferenca a seu favor</span>
+          <span className="text-emerald-300 text-sm font-medium">Diferença a seu favor</span>
           <span className="text-emerald-400 font-bold text-lg">
             {formatBRL(difference)}{' '}
             <span className="text-emerald-500 text-sm font-normal">
@@ -314,11 +314,11 @@ function InsightBox({
           <span className="text-white font-semibold">{periodYears} {periodYears === 1 ? 'ano' : 'anos'}</span>
           , o CDI rende aproximadamente{' '}
           <span className="text-green-400 font-semibold">{formatPercent(differencePercent)}% a mais</span>{' '}
-          que a poupanca no mesmo periodo.
+          que a poupança no mesmo período.
         </p>
       )}
       <p className="text-slate-300 text-sm">
-        A poupanca e isenta de Imposto de Renda. O CDI desconta entre 15% e 22,5% sobre os
+        A poupança é isenta de Imposto de Renda. O CDI desconta entre 15% e 22,5% sobre os
         rendimentos, mas ainda costuma render mais — especialmente a longo prazo.
       </p>
     </div>
@@ -332,7 +332,7 @@ function TaxInfoPanel() {
     <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6">
       <h4 className="text-white font-semibold text-sm mb-3">Tabela de IR — Renda Fixa</h4>
       <div className="grid grid-cols-2 gap-x-4 sm:gap-x-8 gap-y-1 text-sm max-w-xs sm:max-w-sm">
-        <span className="text-slate-400">Ate 180 dias</span>
+        <span className="text-slate-400">Até 180 dias</span>
         <span className="text-slate-200 font-medium">22,5%</span>
         <span className="text-slate-400">181 a 360 dias</span>
         <span className="text-slate-200 font-medium">20,0%</span>
@@ -340,12 +340,12 @@ function TaxInfoPanel() {
         <span className="text-slate-200 font-medium">17,5%</span>
         <span className="text-slate-400">Acima de 720 dias</span>
         <span className="text-slate-200 font-medium">15,0%</span>
-        <span className="text-slate-400">Poupanca</span>
+        <span className="text-slate-400">Poupança</span>
         <span className="text-blue-400 font-medium">Isento</span>
       </div>
       <p className="text-slate-500 text-xs mt-3">
-        IOF: aplicavel apenas nos primeiros 30 dias (0% apos 30 dias). Os valores da tabela acima
-        assumem resgate apos 30 dias.
+        IOF: aplicável apenas nos primeiros 30 dias (0% após 30 dias). Os valores da tabela acima
+        assumem resgate após 30 dias.
       </p>
     </div>
   );
@@ -370,7 +370,7 @@ function TableModeToggle({
             : 'bg-slate-700 text-slate-400 hover:text-slate-200'
         }`}
       >
-        Mes a mes (1 ano)
+        Mês a mês (1 ano)
       </button>
       <button
         onClick={() => onChange('yearly')}
@@ -394,13 +394,13 @@ function MonthlyTable({ rows }: { rows: MonthlyBreakdownRow[] }) {
       <table className="w-full text-xs sm:text-sm whitespace-nowrap">
         <thead className="bg-slate-700">
           <tr>
-            <th className="px-3 sm:px-4 py-3 text-left text-slate-300 font-semibold">Mes</th>
+            <th className="px-3 sm:px-4 py-3 text-left text-slate-300 font-semibold">Mês</th>
             <th className="px-3 sm:px-4 py-3 text-right text-slate-300 font-semibold">
               Total investido
             </th>
-            <th className="px-3 sm:px-4 py-3 text-right text-blue-400 font-semibold">Poupanca</th>
+            <th className="px-3 sm:px-4 py-3 text-right text-blue-400 font-semibold">Poupança</th>
             <th className="px-3 sm:px-4 py-3 text-right text-green-400 font-semibold">
-              CDI (apos impostos)
+              CDI (após impostos)
             </th>
           </tr>
         </thead>
@@ -409,7 +409,7 @@ function MonthlyTable({ rows }: { rows: MonthlyBreakdownRow[] }) {
             const cdiIsHigher = row.netCDI >= row.poupanca;
             return (
               <tr key={row.month} className={index % 2 === 0 ? 'bg-slate-800' : 'bg-slate-800/60'}>
-                <td className="px-3 sm:px-4 py-3 text-slate-200">Mes {row.month}</td>
+                <td className="px-3 sm:px-4 py-3 text-slate-200">Mês {row.month}</td>
                 <td className="px-3 sm:px-4 py-3 text-right text-slate-300">
                   {formatBRL(row.totalContributed)}
                 </td>
@@ -444,12 +444,12 @@ function YearlyTable({ rows }: { rows: YearlyBreakdownRow[] }) {
             <th className="px-3 sm:px-4 py-3 text-right text-slate-300 font-semibold">
               Total investido
             </th>
-            <th className="px-3 sm:px-4 py-3 text-right text-blue-400 font-semibold">Poupanca</th>
+            <th className="px-3 sm:px-4 py-3 text-right text-blue-400 font-semibold">Poupança</th>
             <th className="px-3 sm:px-4 py-3 text-right text-green-400 font-semibold">
-              CDI (apos impostos)
+              CDI (após impostos)
             </th>
             <th className="px-3 sm:px-4 py-3 text-right text-emerald-400 font-semibold">
-              Diferenca
+              Diferença
             </th>
           </tr>
         </thead>
@@ -567,7 +567,7 @@ export function WealthProjectionPage() {
         <div className="flex items-center gap-3">
           <TrendingUp className="text-green-500" size={28} />
           <div>
-            <h2 className="text-2xl font-bold text-white">Projecao de Patrimonio</h2>
+            <h2 className="text-2xl font-bold text-white">Projeção de Patrimônio</h2>
             <p className="text-slate-400">Simule o crescimento do seu dinheiro ao longo do tempo.</p>
           </div>
         </div>
@@ -576,11 +576,11 @@ export function WealthProjectionPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Parameters panel */}
         <div className="lg:col-span-1 bg-slate-800 p-5 rounded-lg border border-slate-700 space-y-5">
-          <h3 className="text-white font-semibold text-lg">Parametros</h3>
+          <h3 className="text-white font-semibold text-lg">Parâmetros</h3>
 
           <div>
             <label className="block text-sm text-slate-400 mb-1">
-              Quanto voce ja tem guardado (R$)
+              Quanto você já tem guardado (R$)
             </label>
             <input
               type="number"
@@ -634,7 +634,7 @@ export function WealthProjectionPage() {
             )}
             {cdiStatus.kind === 'error' && (
               <p className="text-amber-400 text-xs mt-1">
-                Nao foi possivel obter o CDI automaticamente. Insira manualmente.
+                Não foi possível obter o CDI automaticamente. Insira manualmente.
               </p>
             )}
           </div>
@@ -642,7 +642,7 @@ export function WealthProjectionPage() {
           {/* Poupanca read-only badge */}
           <div className="bg-slate-700 rounded-lg px-3 py-2 border border-slate-600">
             <p className="text-blue-400 text-xs font-medium">
-              Poupanca: {formatPercent(poupancaAnnualRate)}% ao ano (isenta de imposto)
+              Poupança: {formatPercent(poupancaAnnualRate)}% ao ano (isenta de imposto)
             </p>
           </div>
 
@@ -669,9 +669,9 @@ export function WealthProjectionPage() {
         {/* Summary cards */}
         <div className="lg:col-span-2 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <SummaryCard label="CDI (o que voce recebe)" value={formatBRL(finalNetCDI)} accent="green" />
+            <SummaryCard label="CDI (o que você recebe)" value={formatBRL(finalNetCDI)} accent="green" />
             <SummaryCard label="Total investido" value={formatBRL(totalContributed)} />
-            <SummaryCard label="Poupanca" value={formatBRL(finalPoupanca)} accent="blue" />
+            <SummaryCard label="Poupança" value={formatBRL(finalPoupanca)} accent="blue" />
             <SummaryCard label="Rendimento bruto" value={formatBRL(totalEarnings)} accent="blue" />
             <SummaryCard
               label="Rendimento total %"
@@ -689,12 +689,12 @@ export function WealthProjectionPage() {
               </p>
             )}
             <p className="text-slate-300 text-sm">
-              <span className="text-blue-400 font-semibold">Projecao:</span> Com esse ritmo, em{' '}
-              <span className="text-white font-semibold">{periodYears} {periodYears === 1 ? 'ano' : 'anos'}</span> voce tera{' '}
+              <span className="text-blue-400 font-semibold">Projeção:</span> Com esse ritmo, em{' '}
+              <span className="text-white font-semibold">{periodYears} {periodYears === 1 ? 'ano' : 'anos'}</span> você terá{' '}
               <span className="text-emerald-400 font-semibold">{formatBRL(finalNetCDI)}</span>{' '}
               no CDI ou{' '}
               <span className="text-blue-400 font-semibold">{formatBRL(finalPoupanca)}</span>{' '}
-              na poupanca.
+              na poupança.
             </p>
             {periodYears > LONG_TERM_THRESHOLD_YEARS && (
               <p className="text-slate-300 text-sm">
@@ -731,7 +731,7 @@ export function WealthProjectionPage() {
 
       {/* Chart */}
       <div className="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6">
-        <h3 className="text-white font-semibold mb-4">Evolucao do Patrimonio</h3>
+        <h3 className="text-white font-semibold mb-4">Evolução do Patrimônio</h3>
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -770,7 +770,7 @@ export function WealthProjectionPage() {
             <Line
               type="monotone"
               dataKey="netCDI"
-              name="CDI (o que voce recebe)"
+              name="CDI (o que você recebe)"
               stroke="#34d399"
               strokeWidth={2}
               strokeDasharray="5 3"
@@ -780,7 +780,7 @@ export function WealthProjectionPage() {
             <Line
               type="monotone"
               dataKey="poupanca"
-              name="Poupanca"
+              name="Poupança"
               stroke="#60a5fa"
               strokeWidth={2}
               dot={false}
@@ -802,7 +802,7 @@ export function WealthProjectionPage() {
       {/* Dual-mode breakdown table */}
       <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
         <div className="flex items-center justify-between px-4 pt-4 pb-0">
-          <h3 className="text-white font-semibold">Evolucao detalhada</h3>
+          <h3 className="text-white font-semibold">Evolução detalhada</h3>
         </div>
         <TableModeToggle mode={tableMode} onChange={setTableMode} />
         {tableMode === 'monthly' ? (

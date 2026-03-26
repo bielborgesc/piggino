@@ -14,10 +14,10 @@ interface GoalTypeOption {
 }
 
 const GOAL_TYPE_OPTIONS: GoalTypeOption[] = [
-  { value: 'EmergencyFund', label: 'Emergencia', emoji: 'SOS' },
-  { value: 'Savings', label: 'Poupanca', emoji: '$' },
+  { value: 'EmergencyFund', label: 'Emergência', emoji: 'SOS' },
+  { value: 'Savings', label: 'Poupança', emoji: '$' },
   { value: 'Investment', label: 'Investimento', emoji: '+' },
-  { value: 'Debt', label: 'Divida', emoji: '-' },
+  { value: 'Debt', label: 'Dívida', emoji: '-' },
   { value: 'Travel', label: 'Viagem', emoji: '>' },
   { value: 'Custom', label: 'Personalizado', emoji: '*' },
 ];
@@ -109,12 +109,12 @@ export function GoalModal({ goal, template, onClose, onSave }: GoalModalProps) {
               required
               maxLength={100}
               className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Ex: Fundo de emergencia"
+              placeholder="Ex: Fundo de emergência"
             />
           </div>
 
           <div>
-            <label className="block text-slate-300 text-sm font-medium mb-1">Descricao (opcional)</label>
+            <label className="block text-slate-300 text-sm font-medium mb-1">Descrição (opcional)</label>
             <input
               type="text"
               value={form.description ?? ''}
@@ -159,7 +159,7 @@ export function GoalModal({ goal, template, onClose, onSave }: GoalModalProps) {
               />
             </div>
             <div>
-              <label className="block text-slate-300 text-sm font-medium mb-1">Ja guardado (R$)</label>
+              <label className="block text-slate-300 text-sm font-medium mb-1">Já guardado (R$)</label>
               <input
                 type="number"
                 min={0}

@@ -23,7 +23,7 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
     getUserSettings()
       .then(setSettings)
       .catch(() => {
-        toast.error('Nao foi possivel carregar as configuracoes.');
+        toast.error('Não foi possível carregar as configurações.');
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -37,7 +37,7 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
         setFinancialSources(sources);
       })
       .catch(() => {
-        toast.error('Nao foi possivel carregar categorias e fontes financeiras.');
+        toast.error('Não foi possível carregar categorias e fontes financeiras.');
       });
   }, [settings.isTitheModuleEnabled]);
 
@@ -48,9 +48,9 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
     try {
       const saved = await updateUserSettings(updated);
       setSettings(saved);
-      toast.success(saved.is503020Enabled ? 'Metodo 50/30/20 ativado.' : 'Metodo 50/30/20 desativado.');
+      toast.success(saved.is503020Enabled ? 'Método 50/30/20 ativado.' : 'Método 50/30/20 desativado.');
     } catch (error) {
-      toast.error(extractErrorMessage(error, 'Erro ao salvar configuracoes.'));
+      toast.error(extractErrorMessage(error, 'Erro ao salvar configurações.'));
     } finally {
       setIsSaving(false);
     }
@@ -63,9 +63,9 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
     try {
       const saved = await updateUserSettings(updated);
       setSettings(saved);
-      toast.success(saved.isTitheModuleEnabled ? 'Modulo Dizimo ativado.' : 'Modulo Dizimo desativado.');
+      toast.success(saved.isTitheModuleEnabled ? 'Módulo Dízimo ativado.' : 'Módulo Dízimo desativado.');
     } catch (error) {
-      toast.error(extractErrorMessage(error, 'Erro ao salvar configuracoes.'));
+      toast.error(extractErrorMessage(error, 'Erro ao salvar configurações.'));
     } finally {
       setIsSaving(false);
     }
@@ -80,7 +80,7 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
       const saved = await updateUserSettings(updated);
       setSettings(saved);
     } catch (error) {
-      toast.error(extractErrorMessage(error, 'Erro ao salvar categoria do dizimo.'));
+      toast.error(extractErrorMessage(error, 'Erro ao salvar categoria do dízimo.'));
     } finally {
       setIsSaving(false);
     }
@@ -95,7 +95,7 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
       const saved = await updateUserSettings(updated);
       setSettings(saved);
     } catch (error) {
-      toast.error(extractErrorMessage(error, 'Erro ao salvar fonte financeira do dizimo.'));
+      toast.error(extractErrorMessage(error, 'Erro ao salvar fonte financeira do dízimo.'));
     } finally {
       setIsSaving(false);
     }
@@ -110,7 +110,7 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md border border-slate-700 flex flex-col max-h-[90dvh]">
         <div className="flex items-center justify-between p-6 border-b border-slate-700 shrink-0">
-          <h2 className="text-lg font-bold text-white">Configuracoes</h2>
+          <h2 className="text-lg font-bold text-white">Configurações</h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-white transition-colors"
@@ -127,7 +127,7 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <p className="text-white font-semibold">Metodo 50/30/20</p>
+                  <p className="text-white font-semibold">Método 50/30/20</p>
                   <p className="text-slate-400 text-sm mt-1">
                     Distribua sua renda em tres categorias: Necessidades, Desejos e Reservas.
                   </p>
@@ -140,7 +140,7 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
                 <button
                   onClick={handleToggle503020}
                   disabled={isSaving}
-                  aria-label="Ativar ou desativar metodo 50/30/20"
+                  aria-label="Ativar ou desativar método 50/30/20"
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
                     settings.is503020Enabled ? 'bg-green-600' : 'bg-slate-600'
                   }`}
@@ -164,18 +164,18 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
 
               <div className="border-t border-slate-700 pt-4 flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <p className="text-white font-semibold">Modulo Dizimo</p>
+                  <p className="text-white font-semibold">Módulo Dízimo</p>
                   <p className="text-slate-400 text-sm mt-1">
-                    Gera automaticamente uma transacao de 10% da sua receita mensal como dizimo.
+                    Gera automaticamente uma transação de 10% da sua receita mensal como dízimo.
                   </p>
                   {settings.isTitheModuleEnabled && (
                     <>
                       <p className="text-slate-500 text-xs mt-2">
-                        Visivel no Dashboard para acompanhar e gerar o dizimo do mes.
+                        Visível no Dashboard para acompanhar e gerar o dízimo do mês.
                       </p>
                       <div className="mt-3 space-y-3">
                         <div>
-                          <label className="block text-slate-400 text-xs mb-1">Categoria do dizimo</label>
+                          <label className="block text-slate-400 text-xs mb-1">Categoria do dízimo</label>
                           <select
                             value={settings.titheCategoryId ?? ''}
                             onChange={e => handleTitheCategoryChange(e.target.value)}
@@ -203,7 +203,7 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
                           </select>
                         </div>
                         <p className="text-slate-500 text-xs">
-                          Se nao configurado, o sistema usara a categoria 'Dizimo' ou a primeira disponivel.
+                          Se não configurado, o sistema usará a categoria 'Dízimo' ou a primeira disponível.
                         </p>
                       </div>
                     </>
@@ -212,7 +212,7 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
                 <button
                   onClick={handleToggleTithe}
                   disabled={isSaving}
-                  aria-label="Ativar ou desativar modulo dizimo"
+                  aria-label="Ativar ou desativar módulo dízimo"
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
                     settings.isTitheModuleEnabled ? 'bg-amber-500' : 'bg-slate-600'
                   }`}
@@ -227,7 +227,7 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
 
               <div className="border-t border-slate-700 pt-4">
                 <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3">
-                  Integracao Telegram
+                  Integração Telegram
                 </p>
                 <TelegramConnectCard />
               </div>

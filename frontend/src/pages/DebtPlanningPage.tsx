@@ -50,10 +50,10 @@ function StrategyExplanationCard({ strategy }: { strategy: DebtStrategy }) {
   if (strategy === 'avalanche') {
     return (
       <div className="bg-blue-900/30 border border-blue-700/50 rounded-lg p-4">
-        <h4 className="text-blue-300 font-semibold mb-1">Estrategia Avalanche</h4>
+        <h4 className="text-blue-300 font-semibold mb-1">Estratégia Avalanche</h4>
         <p className="text-slate-300 text-sm">
-          Prioriza quitar as dividas com o <strong>maior pagamento mensal</strong> primeiro.
-          Matematicamente otima — voce paga menos juros no longo prazo. Indicada para quem tem
+          Prioriza quitar as dívidas com o <strong>maior pagamento mensal</strong> primeiro.
+          Matematicamente ótima — você paga menos juros no longo prazo. Indicada para quem tem
           disciplina e foco em economizar dinheiro total.
         </p>
       </div>
@@ -62,10 +62,10 @@ function StrategyExplanationCard({ strategy }: { strategy: DebtStrategy }) {
 
   return (
     <div className="bg-purple-900/30 border border-purple-700/50 rounded-lg p-4">
-      <h4 className="text-purple-300 font-semibold mb-1">Estrategia Bola de Neve</h4>
+      <h4 className="text-purple-300 font-semibold mb-1">Estratégia Bola de Neve</h4>
       <p className="text-slate-300 text-sm">
-        Prioriza quitar as dividas com o <strong>menor saldo restante</strong> primeiro. Gera
-        vitorias rapidas e aumenta a motivacao. Indicada para quem precisa de impulso psicologico
+        Prioriza quitar as dívidas com o <strong>menor saldo restante</strong> primeiro. Gera
+        vitórias rápidas e aumenta a motivação. Indicada para quem precisa de impulso psicológico
         para manter o foco.
       </p>
     </div>
@@ -101,7 +101,7 @@ function DebtItemCard({
           </div>
 
           <div className="text-sm text-slate-400 mb-3">
-            Proximo vencimento:{' '}
+            Próximo vencimento:{' '}
             <span className="text-slate-200">{formatDate(debt.nextDueDate)}</span>
           </div>
 
@@ -145,8 +145,8 @@ function EmptyDebtsState() {
   return (
     <div className="text-center p-10 text-slate-400 bg-slate-800 rounded-lg border border-slate-700">
       <PartyPopper className="mx-auto mb-3 text-green-500" size={40} />
-      <p className="font-semibold text-white mb-1">Nenhuma divida ativa!</p>
-      <p className="text-sm">Voce nao possui compras parceladas em aberto. Parabens!</p>
+      <p className="font-semibold text-white mb-1">Nenhuma dívida ativa!</p>
+      <p className="text-sm">Você não possui compras parceladas em aberto. Parabéns!</p>
     </div>
   );
 }
@@ -176,7 +176,7 @@ export function DebtPlanningPage() {
       toast.success('Parcelas quitadas com sucesso!', { id: toastId });
       refetch();
     } catch {
-      toast.error('Nao foi possivel quitar as parcelas.', { id: toastId });
+      toast.error('Não foi possível quitar as parcelas.', { id: toastId });
     } finally {
       setSettlingId(null);
     }
@@ -196,9 +196,9 @@ export function DebtPlanningPage() {
         <div className="flex items-center gap-3">
           <CreditCard className="text-green-500" size={28} />
           <div>
-            <h2 className="text-2xl font-bold text-white">Planejamento de Dividas</h2>
+            <h2 className="text-2xl font-bold text-white">Planejamento de Dívidas</h2>
             <p className="text-slate-400">
-              Escolha uma estrategia e quite suas dividas de forma inteligente.
+              Escolha uma estratégia e quite suas dívidas de forma inteligente.
             </p>
           </div>
         </div>
@@ -220,7 +220,7 @@ export function DebtPlanningPage() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <SummaryCard
-              label="Total em dividas"
+              label="Total em dívidas"
               value={formatBRL(debtSummary.totalDebt)}
               accent="red"
             />
@@ -270,9 +270,9 @@ export function DebtPlanningPage() {
           {sortedDebts.length > 0 && (
             <div className="mt-6 bg-slate-800 border border-slate-700 rounded-lg p-4 text-center">
               <p className="text-slate-300 text-sm">
-                Seguindo a estrategia{' '}
-                <span className="text-white font-semibold">{STRATEGY_LABELS[strategy]}</span>, voce
-                ficara livre de dividas em aproximadamente{' '}
+                Seguindo a estratégia{' '}
+                <span className="text-white font-semibold">{STRATEGY_LABELS[strategy]}</span>, você
+                ficará livre de dívidas em aproximadamente{' '}
                 <span className="text-green-400 font-bold">
                   {debtSummary.estimatedMonthsToFreedom} meses
                 </span>

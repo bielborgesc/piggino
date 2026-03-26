@@ -27,18 +27,18 @@ export function TitheModuleCard() {
     if (!status) return;
     try {
       await toggle(!status.isEnabled);
-      toast.success(!status.isEnabled ? 'Modulo Dizimo ativado.' : 'Modulo Dizimo desativado.');
+      toast.success(!status.isEnabled ? 'Módulo Dízimo ativado.' : 'Módulo Dízimo desativado.');
     } catch {
-      toast.error('Erro ao alterar Modulo Dizimo.');
+      toast.error('Erro ao alterar Módulo Dízimo.');
     }
   };
 
   const handleGenerate = async () => {
     try {
       await generate();
-      toast.success('Transacoes de dizimo criadas com sucesso!');
+      toast.success('Transações de dízimo criadas com sucesso!');
     } catch {
-      toast.error('Nao foi possivel gerar o dizimo. Verifique se ja foi gerado este mes ou se ha receitas titulaveis registradas.');
+      toast.error('Não foi possível gerar o dízimo. Verifique se já foi gerado este mês ou se há receitas tituláveis registradas.');
     }
   };
 
@@ -63,16 +63,16 @@ export function TitheModuleCard() {
             <Church size={20} className="text-amber-400" />
           </div>
           <div>
-            <p className="text-white font-semibold text-sm">Modulo Dizimo</p>
+            <p className="text-white font-semibold text-sm">Módulo Dízimo</p>
             <p className="text-slate-400 text-xs mt-0.5">
-              10% de cada receita marcada como dizmavel e reservado como dizimo
+              10% de cada receita marcada como dizimável é reservado como dízimo
             </p>
           </div>
         </div>
         <button
           onClick={handleToggle}
           disabled={isToggling}
-          aria-label="Ativar ou desativar modulo dizimo"
+          aria-label="Ativar ou desativar módulo dízimo"
           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
             status.isEnabled ? 'bg-amber-500' : 'bg-slate-600'
           }`}
@@ -114,18 +114,18 @@ export function TitheModuleCard() {
                       Gerando...
                     </span>
                   ) : (
-                    'Gerar transacoes de dizimo'
+                    'Gerar transações de dízimo'
                   )}
                 </button>
               ) : (
                 <p className="text-green-400 text-xs font-medium">
-                  Todas as transacoes de dizimo ja foram geradas para este mes.
+                  Todas as transações de dízimo já foram geradas para este mês.
                 </p>
               )}
             </>
           ) : (
             <p className="text-slate-500 text-xs">
-              Nenhuma receita dizmavel registrada neste mes. Marque uma categoria de receita como "Incluir no dizimo" para comecar.
+              Nenhuma receita dizimável registrada neste mês. Marque uma categoria de receita como "Incluir no dízimo" para começar.
             </p>
           )}
         </div>

@@ -57,7 +57,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
         setCategories(cats);
         setFinancialSources(sources);
       } catch {
-        toast.error('Nao foi possivel carregar os dados do formulario.');
+        toast.error('Não foi possível carregar os dados do formulário.');
       } finally {
         setIsLoadingData(false);
       }
@@ -119,12 +119,12 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
     event.preventDefault();
 
     if (isInstallment && (!installmentCount || parseInt(installmentCount) < 2)) {
-      toast.error('Para transacoes parceladas, informe pelo menos 2 parcelas.');
+      toast.error('Para transações parceladas, informe pelo menos 2 parcelas.');
       return;
     }
 
     if (isFixed && (!dayOfMonth || parseInt(dayOfMonth) < 1 || parseInt(dayOfMonth) > 31)) {
-      toast.error('Para transacoes fixas, informe um dia do mes valido (1 a 31).');
+      toast.error('Para transações fixas, informe um dia do mês válido (1 a 31).');
       return;
     }
 
@@ -172,7 +172,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-400 mb-1">
-            Descricao
+            Descrição
           </label>
           <input
             type="text"
@@ -343,7 +343,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
               className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:opacity-50"
             />
             <label htmlFor="installment" className={`text-sm ${isFixed ? 'text-gray-500' : 'text-gray-300'}`}>
-              E parcelado?
+              É parcelado?
             </label>
           </div>
 
@@ -357,7 +357,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
               className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:opacity-50"
             />
             <label htmlFor="isFixed" className={`text-sm ${isInstallment ? 'text-gray-500' : 'text-gray-300'}`}>
-              E fixo?
+              É fixo?
             </label>
           </div>
         </div>
@@ -367,7 +367,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
             <div className="mt-2 space-y-3">
               <div>
                 <label htmlFor="installmentCount" className="block text-sm font-medium text-gray-400 mb-1">
-                  No de Parcelas
+                  Nº de Parcelas
                 </label>
                 <input
                   type="number"
@@ -388,7 +388,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
                   className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
                 />
                 <label htmlFor="isRecurring" className="text-sm text-gray-300">
-                  Recorrente (reinicia automaticamente apos a ultima parcela)
+                  Recorrente (reinicia automaticamente após a última parcela)
                 </label>
               </div>
             </div>
@@ -438,7 +438,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
             disabled={isSaving}
             className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition-colors disabled:bg-slate-500"
           >
-            {isSaving ? 'Salvando...' : 'Salvar Transacao'}
+            {isSaving ? 'Salvando...' : 'Salvar Transação'}
           </button>
         </div>
       </form>

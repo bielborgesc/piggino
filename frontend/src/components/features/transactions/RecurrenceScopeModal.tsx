@@ -12,22 +12,22 @@ const SCOPE_OPTIONS: ScopeOption[] = [
   {
     value: 'OnlyThis',
     label: 'Somente esta',
-    description: 'Apenas esta ocorrencia sera afetada.',
+    description: 'Apenas esta ocorrência será afetada.',
   },
   {
     value: 'ThisAndFuture',
     label: 'Esta e as futuras',
-    description: 'Esta e todas as ocorrencias posteriores serao afetadas.',
+    description: 'Esta e todas as ocorrências posteriores serão afetadas.',
   },
   {
     value: 'ThisAndPast',
     label: 'Esta e as passadas',
-    description: 'Esta e todas as ocorrencias anteriores serao afetadas.',
+    description: 'Esta e todas as ocorrências anteriores serão afetadas.',
   },
   {
     value: 'All',
     label: 'Todas',
-    description: 'Todas as ocorrencias desta recorrencia serao afetadas.',
+    description: 'Todas as ocorrências desta recorrência serão afetadas.',
   },
 ];
 
@@ -43,18 +43,18 @@ interface RecurrenceScopeModalProps {
 
 const TITLES: Record<ModalVariant, Record<'edit' | 'delete', string>> = {
   recurrence: {
-    edit: 'Editar transacao recorrente',
-    delete: 'Excluir transacao recorrente',
+    edit: 'Editar transação recorrente',
+    delete: 'Excluir transação recorrente',
   },
   installment: {
-    edit: 'Editar transacao parcelada',
-    delete: 'Excluir transacao parcelada',
+    edit: 'Editar transação parcelada',
+    delete: 'Excluir transação parcelada',
   },
 };
 
 const DESCRIPTIONS: Record<ModalVariant, string> = {
-  recurrence: 'Esta e uma transacao recorrente. Selecione quais ocorrencias devem ser afetadas:',
-  installment: 'Esta e uma transacao parcelada. Selecione quais parcelas devem ser afetadas:',
+  recurrence: 'Esta é uma transação recorrente. Selecione quais ocorrências devem ser afetadas:',
+  installment: 'Esta é uma transação parcelada. Selecione quais parcelas devem ser afetadas:',
 };
 
 export function RecurrenceScopeModal({ isOpen, action, variant = 'recurrence', onConfirm, onCancel }: RecurrenceScopeModalProps) {
@@ -64,7 +64,7 @@ export function RecurrenceScopeModal({ isOpen, action, variant = 'recurrence', o
 
   const title = TITLES[variant][action];
   const description = DESCRIPTIONS[variant];
-  const confirmLabel = action === 'edit' ? 'Confirmar edicao' : 'Confirmar exclusao';
+  const confirmLabel = action === 'edit' ? 'Confirmar edição' : 'Confirmar exclusão';
   const confirmClass = action === 'delete'
     ? 'bg-red-600 hover:bg-red-700'
     : 'bg-green-600 hover:bg-green-700';

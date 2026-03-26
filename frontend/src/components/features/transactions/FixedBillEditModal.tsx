@@ -46,7 +46,7 @@ export function FixedBillEditModal({
         const matchedSource = sources.find((s) => s.name === bill.financialSourceName);
         if (matchedSource) setFinancialSourceId(matchedSource.id);
       } catch (err) {
-        setLoadError(extractErrorMessage(err, 'Nao foi possivel carregar categorias e fontes.'));
+        setLoadError(extractErrorMessage(err, 'Não foi possível carregar categorias e fontes.'));
       }
     }
 
@@ -108,7 +108,7 @@ export function FixedBillEditModal({
           </div>
         )}
           <div>
-            <label className="block text-slate-300 text-sm font-medium mb-1">Descricao</label>
+            <label className="block text-slate-300 text-sm font-medium mb-1">Descrição</label>
             <input
               type="text"
               value={description}
