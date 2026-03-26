@@ -3,6 +3,12 @@ import { getDashboardSummary } from '../services/api';
 import { DashboardSummary } from '../types';
 import { extractErrorMessage } from '../utils/errors';
 
+interface UseDashboardOptions {
+  months?: number;
+  year?: number;
+  month?: number;
+}
+
 interface UseDashboardResult {
   summary: DashboardSummary | null;
   isLoading: boolean;
@@ -10,7 +16,7 @@ interface UseDashboardResult {
   refetch: () => void;
 }
 
-export function useDashboard(months = 6): UseDashboardResult {
+export function useDashboard({ months = 6, year, month }: UseDashboardOptions = {}): UseDashboardResult {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +26,7 @@ export function useDashboard(months = 6): UseDashboardResult {
     setError(null);
 
     try {
-      const data = await getDashboardSummary(months);
+      const data = await getDashboardSummary(months, year, month);
       setSummary(data);
     } catch (fetchError) {
       const message = extractErrorMessage(fetchError, 'Não foi possível carregar o painel. Tente novamente.');
@@ -29,7 +35,7 @@ export function useDashboard(months = 6): UseDashboardResult {
     } finally {
       setIsLoading(false);
     }
-  }, [months]);
+  }, [months, year, month]);
 
   useEffect(() => {
     fetchSummary();

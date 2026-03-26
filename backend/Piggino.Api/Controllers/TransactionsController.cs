@@ -176,9 +176,12 @@ namespace Piggino.Api.Controllers
         }
 
         [HttpGet("summary")]
-        public async Task<ActionResult<DashboardSummaryDto>> GetDashboardSummary([FromQuery] int months = 6)
+        public async Task<ActionResult<DashboardSummaryDto>> GetDashboardSummary(
+            [FromQuery] int months = 6,
+            [FromQuery] int? year = null,
+            [FromQuery] int? month = null)
         {
-            DashboardSummaryDto summary = await _service.GetDashboardSummaryAsync(months);
+            DashboardSummaryDto summary = await _service.GetDashboardSummaryAsync(months, year, month);
             return Ok(summary);
         }
 
@@ -218,6 +221,41 @@ namespace Piggino.Api.Controllers
                 return NotFound(new { message = "Payment record not found." });
 
             return NoContent();
+        }
+
+        [HttpDelete("fixed-bills/{id}/scoped")]
+        public async Task<IActionResult> DeleteFixedBill(
+            int id,
+            [FromQuery] FixedBillScope scope,
+            [FromQuery] string anchorMonth)
+        {
+            if (!DateOnly.TryParseExact(anchorMonth, "yyyy-MM", out DateOnly parsedAnchor))
+                return BadRequest(new { message = "Invalid anchorMonth format. Use yyyy-MM." });
+
+            bool success = await _service.DeleteFixedBillAsync(id, scope, parsedAnchor.Year, parsedAnchor.Month);
+
+            if (!success)
+                return NotFound(new { message = "Fixed bill not found." });
+
+            return NoContent();
+        }
+
+        [HttpPut("fixed-bills/{id}/scoped")]
+        public async Task<IActionResult> UpdateFixedBill(int id, FixedBillUpdateDto updateDto)
+        {
+            try
+            {
+                bool success = await _service.UpdateFixedBillAsync(id, updateDto);
+
+                if (!success)
+                    return NotFound(new { message = "Fixed bill not found." });
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost("{id}/settle")]

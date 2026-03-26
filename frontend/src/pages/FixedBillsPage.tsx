@@ -1,12 +1,16 @@
 import { useState, useMemo, useCallback } from 'react';
-import { CheckCircle, XCircle, Receipt } from 'lucide-react';
+import { CheckCircle, XCircle, Receipt, Edit, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useFixedBills } from '../hooks/useFixedBills';
-import { FixedBill } from '../types';
+import { FixedBill, FixedBillScope, FixedBillUpdateData } from '../types';
 import { formatBRL } from '../utils/formatters';
 import { MonthNavigator } from '../components/ui/MonthNavigator';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { EmptyState } from '../components/ui/EmptyState';
+import { FixedBillScopeModal } from '../components/features/transactions/FixedBillScopeModal';
+import { FixedBillEditModal } from '../components/features/transactions/FixedBillEditModal';
+import { deleteFixedBillScoped, updateFixedBillScoped } from '../services/api';
+import { extractErrorMessage } from '../utils/errors';
 
 const MONTH_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric', timeZone: 'UTC' };
 
@@ -39,9 +43,16 @@ function SummaryCards({ totalAmount, paidAmount, pendingAmount }: {
   );
 }
 
-function FixedBillCard({ bill, onTogglePaid }: {
+function FixedBillCard({
+  bill,
+  onTogglePaid,
+  onEdit,
+  onDelete,
+}: {
   bill: FixedBill;
   onTogglePaid: (transactionId: number, currentlyPaid: boolean) => void;
+  onEdit: (bill: FixedBill) => void;
+  onDelete: (bill: FixedBill) => void;
 }) {
   const isCard = bill.financialSourceType === 'Card';
   return (
@@ -67,17 +78,42 @@ function FixedBillCard({ bill, onTogglePaid }: {
             Vence dia {bill.dayOfMonth}
           </p>
         </div>
-        <p className={`font-bold text-red-400 ${bill.isPaid ? 'opacity-50' : ''}`}>
-          {formatBRL(bill.totalAmount)}
-        </p>
+        <div className="flex flex-col items-end gap-2">
+          <p className={`font-bold text-red-400 ${bill.isPaid ? 'opacity-50' : ''}`}>
+            {formatBRL(bill.totalAmount)}
+          </p>
+          <div className="flex gap-1">
+            <button
+              onClick={() => onEdit(bill)}
+              className="text-slate-400 hover:text-blue-400 transition-colors p-1"
+              title="Editar"
+            >
+              <Edit size={16} />
+            </button>
+            <button
+              onClick={() => onDelete(bill)}
+              className="text-slate-400 hover:text-red-400 transition-colors p-1"
+              title="Excluir"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function FixedBillRow({ bill, onTogglePaid }: {
+function FixedBillRow({
+  bill,
+  onTogglePaid,
+  onEdit,
+  onDelete,
+}: {
   bill: FixedBill;
   onTogglePaid: (transactionId: number, currentlyPaid: boolean) => void;
+  onEdit: (bill: FixedBill) => void;
+  onDelete: (bill: FixedBill) => void;
 }) {
   const isCard = bill.financialSourceType === 'Card';
   return (
@@ -108,6 +144,24 @@ function FixedBillRow({ bill, onTogglePaid }: {
       <td className={`p-4 font-bold text-right text-red-400 ${bill.isPaid ? 'opacity-50' : ''}`}>
         {formatBRL(bill.totalAmount)}
       </td>
+      <td className="p-4 text-center">
+        <div className="flex gap-1 justify-center">
+          <button
+            onClick={() => onEdit(bill)}
+            className="text-slate-400 hover:text-blue-400 transition-colors p-1"
+            title="Editar"
+          >
+            <Edit size={16} />
+          </button>
+          <button
+            onClick={() => onDelete(bill)}
+            className="text-slate-400 hover:text-red-400 transition-colors p-1"
+            title="Excluir"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </td>
     </tr>
   );
 }
@@ -120,12 +174,21 @@ export function FixedBillsPage() {
 
   const monthKey = useMemo(() => formatMonthKey(currentDate), [currentDate]);
 
-  const { data, isLoading, error, togglePaid } = useFixedBills(monthKey);
+  const { data, isLoading, error, togglePaid, refetch } = useFixedBills(monthKey);
+
+  const [pendingBill, setPendingBill] = useState<FixedBill | null>(null);
+  const [scopeModalAction, setScopeModalAction] = useState<'edit' | 'delete'>('delete');
+  const [isScopeModalOpen, setIsScopeModalOpen] = useState(false);
+
+  const [editBill, setEditBill] = useState<FixedBill | null>(null);
+  const [editScope, setEditScope] = useState<FixedBillScope>('All');
+  const [editAnchorMonth, setEditAnchorMonth] = useState<string>(monthKey);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleTogglePaid = useCallback((transactionId: number, currentlyPaid: boolean) => {
     const bill = data?.items.find(b => b.transactionId === transactionId);
     if (bill?.financialSourceType === 'Card') {
-      toast('Contas de cartao sao pagas na tela Fatura.', { icon: '💳' });
+      toast('Contas de cartao sao pagas na tela Fatura.');
       return;
     }
     togglePaid(transactionId, currentlyPaid);
@@ -137,6 +200,75 @@ export function FixedBillsPage() {
 
   const handleNextMonth = () => {
     setCurrentDate(prev => new Date(Date.UTC(prev.getUTCFullYear(), prev.getUTCMonth() + 1, 1)));
+  };
+
+  const handleOpenEdit = useCallback((bill: FixedBill) => {
+    setPendingBill(bill);
+    setScopeModalAction('edit');
+    setIsScopeModalOpen(true);
+  }, []);
+
+  const handleOpenDelete = useCallback((bill: FixedBill) => {
+    setPendingBill(bill);
+    setScopeModalAction('delete');
+    setIsScopeModalOpen(true);
+  }, []);
+
+  const handleScopeConfirm = useCallback((scope: FixedBillScope, anchorMonth: string) => {
+    setIsScopeModalOpen(false);
+
+    if (pendingBill === null) return;
+
+    if (scopeModalAction === 'delete') {
+      executeDelete(pendingBill.transactionId, scope, anchorMonth);
+      setPendingBill(null);
+      return;
+    }
+
+    setEditBill(pendingBill);
+    setEditScope(scope);
+    setEditAnchorMonth(anchorMonth);
+    setIsEditModalOpen(true);
+    setPendingBill(null);
+  }, [pendingBill, scopeModalAction]);
+
+  const handleScopeCancel = () => {
+    setIsScopeModalOpen(false);
+    setPendingBill(null);
+  };
+
+  const executeDelete = async (transactionId: number, scope: FixedBillScope, anchorMonth: string) => {
+    const toastId = toast.loading('Excluindo conta fixa...');
+    try {
+      await deleteFixedBillScoped(transactionId, scope, anchorMonth);
+      toast.success('Conta fixa excluida!', { id: toastId });
+      refetch();
+    } catch (deleteError) {
+      const message = extractErrorMessage(deleteError, 'Falha ao excluir a conta fixa.');
+      toast.error(message, { id: toastId });
+    }
+  };
+
+  const handleEditSave = async (updateData: FixedBillUpdateData) => {
+    if (editBill === null) return;
+
+    const toastId = toast.loading('Salvando alteracoes...');
+    try {
+      await updateFixedBillScoped(editBill.transactionId, updateData);
+      toast.success('Conta fixa atualizada!', { id: toastId });
+      setIsEditModalOpen(false);
+      setEditBill(null);
+      refetch();
+    } catch (saveError) {
+      const message = extractErrorMessage(saveError, 'Falha ao atualizar a conta fixa.');
+      toast.error(message, { id: toastId });
+      throw saveError;
+    }
+  };
+
+  const handleEditCancel = () => {
+    setIsEditModalOpen(false);
+    setEditBill(null);
   };
 
   return (
@@ -183,7 +315,13 @@ export function FixedBillsPage() {
         <>
           <div className="space-y-4 md:hidden">
             {data.items.map(bill => (
-              <FixedBillCard key={bill.transactionId} bill={bill} onTogglePaid={handleTogglePaid} />
+              <FixedBillCard
+                key={bill.transactionId}
+                bill={bill}
+                onTogglePaid={handleTogglePaid}
+                onEdit={handleOpenEdit}
+                onDelete={handleOpenDelete}
+              />
             ))}
           </div>
 
@@ -197,16 +335,44 @@ export function FixedBillsPage() {
                   <th className="p-4 font-semibold">Fonte</th>
                   <th className="p-4 font-semibold">Vencimento</th>
                   <th className="p-4 font-semibold text-right">Valor</th>
+                  <th className="p-4 font-semibold w-20 text-center">Acoes</th>
                 </tr>
               </thead>
               <tbody>
                 {data.items.map(bill => (
-                  <FixedBillRow key={bill.transactionId} bill={bill} onTogglePaid={handleTogglePaid} />
+                  <FixedBillRow
+                    key={bill.transactionId}
+                    bill={bill}
+                    onTogglePaid={handleTogglePaid}
+                    onEdit={handleOpenEdit}
+                    onDelete={handleOpenDelete}
+                  />
                 ))}
               </tbody>
             </table>
           </div>
         </>
+      )}
+
+      {pendingBill !== null && (
+        <FixedBillScopeModal
+          isOpen={isScopeModalOpen}
+          action={scopeModalAction}
+          currentMonth={monthKey}
+          onConfirm={handleScopeConfirm}
+          onCancel={handleScopeCancel}
+        />
+      )}
+
+      {editBill !== null && (
+        <FixedBillEditModal
+          isOpen={isEditModalOpen}
+          bill={editBill}
+          scope={editScope}
+          anchorMonth={editAnchorMonth}
+          onSave={handleEditSave}
+          onCancel={handleEditCancel}
+        />
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Target, Plus, Pencil, Trash2, LoaderCircle, AlertCircle } from 'lucide-react';
+import { Target, Plus, Pencil, Trash2, LoaderCircle, AlertCircle, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGoals } from '../hooks/useGoals';
 import { GoalModal } from '../components/features/goals/GoalModal';
@@ -16,7 +16,7 @@ const GOAL_TYPE_LABELS: Record<GoalType, string> = {
   Custom: 'Personalizado',
 };
 
-const EMERGENCY_FUND_DEFAULT: GoalData = {
+const EMERGENCY_FUND_TEMPLATE: GoalData = {
   name: 'Fundo de Emergencia',
   description: '3 a 6 vezes o salario mensal para cobrir imprevistos',
   targetAmount: 0,
@@ -186,17 +186,20 @@ export function GoalsPage() {
 
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | undefined>(undefined);
+  const [goalTemplate, setGoalTemplate] = useState<GoalData | undefined>(undefined);
   const [contributionTarget, setContributionTarget] = useState<ContributionModalState | null>(null);
 
   const hasEmergencyFund = goals.some((g) => g.type === 'EmergencyFund');
 
   const handleOpenCreate = () => {
     setEditingGoal(undefined);
+    setGoalTemplate(undefined);
     setIsGoalModalOpen(true);
   };
 
   const handleOpenEdit = (goal: Goal) => {
     setEditingGoal(goal);
+    setGoalTemplate(undefined);
     setIsGoalModalOpen(true);
   };
 
@@ -240,13 +243,10 @@ export function GoalsPage() {
     }
   };
 
-  const handleCreateEmergencyFund = async () => {
-    try {
-      await create(EMERGENCY_FUND_DEFAULT);
-      toast.success('Fundo de emergencia criado!');
-    } catch (createError) {
-      toast.error(extractErrorMessage(createError, 'Erro ao criar meta.'));
-    }
+  const handleOpenEmergencyFundModal = () => {
+    setEditingGoal(undefined);
+    setGoalTemplate(EMERGENCY_FUND_TEMPLATE);
+    setIsGoalModalOpen(true);
   };
 
   if (isLoading) {
@@ -283,6 +283,14 @@ export function GoalsPage() {
           </button>
         </div>
 
+        <div className="flex items-start gap-3 bg-slate-800/60 border border-slate-700 rounded-xl p-4">
+          <Info className="text-slate-400 shrink-0 mt-0.5" size={16} />
+          <p className="text-slate-400 text-xs leading-relaxed">
+            Acompanhe seus objetivos financeiros aqui. Voce pode adicionar valores manualmente ou vincular transacoes a uma meta.
+            O progresso de uma meta so e atualizado quando a transacao vinculada esta marcada como paga.
+          </p>
+        </div>
+
         {!hasEmergencyFund && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-900/30 border border-amber-700 rounded-xl p-4">
             <div className="flex items-start gap-3">
@@ -293,7 +301,7 @@ export function GoalsPage() {
               </div>
             </div>
             <button
-              onClick={handleCreateEmergencyFund}
+              onClick={handleOpenEmergencyFundModal}
               className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition-colors"
             >
               Criar agora
@@ -333,7 +341,8 @@ export function GoalsPage() {
       {isGoalModalOpen && (
         <GoalModal
           goal={editingGoal}
-          onClose={() => setIsGoalModalOpen(false)}
+          template={goalTemplate}
+          onClose={() => { setIsGoalModalOpen(false); setGoalTemplate(undefined); }}
           onSave={handleSave}
         />
       )}

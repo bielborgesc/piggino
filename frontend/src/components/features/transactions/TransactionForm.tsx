@@ -39,6 +39,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
   const [transactionType, setTransactionType] = useState<CategoryType>('Expense');
   const [isInstallment, setIsInstallment] = useState(false);
   const [installmentCount, setInstallmentCount] = useState('');
+  const [amountMode, setAmountMode] = useState<'per-installment' | 'total'>('per-installment');
   const [isFixed, setIsFixed] = useState(false);
   const [dayOfMonth, setDayOfMonth] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
@@ -67,7 +68,12 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
   useEffect(() => {
     if (initialData) {
       setDescription(initialData.description);
-      setAmount(String(initialData.totalAmount));
+      const isEditingInstallment = initialData.isInstallment && initialData.installmentCount && initialData.installmentCount > 0;
+      const displayAmount = isEditingInstallment
+        ? initialData.totalAmount / initialData.installmentCount!
+        : initialData.totalAmount;
+      setAmount(String(displayAmount));
+      setAmountMode('per-installment');
       setPurchaseDate(toLocalDateInputValue(new Date(initialData.originalPurchaseDate)));
       setSourceId(String(initialData.financialSourceId));
       setCategoryId(String(initialData.categoryId));
@@ -81,6 +87,7 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
     } else {
       setDescription('');
       setAmount('');
+      setAmountMode('per-installment');
       setPurchaseDate(toLocalDateInputValue(new Date()));
       setSourceId('');
       setCategoryId('');
@@ -121,9 +128,16 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
       return;
     }
 
+    const parsedAmount = parseFloat(amount);
+    const parsedCount = isInstallment ? parseInt(installmentCount) : 1;
+    const perInstallmentAmount =
+      isInstallment && amountMode === 'total'
+        ? parsedAmount / parsedCount
+        : parsedAmount;
+
     const transactionData: TransactionData = {
       description,
-      totalAmount: parseFloat(amount),
+      totalAmount: perInstallmentAmount,
       transactionType,
       financialSourceId: parseInt(sourceId),
       categoryId: parseInt(categoryId),
@@ -170,38 +184,79 @@ export function TransactionForm({ onSave, onCancel, initialData, isSaving }: Tra
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-400 mb-1">
-              Valor
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
-                R$
-              </span>
+        <div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="amount" className="block text-sm font-medium text-gray-400 mb-1">
+                {isInstallment
+                  ? amountMode === 'per-installment' ? 'Valor da Parcela' : 'Valor Total'
+                  : 'Valor'}
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                  R$
+                </span>
+                <input
+                  type="number"
+                  id="amount"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 pl-10"
+                  placeholder="0,00"
+                  step="0.01"
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="purchaseDate" className="block text-sm font-medium text-gray-400 mb-1">
+                Data
+              </label>
               <input
-                type="number"
-                id="amount"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 pl-10"
-                placeholder="0,00"
-                step="0.01"
+                type="date"
+                id="purchaseDate"
+                value={purchaseDate}
+                onChange={(e) => setPurchaseDate(e.target.value)}
+                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2"
               />
             </div>
           </div>
-          <div>
-            <label htmlFor="purchaseDate" className="block text-sm font-medium text-gray-400 mb-1">
-              Data
-            </label>
-            <input
-              type="date"
-              id="purchaseDate"
-              value={purchaseDate}
-              onChange={(e) => setPurchaseDate(e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded-md p-2"
-            />
-          </div>
+
+          {isInstallment && (
+            <div className="mt-2 space-y-1">
+              <div className="flex gap-4">
+                <label className="flex items-center gap-1.5 cursor-pointer text-sm text-gray-300">
+                  <input
+                    type="radio"
+                    name="amountMode"
+                    value="per-installment"
+                    checked={amountMode === 'per-installment'}
+                    onChange={() => setAmountMode('per-installment')}
+                    className="text-green-500 focus:ring-green-500"
+                  />
+                  Valor da parcela
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer text-sm text-gray-300">
+                  <input
+                    type="radio"
+                    name="amountMode"
+                    value="total"
+                    checked={amountMode === 'total'}
+                    onChange={() => setAmountMode('total')}
+                    className="text-green-500 focus:ring-green-500"
+                  />
+                  Valor total
+                </label>
+              </div>
+
+              {amount && installmentCount && parseInt(installmentCount) >= 2 && (
+                <p className="text-xs text-gray-400">
+                  {amountMode === 'per-installment'
+                    ? `${installmentCount} × R$ ${parseFloat(amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} = R$ ${(parseFloat(amount) * parseInt(installmentCount)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} total`
+                    : `R$ ${parseFloat(amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ÷ ${installmentCount} = R$ ${(parseFloat(amount) / parseInt(installmentCount)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} por parcela`}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <div>

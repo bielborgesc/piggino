@@ -4,10 +4,12 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { TransactionModal } from '../components/features/transactions/TransactionModal';
 import { InstallmentBreakdown } from '../components/features/transactions/InstallmentBreakdown';
 import { RecurrenceScopeModal } from '../components/features/transactions/RecurrenceScopeModal';
+import { FixedBillScopeModal } from '../components/features/transactions/FixedBillScopeModal';
+import { FixedBillEditModal } from '../components/features/transactions/FixedBillEditModal';
 import { MonthNavigator } from '../components/ui/MonthNavigator';
 import { CategoryBadge } from '../components/ui/CategoryBadge';
-import { getTransactions, getTransactionById, deleteTransaction, deleteInstallmentsByScope, getCategories, getFinancialSources, toggleInstallmentPaidStatus, toggleTransactionPaidStatus, settleInstallments, payFixedBill, unpayFixedBill } from '../services/api';
-import { Transaction, Category, FinancialSource, RecurrenceScope } from '../types';
+import { getTransactions, getTransactionById, deleteTransaction, deleteInstallmentsByScope, getCategories, getFinancialSources, toggleInstallmentPaidStatus, toggleTransactionPaidStatus, settleInstallments, payFixedBill, unpayFixedBill, deleteFixedBillScoped, updateFixedBillScoped } from '../services/api';
+import { Transaction, Category, FinancialSource, RecurrenceScope, FixedBillScope, FixedBillUpdateData, FixedBill } from '../types';
 import { formatBRL } from '../utils/formatters';
 import toast from 'react-hot-toast';
 import { extractErrorMessage } from '../utils/errors';
@@ -18,7 +20,7 @@ const TRANSACTIONS_MONTH_FORMAT: Intl.DateTimeFormatOptions = {
 };
 
 function isCardTransaction(item: Transaction): boolean {
-  return item.isInstallment === true || item.financialSourceType === 'Card';
+  return item.financialSourceType === 'Card';
 }
 
 function resolveInstallmentAmount(item: Transaction): number {
@@ -72,6 +74,15 @@ export function TransactionsPage() {
   const [pendingInstallmentNumber, setPendingInstallmentNumber] = useState<number | undefined>(undefined);
 
   const [settlingId, setSettlingId] = useState<number | null>(null);
+
+  const [isFixedBillScopeModalOpen, setIsFixedBillScopeModalOpen] = useState(false);
+  const [fixedBillScopeModalAction, setFixedBillScopeModalAction] = useState<'edit' | 'delete'>('delete');
+  const [pendingFixedBillItem, setPendingFixedBillItem] = useState<Transaction | null>(null);
+
+  const [isFixedBillEditModalOpen, setIsFixedBillEditModalOpen] = useState(false);
+  const [fixedBillEditTarget, setFixedBillEditTarget] = useState<FixedBill | null>(null);
+  const [fixedBillEditScope, setFixedBillEditScope] = useState<FixedBillScope>('All');
+  const [fixedBillEditAnchorMonth, setFixedBillEditAnchorMonth] = useState<string>('');
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [financialSources, setFinancialSources] = useState<FinancialSource[]>([]);
@@ -154,9 +165,38 @@ export function TransactionsPage() {
     return `${year}-${month}`;
   };
 
-  const handleTogglePaid = async (item: Transaction & { displayAmount: number; syntheticId?: string; isInstallmentItem?: boolean; installmentId?: number }) => {
+  const resolveInstallmentId = (transactionId: number, installmentNumber: number): number | null => {
+    const parent = allTransactions.find(t => t.id === transactionId);
+    if (!parent?.cardInstallments) return null;
+    const installment = parent.cardInstallments.find(i => i.installmentNumber === installmentNumber);
+    return installment?.id ?? null;
+  };
+
+  const handleTogglePaid = async (item: Transaction & { displayAmount: number; syntheticId?: string }) => {
     if (isCardTransaction(item)) {
       toast('Parcelas de cartao sao pagas na tela Fatura.', { icon: '💳' });
+      return;
+    }
+
+    const isAccountInstallmentRow = item.isInstallment &&
+      item.currentInstallmentNumber !== undefined &&
+      item.financialSourceType !== 'Card';
+
+    if (isAccountInstallmentRow) {
+      const installmentId = resolveInstallmentId(item.id, item.currentInstallmentNumber!);
+      if (!installmentId) {
+        toast.error('Nao foi possivel identificar a parcela.');
+        return;
+      }
+      const toastId = toast.loading('Atualizando status...');
+      try {
+        await toggleInstallmentPaidStatus(installmentId);
+        toast.success('Status atualizado!', { id: toastId });
+        getTransactions().then(data => setAllTransactions(data)).catch(() => {});
+      } catch (toggleError) {
+        const message = extractErrorMessage(toggleError, 'Nao foi possivel atualizar o status.');
+        toast.error(message, { id: toastId });
+      }
       return;
     }
 
@@ -171,9 +211,7 @@ export function TransactionsPage() {
     );
 
     try {
-      if (item.isInstallmentItem && item.installmentId) {
-        await toggleInstallmentPaidStatus(item.installmentId);
-      } else if (item.isFixed) {
+      if (item.isFixed) {
         const monthParam = buildMonthParam(currentDate);
         if (item.isPaid) {
           await unpayFixedBill(item.id, monthParam);
@@ -219,7 +257,14 @@ export function TransactionsPage() {
 
     const original = resolveOriginalTransaction(item);
 
-    if (original.isFixed || original.isRecurring) {
+    if (original.isFixed) {
+      setPendingFixedBillItem(original);
+      setFixedBillScopeModalAction('edit');
+      setIsFixedBillScopeModalOpen(true);
+      return;
+    }
+
+    if (original.isRecurring) {
       setPendingScopeItem(original);
       setScopeModalAction('edit');
       setIsScopeModalOpen(true);
@@ -249,7 +294,14 @@ export function TransactionsPage() {
 
     const original = resolveOriginalTransaction(item);
 
-    if (original.isFixed || original.isRecurring) {
+    if (original.isFixed) {
+      setPendingFixedBillItem(original);
+      setFixedBillScopeModalAction('delete');
+      setIsFixedBillScopeModalOpen(true);
+      return;
+    }
+
+    if (original.isRecurring) {
       setPendingScopeItem(original);
       setScopeModalAction('delete');
       setIsScopeModalOpen(true);
@@ -333,6 +385,72 @@ export function TransactionsPage() {
   const handleInstallmentScopeCancel = () => {
     setIsInstallmentScopeModalOpen(false);
     setPendingInstallmentItem(null);
+  };
+
+  const handleFixedBillScopeConfirm = async (scope: FixedBillScope, anchorMonth: string) => {
+    setIsFixedBillScopeModalOpen(false);
+
+    if (pendingFixedBillItem === null) return;
+
+    const item = pendingFixedBillItem;
+    setPendingFixedBillItem(null);
+
+    if (fixedBillScopeModalAction === 'delete') {
+      const toastId = toast.loading('Excluindo conta fixa...');
+      try {
+        await deleteFixedBillScoped(item.id, scope, anchorMonth);
+        toast.success('Conta fixa excluida!', { id: toastId });
+        fetchPageData();
+      } catch (deleteError) {
+        const message = extractErrorMessage(deleteError, 'Falha ao excluir a conta fixa.');
+        toast.error(message, { id: toastId });
+      }
+      return;
+    }
+
+    const asBill: FixedBill = {
+      transactionId: item.id,
+      description: item.description,
+      totalAmount: item.totalAmount,
+      categoryName: item.categoryName ?? null,
+      financialSourceName: item.financialSourceName ?? null,
+      financialSourceType: item.financialSourceType,
+      dayOfMonth: item.dayOfMonth ?? 1,
+      isPaid: item.isPaid,
+      paymentId: null,
+    };
+
+    setFixedBillEditTarget(asBill);
+    setFixedBillEditScope(scope);
+    setFixedBillEditAnchorMonth(anchorMonth);
+    setIsFixedBillEditModalOpen(true);
+  };
+
+  const handleFixedBillScopeCancel = () => {
+    setIsFixedBillScopeModalOpen(false);
+    setPendingFixedBillItem(null);
+  };
+
+  const handleFixedBillEditSave = async (updateData: FixedBillUpdateData) => {
+    if (fixedBillEditTarget === null) return;
+
+    const toastId = toast.loading('Salvando alteracoes...');
+    try {
+      await updateFixedBillScoped(fixedBillEditTarget.transactionId, updateData);
+      toast.success('Conta fixa atualizada!', { id: toastId });
+      setIsFixedBillEditModalOpen(false);
+      setFixedBillEditTarget(null);
+      fetchPageData();
+    } catch (saveError) {
+      const message = extractErrorMessage(saveError, 'Falha ao atualizar a conta fixa.');
+      toast.error(message, { id: toastId });
+      throw saveError;
+    }
+  };
+
+  const handleFixedBillEditCancel = () => {
+    setIsFixedBillEditModalOpen(false);
+    setFixedBillEditTarget(null);
   };
 
   const handleToggleInstallmentBreakdown = (rowId: string) => {
@@ -646,6 +764,27 @@ export function TransactionsPage() {
         onConfirm={handleInstallmentScopeConfirm}
         onCancel={handleInstallmentScopeCancel}
       />
+
+      {pendingFixedBillItem !== null && (
+        <FixedBillScopeModal
+          isOpen={isFixedBillScopeModalOpen}
+          action={fixedBillScopeModalAction}
+          currentMonth={buildMonthParam(currentDate)}
+          onConfirm={handleFixedBillScopeConfirm}
+          onCancel={handleFixedBillScopeCancel}
+        />
+      )}
+
+      {fixedBillEditTarget !== null && (
+        <FixedBillEditModal
+          isOpen={isFixedBillEditModalOpen}
+          bill={fixedBillEditTarget}
+          scope={fixedBillEditScope}
+          anchorMonth={fixedBillEditAnchorMonth}
+          onSave={handleFixedBillEditSave}
+          onCancel={handleFixedBillEditCancel}
+        />
+      )}
     </>
   );
 }

@@ -1,6 +1,7 @@
 export type CategoryType = 'Income' | 'Expense';
 export type FinancialSourceType = 'Card' | 'Account' | 'Cash';
 export type RecurrenceScope = 'OnlyThis' | 'ThisAndFuture' | 'ThisAndPast' | 'All';
+export type FixedBillScope = 'All' | 'FromThisMonthForward' | 'FromThisMonthBackward';
 export type BudgetBucket = 'None' | 'Needs' | 'Wants' | 'Savings';
 export type GoalType = 'EmergencyFund' | 'Savings' | 'Investment' | 'Debt' | 'Travel' | 'Custom';
 
@@ -203,6 +204,16 @@ export interface FixedBill {
   dayOfMonth: number;
   isPaid: boolean;
   paymentId: number | null;
+}
+
+export interface FixedBillUpdateData {
+  scope: FixedBillScope;
+  anchorMonth: string;
+  description: string;
+  totalAmount: number;
+  categoryId: number;
+  financialSourceId: number;
+  dayOfMonth: number;
 }
 
 export interface MonthlyFixedBills {

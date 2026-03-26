@@ -63,5 +63,10 @@ namespace Piggino.Api.Domain.Transactions.Entities
         /// Carries the original purchase date before the PurchaseDate is replaced by the installment DueDate.
         /// </summary>
         public DateTime? OriginalPurchaseDate { get; set; }
+
+        /// <summary>
+        /// For fixed bills only. When set, the bill will no longer be projected after this year/month.
+        /// </summary>
+        public DateTime? EndDate { get; set; }
     }
 }

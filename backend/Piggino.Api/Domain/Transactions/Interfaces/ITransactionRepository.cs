@@ -26,5 +26,6 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         void DeleteFixedPayment(FixedTransactionPayment payment);
         Task<IEnumerable<CardInstallment>> GetUnpaidInstallmentsForMonthAsync(Guid userId, int year, int month);
         Task<IEnumerable<Transaction>> GetActiveInstallmentTransactionsAsync(Guid userId);
+        Task<Transaction?> GetFixedTransactionByIdAsync(int id, Guid userId);
     }
 }

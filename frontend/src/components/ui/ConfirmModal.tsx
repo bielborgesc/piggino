@@ -25,11 +25,13 @@ export function ConfirmModal({
       : 'bg-green-600 hover:bg-green-700 text-white';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-slate-800 rounded-xl p-6 w-full max-w-sm border border-slate-700 shadow-xl">
-        <h2 className="text-white font-bold text-lg mb-2">{title}</h2>
-        <p className="text-slate-400 text-sm mb-6">{message}</p>
-        <div className="flex justify-end gap-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-slate-800 rounded-xl w-full max-w-sm border border-slate-700 shadow-xl flex flex-col max-h-[90dvh]">
+        <div className="overflow-y-auto flex-1 px-6 pt-6 pb-4">
+          <h2 className="text-white font-bold text-lg mb-2">{title}</h2>
+          <p className="text-slate-400 text-sm">{message}</p>
+        </div>
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-700 shrink-0">
           <button
             type="button"
             onClick={onCancel}

@@ -161,8 +161,8 @@ export function ChangePasswordModal({ onClose, onLogout }: ChangePasswordModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm border border-slate-700 p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm border border-slate-700 flex flex-col max-h-[90dvh]">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0">
           <h2 className="text-xl font-bold text-white">Alterar senha</h2>
           <button
             type="button"
@@ -174,7 +174,8 @@ export function ChangePasswordModal({ onClose, onLogout }: ChangePasswordModalPr
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <div className="overflow-y-auto flex-1 px-6 space-y-5">
           <PasswordField
             id="current-password"
             label="Senha atual"
@@ -207,39 +208,41 @@ export function ChangePasswordModal({ onClose, onLogout }: ChangePasswordModalPr
             <p className="text-red-400 text-xs -mt-3">As senhas nao coincidem.</p>
           )}
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isLoading}
-              className="flex-1 py-2.5 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors font-semibold disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitDisabled}
-              className="flex-1 flex justify-center items-center bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg transition-all duration-300 disabled:bg-slate-500 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <svg
-                  className="animate-spin h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              ) : (
-                'Alterar'
-              )}
-            </button>
-          </div>
+        </div>
+
+        <div className="flex gap-3 px-6 py-4 border-t border-slate-700 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isLoading}
+            className="flex-1 py-2.5 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors font-semibold disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitDisabled}
+            className="flex-1 flex justify-center items-center bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg transition-all duration-300 disabled:bg-slate-500 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <svg
+                className="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+            ) : (
+              'Alterar'
+            )}
+          </button>
+        </div>
         </form>
       </div>
     </div>

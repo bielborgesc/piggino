@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Goal, GoalData, GoalType } from '../../../types';
 
+type GoalFormData = Omit<GoalData, 'targetAmount' | 'currentAmount'> & {
+  targetAmount: number | '';
+  currentAmount: number | '';
+};
+
 interface GoalTypeOption {
   value: GoalType;
   label: string;
@@ -19,11 +24,11 @@ const GOAL_TYPE_OPTIONS: GoalTypeOption[] = [
 
 const DEFAULT_COLOR = '#22c55e';
 
-const EMPTY_FORM: GoalData = {
+const EMPTY_FORM: GoalFormData = {
   name: '',
   description: '',
-  targetAmount: 0,
-  currentAmount: 0,
+  targetAmount: '',
+  currentAmount: '',
   targetDate: undefined,
   color: DEFAULT_COLOR,
   type: 'Custom',
@@ -31,12 +36,13 @@ const EMPTY_FORM: GoalData = {
 
 interface GoalModalProps {
   goal?: Goal;
+  template?: GoalData;
   onClose: () => void;
   onSave: (data: GoalData) => Promise<void>;
 }
 
-export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
-  const [form, setForm] = useState<GoalData>(EMPTY_FORM);
+export function GoalModal({ goal, template, onClose, onSave }: GoalModalProps) {
+  const [form, setForm] = useState<GoalFormData>(EMPTY_FORM);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -50,17 +56,29 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
         color: goal.color,
         type: goal.type,
       });
+    } else if (template) {
+      setForm({
+        ...EMPTY_FORM,
+        ...template,
+        targetAmount: template.targetAmount > 0 ? template.targetAmount : '',
+        currentAmount: template.currentAmount > 0 ? template.currentAmount : '',
+      });
     } else {
       setForm(EMPTY_FORM);
     }
-  }, [goal]);
+  }, [goal, template]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsSaving(true);
 
     try {
-      await onSave(form);
+      const goalData: GoalData = {
+        ...form,
+        targetAmount: Number(form.targetAmount) || 0,
+        currentAmount: Number(form.currentAmount) || 0,
+      };
+      await onSave(goalData);
     } finally {
       setIsSaving(false);
     }
@@ -69,9 +87,9 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
   const isEditing = goal !== undefined;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-slate-800 rounded-xl p-6 w-full max-w-lg border border-slate-700 shadow-xl">
-        <div className="flex items-center justify-between mb-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-slate-800 rounded-xl w-full max-w-lg border border-slate-700 shadow-xl flex flex-col max-h-[90dvh]">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0">
           <h2 className="text-white font-bold text-lg">
             {isEditing ? 'Editar meta' : 'Nova meta'}
           </h2>
@@ -80,7 +98,8 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <div className="overflow-y-auto flex-1 px-6 space-y-4">
           <div>
             <label className="block text-slate-300 text-sm font-medium mb-1">Nome</label>
             <input
@@ -133,8 +152,9 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
                 min={0.01}
                 step="0.01"
                 value={form.targetAmount}
-                onChange={(e) => setForm({ ...form, targetAmount: Number(e.target.value) })}
+                onChange={(e) => setForm({ ...form, targetAmount: e.target.value === '' ? '' : Number(e.target.value) })}
                 required
+                placeholder="Ex: 10000.00"
                 className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
@@ -145,7 +165,8 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
                 min={0}
                 step="0.01"
                 value={form.currentAmount}
-                onChange={(e) => setForm({ ...form, currentAmount: Number(e.target.value) })}
+                onChange={(e) => setForm({ ...form, currentAmount: e.target.value === '' ? '' : Number(e.target.value) })}
+                placeholder="0.00"
                 className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
@@ -171,22 +192,24 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 text-sm font-semibold transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="px-5 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white rounded-lg text-sm font-semibold transition-colors"
-            >
-              {isSaving ? 'Salvando...' : 'Salvar'}
-            </button>
-          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-700 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 text-sm font-semibold transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="px-5 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white rounded-lg text-sm font-semibold transition-colors"
+          >
+            {isSaving ? 'Salvando...' : 'Salvar'}
+          </button>
+        </div>
         </form>
       </div>
     </div>

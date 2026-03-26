@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   BarChart,
   Bar,
@@ -24,6 +24,7 @@ import { useBudgetAnalysis } from '../hooks/useBudgetAnalysis';
 import { useGoals } from '../hooks/useGoals';
 import { useHealthScore } from '../hooks/useHealthScore';
 import { useContextualTips } from '../hooks/useContextualTips';
+import { MonthNavigator } from '../components/ui/MonthNavigator';
 import { getCategories, getUserSettings } from '../services/api';
 import { Category, MonthlySummary, CategoryExpense, TopExpense, BudgetAnalysis, BucketCategoryBreakdown, Goal } from '../types';
 import { formatBRL } from '../utils/formatters';
@@ -864,8 +865,26 @@ interface DashboardPageProps {
 export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: DashboardPageProps) {
   const [categoryColorMap, setCategoryColorMap] = useState<Map<string, string>>(new Map());
   const [is503020Enabled, setIs503020Enabled] = useState(false);
-  const [budgetMonth, setBudgetMonth] = useState<string>(getCurrentMonthKey());
-  const { summary, isLoading, error, refetch } = useDashboard(MONTH_COUNT);
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const now = new Date();
+    return new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
+  });
+
+  const budgetMonth = `${selectedDate.getUTCFullYear()}-${String(selectedDate.getUTCMonth() + 1).padStart(2, '0')}`;
+
+  const handlePreviousMonth = useCallback(() => {
+    setSelectedDate((prev) => new Date(Date.UTC(prev.getUTCFullYear(), prev.getUTCMonth() - 1, 1)));
+  }, []);
+
+  const handleNextMonth = useCallback(() => {
+    setSelectedDate((prev) => new Date(Date.UTC(prev.getUTCFullYear(), prev.getUTCMonth() + 1, 1)));
+  }, []);
+
+  const { summary, isLoading, error, refetch } = useDashboard({
+    months: MONTH_COUNT,
+    year: selectedDate.getUTCFullYear(),
+    month: selectedDate.getUTCMonth() + 1,
+  });
   const { goals } = useGoals();
 
   useEffect(() => {
@@ -883,6 +902,11 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: Das
       .catch(() => {
         // Non-critical: feature stays hidden
       });
+  }, []);
+
+  const handleBudgetMonthChange = useCallback((monthKey: string) => {
+    const [year, month] = monthKey.split('-').map(Number);
+    setSelectedDate(new Date(Date.UTC(year, month - 1, 1)));
   }, []);
 
   if (isLoading) {
@@ -908,10 +932,15 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: Das
     );
   }
 
-
   return (
     <>
       <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6">
+        <MonthNavigator
+          currentDate={selectedDate}
+          onPreviousMonth={handlePreviousMonth}
+          onNextMonth={handleNextMonth}
+        />
+
         {is503020Enabled && (
           <BudgetAlertsBanner
             budgetMonth={budgetMonth}
@@ -962,7 +991,7 @@ export function DashboardPage({ onNavigateToCategories, onNavigateToGoals }: Das
         {is503020Enabled && (
           <BudgetAnalysisSection
             month={budgetMonth}
-            onMonthChange={setBudgetMonth}
+            onMonthChange={handleBudgetMonthChange}
             onNavigateToCategories={onNavigateToCategories}
           />
         )}

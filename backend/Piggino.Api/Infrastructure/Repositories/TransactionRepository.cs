@@ -183,5 +183,13 @@ namespace Piggino.Api.Infrastructure.Repositories
                     t.CardInstallments.Any(i => !i.IsPaid))
                 .ToListAsync();
         }
+
+        public async Task<Transaction?> GetFixedTransactionByIdAsync(int id, Guid userId)
+        {
+            return await _context.Transactions
+                .Include(t => t.Category)
+                .Include(t => t.FinancialSource)
+                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId && t.IsFixed);
+        }
     }
 }

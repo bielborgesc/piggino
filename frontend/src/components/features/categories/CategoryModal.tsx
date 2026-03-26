@@ -48,10 +48,10 @@ export function CategoryModal({ isOpen, onClose, onSaveSuccess, categoryToEdit, 
       onClick={onClose}
     >
       <div
-        className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md border border-slate-700 p-6 sm:p-8 relative"
+        className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md border border-slate-700 flex flex-col max-h-[90dvh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center px-6 pt-6 pb-4 shrink-0">
           <h2 className="text-xl font-bold text-white">
             {categoryToEdit ? 'Editar Categoria' : 'Nova Categoria'}
           </h2>
@@ -63,13 +63,15 @@ export function CategoryModal({ isOpen, onClose, onSaveSuccess, categoryToEdit, 
           </button>
         </div>
 
-        <CategoryForm
-          onSave={handleSave}
-          onCancel={onClose}
-          initialData={categoryToEdit}
-          isSaving={isSaving}
-          is503020Enabled={is503020Enabled}
-        />
+        <div className="overflow-y-auto px-6 pb-6">
+          <CategoryForm
+            onSave={handleSave}
+            onCancel={onClose}
+            initialData={categoryToEdit}
+            isSaving={isSaving}
+            is503020Enabled={is503020Enabled}
+          />
+        </div>
       </div>
     </div>
   );

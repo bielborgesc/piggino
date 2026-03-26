@@ -6,6 +6,8 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
 {
     public interface ITransactionService
     {
+        Task<bool> DeleteFixedBillAsync(int id, FixedBillScope scope, int anchorYear, int anchorMonth);
+        Task<bool> UpdateFixedBillAsync(int id, FixedBillUpdateDto updateDto);
         Task<TransactionReadDto?> GetByIdAsync(int id);
         Task<IEnumerable<TransactionReadDto>> GetAllAsync();
         Task<TransactionReadDto> CreateAsync(TransactionCreateDto createDto);
@@ -20,7 +22,7 @@ namespace Piggino.Api.Domain.Transactions.Interfaces
         Task<MonthlyFixedBillsReadDto> GetMonthlyFixedBillsAsync(int year, int month);
         Task<bool> MarkFixedBillAsPaidAsync(int transactionId, int year, int month);
         Task<bool> UnmarkFixedBillAsPaidAsync(int transactionId, int year, int month);
-        Task<DashboardSummaryDto> GetDashboardSummaryAsync(int months);
+        Task<DashboardSummaryDto> GetDashboardSummaryAsync(int months, int? year = null, int? month = null);
         Task<bool> SettleInstallmentsAsync(int transactionId);
         Task<SimulationReadDto> GetSimulationAsync();
         Task<BudgetAnalysisDto> GetBudgetAnalysisAsync(int year, int month);

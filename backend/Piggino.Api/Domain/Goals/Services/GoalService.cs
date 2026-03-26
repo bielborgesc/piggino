@@ -47,7 +47,7 @@ namespace Piggino.Api.Domain.Goals.Services
                 Description = dto.Description,
                 TargetAmount = dto.TargetAmount,
                 CurrentAmount = dto.CurrentAmount,
-                TargetDate = dto.TargetDate,
+                TargetDate = NormalizeToUtc(dto.TargetDate),
                 Color = dto.Color,
                 Type = dto.Type,
                 UserId = userId
@@ -71,7 +71,7 @@ namespace Piggino.Api.Domain.Goals.Services
             goal.Description = dto.Description;
             goal.TargetAmount = dto.TargetAmount;
             goal.CurrentAmount = dto.CurrentAmount;
-            goal.TargetDate = dto.TargetDate;
+            goal.TargetDate = NormalizeToUtc(dto.TargetDate);
             goal.Color = dto.Color;
             goal.Type = dto.Type;
 
@@ -169,6 +169,17 @@ namespace Piggino.Api.Domain.Goals.Services
                 return null;
 
             return (int)Math.Ceiling((double)(remaining / monthlySavingsRate));
+        }
+
+        private static DateTime? NormalizeToUtc(DateTime? date)
+        {
+            if (!date.HasValue)
+                return null;
+
+            if (date.Value.Kind == DateTimeKind.Utc)
+                return date.Value;
+
+            return DateTime.SpecifyKind(date.Value, DateTimeKind.Utc);
         }
 
         private Guid GetCurrentUserId()

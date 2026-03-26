@@ -17,8 +17,7 @@ namespace Piggino.Api.Domain.Transactions.Services
 {
     public class TransactionService : ITransactionService
     {
-        private const int FixedTransactionProjectionMonthsBefore = 2;
-        private const int FixedTransactionProjectionTotalMonths = 14;
+        private const int FixedTransactionProjectionMonthsForward = 3;
         private const int FallbackInstallmentCount = 1;
         private const string InstallmentSuffixPattern = @"\s\(\d+/\d+\)$";
 
@@ -65,7 +64,7 @@ namespace Piggino.Api.Domain.Transactions.Services
                 await _titheService.RecalculateTitheForCategoryAsync(
                     userId, newTransaction.CategoryId, newTransaction.PurchaseDate.Year, newTransaction.PurchaseDate.Month);
 
-            if (createDto.GoalId.HasValue)
+            if (createDto.GoalId.HasValue && newTransaction.IsPaid)
                 await ApplyGoalContributionAsync(createDto.GoalId.Value, newTransaction.TotalAmount, userId);
 
             return MapToReadDto(newTransaction);
@@ -174,7 +173,7 @@ namespace Piggino.Api.Domain.Transactions.Services
             List<Transaction> projected = new List<Transaction>();
 
             projected.AddRange(GetNormalTransactions(allTransactions));
-            projected.AddRange(ProjectCreditCardTransactions(allTransactions));
+            projected.AddRange(ProjectInstallmentTransactions(allTransactions));
             projected.AddRange(ProjectFixedTransactions(allTransactions, paidFixedBillKeys));
 
             return projected
@@ -316,9 +315,21 @@ namespace Piggino.Api.Domain.Transactions.Services
             if (transaction == null) return false;
             if (transaction.IsInstallment) return false;
 
+            bool wasAlreadyPaid = transaction.IsPaid;
             transaction.IsPaid = !transaction.IsPaid;
             _transactionRepository.Update(transaction);
-            return await _transactionRepository.SaveChangesAsync();
+            bool saved = await _transactionRepository.SaveChangesAsync();
+
+            if (saved && transaction.GoalId.HasValue)
+            {
+                decimal contributionDelta = wasAlreadyPaid
+                    ? -transaction.TotalAmount
+                    : transaction.TotalAmount;
+
+                await ApplyGoalContributionAsync(transaction.GoalId.Value, contributionDelta, userId);
+            }
+
+            return saved;
         }
 
         public async Task<bool> PayInvoiceAsync(int financialSourceId, int year, int month)
@@ -382,6 +393,7 @@ namespace Piggino.Api.Domain.Transactions.Services
                 .ToDictionary(p => p.TransactionId);
 
             List<FixedBillReadDto> items = fixedTransactions
+                .Where(t => IsFixedBillActiveForMonth(t, year, month))
                 .Select(t => MapToFixedBillReadDto(t, paymentByTransactionId))
                 .OrderBy(b => b.DayOfMonth)
                 .ToList();
@@ -432,15 +444,16 @@ namespace Piggino.Api.Domain.Transactions.Services
             return await _transactionRepository.SaveChangesAsync();
         }
 
-        public async Task<DashboardSummaryDto> GetDashboardSummaryAsync(int months)
+        public async Task<DashboardSummaryDto> GetDashboardSummaryAsync(int months, int? year = null, int? month = null)
         {
             IEnumerable<TransactionReadDto> allProjected = await GetAllAsync();
 
             DateTime now = DateTime.UtcNow;
-            int currentYear = now.Year;
-            int currentMonth = now.Month;
+            int currentYear = year ?? now.Year;
+            int currentMonth = month ?? now.Month;
+            DateTime selectedMonth = new DateTime(currentYear, currentMonth, 1, 0, 0, 0, DateTimeKind.Utc);
 
-            IEnumerable<MonthlySummaryDto> monthlySummaries = BuildMonthlySummaries(allProjected, now, months);
+            IEnumerable<MonthlySummaryDto> monthlySummaries = BuildMonthlySummaries(allProjected, selectedMonth, months);
             IEnumerable<CategoryExpenseDto> expensesByCategory = BuildExpensesByCategory(allProjected, currentYear, currentMonth);
             IEnumerable<TopExpenseDto> topExpenses = BuildTopExpenses(allProjected, currentYear, currentMonth);
 
@@ -451,8 +464,9 @@ namespace Piggino.Api.Domain.Transactions.Services
             int pendingFixedBills = await CountPendingFixedBillsAsync(currentYear, currentMonth);
             decimal pendingInvoiceAmount = await SumPendingInvoiceAmountAsync(currentYear, currentMonth);
 
-            decimal previousMonthIncome = SumByTypeForMonth(allProjected, TransactionType.Income, now.AddMonths(-1).Year, now.AddMonths(-1).Month);
-            decimal previousMonthExpenses = SumByTypeForMonth(allProjected, TransactionType.Expense, now.AddMonths(-1).Year, now.AddMonths(-1).Month);
+            DateTime previousMonthDate = selectedMonth.AddMonths(-1);
+            decimal previousMonthIncome = SumByTypeForMonth(allProjected, TransactionType.Income, previousMonthDate.Year, previousMonthDate.Month);
+            decimal previousMonthExpenses = SumByTypeForMonth(allProjected, TransactionType.Expense, previousMonthDate.Year, previousMonthDate.Month);
             decimal incomeChangePercent = previousMonthIncome > 0 ? Math.Round((currentMonthIncome - previousMonthIncome) / previousMonthIncome * 100, 1) : 0;
             decimal expensesChangePercent = previousMonthExpenses > 0 ? Math.Round((currentMonthExpenses - previousMonthExpenses) / previousMonthExpenses * 100, 1) : 0;
 
@@ -592,6 +606,113 @@ namespace Piggino.Api.Domain.Transactions.Services
 
             _transactionRepository.DeleteFixedPayment(existing);
             return await _transactionRepository.SaveChangesAsync();
+        }
+
+        public async Task<bool> DeleteFixedBillAsync(int id, FixedBillScope scope, int anchorYear, int anchorMonth)
+        {
+            Guid userId = GetCurrentUserId();
+            Transaction? transaction = await _transactionRepository.GetFixedTransactionByIdAsync(id, userId);
+
+            if (transaction == null) return false;
+
+            switch (scope)
+            {
+                case FixedBillScope.All:
+                    _transactionRepository.Delete(transaction);
+                    break;
+
+                case FixedBillScope.FromThisMonthForward:
+                    // Stop projecting this bill from the anchor month onward.
+                    // Set EndDate to the last day of anchorMonth - 1.
+                    DateTime lastActiveMonth = new DateTime(anchorYear, anchorMonth, 1, 0, 0, 0, DateTimeKind.Utc)
+                        .AddMonths(-1);
+                    transaction.EndDate = lastActiveMonth;
+                    _transactionRepository.Update(transaction);
+                    break;
+
+                case FixedBillScope.FromThisMonthBackward:
+                    // Stop projecting this bill for months up to and including the anchor month.
+                    // Advance PurchaseDate to the first day of anchorMonth + 1.
+                    transaction.PurchaseDate = new DateTime(anchorYear, anchorMonth, 1, 0, 0, 0, DateTimeKind.Utc)
+                        .AddMonths(1);
+                    _transactionRepository.Update(transaction);
+                    break;
+            }
+
+            return await _transactionRepository.SaveChangesAsync();
+        }
+
+        public async Task<bool> UpdateFixedBillAsync(int id, FixedBillUpdateDto updateDto)
+        {
+            Guid userId = GetCurrentUserId();
+            Transaction? original = await _transactionRepository.GetFixedTransactionByIdAsync(id, userId);
+
+            if (original == null) return false;
+
+            if (!DateOnly.TryParseExact(updateDto.AnchorMonth, "yyyy-MM", out DateOnly anchor))
+                throw new InvalidOperationException("Invalid anchor month format. Use yyyy-MM.");
+
+            int anchorYear = anchor.Year;
+            int anchorMonth = anchor.Month;
+
+            switch (updateDto.Scope)
+            {
+                case FixedBillScope.All:
+                    ApplyFixedBillFields(original, updateDto);
+                    _transactionRepository.Update(original);
+                    break;
+
+                case FixedBillScope.FromThisMonthForward:
+                    // Keep original until anchorMonth - 1, create a new bill from anchorMonth.
+                    DateTime originalEndMonth = new DateTime(anchorYear, anchorMonth, 1, 0, 0, 0, DateTimeKind.Utc)
+                        .AddMonths(-1);
+                    original.EndDate = originalEndMonth;
+                    _transactionRepository.Update(original);
+
+                    Transaction forwardBill = CloneFixedBillFrom(original, updateDto, anchorYear, anchorMonth);
+                    await _transactionRepository.AddAsync(forwardBill);
+                    break;
+
+                case FixedBillScope.FromThisMonthBackward:
+                    // Create a new bill covering PurchaseDate to anchorMonth, then advance original to anchorMonth + 1.
+                    Transaction backwardBill = CloneFixedBillFrom(original, updateDto, original.PurchaseDate.Year, original.PurchaseDate.Month);
+                    backwardBill.EndDate = new DateTime(anchorYear, anchorMonth, 1, 0, 0, 0, DateTimeKind.Utc);
+                    await _transactionRepository.AddAsync(backwardBill);
+
+                    original.PurchaseDate = new DateTime(anchorYear, anchorMonth, 1, 0, 0, 0, DateTimeKind.Utc)
+                        .AddMonths(1);
+                    _transactionRepository.Update(original);
+                    break;
+            }
+
+            return await _transactionRepository.SaveChangesAsync();
+        }
+
+        private static void ApplyFixedBillFields(Transaction transaction, FixedBillUpdateDto updateDto)
+        {
+            transaction.Description = updateDto.Description;
+            transaction.TotalAmount = updateDto.TotalAmount;
+            transaction.CategoryId = updateDto.CategoryId;
+            transaction.FinancialSourceId = updateDto.FinancialSourceId;
+            transaction.DayOfMonth = updateDto.DayOfMonth;
+        }
+
+        private static Transaction CloneFixedBillFrom(Transaction source, FixedBillUpdateDto updateDto, int startYear, int startMonth)
+        {
+            return new Transaction
+            {
+                Description = updateDto.Description,
+                TotalAmount = updateDto.TotalAmount,
+                TransactionType = source.TransactionType,
+                PurchaseDate = new DateTime(startYear, startMonth, source.DayOfMonth ?? 1, 0, 0, 0, DateTimeKind.Utc),
+                IsFixed = true,
+                DayOfMonth = updateDto.DayOfMonth,
+                IsPaid = false,
+                CategoryId = updateDto.CategoryId,
+                FinancialSourceId = updateDto.FinancialSourceId,
+                UserId = source.UserId,
+                CardInstallments = new List<CardInstallment>()
+            };
         }
 
         public async Task<bool> SettleInstallmentsAsync(int transactionId)
@@ -921,27 +1042,26 @@ namespace Piggino.Api.Domain.Transactions.Services
         {
             return transactions.Where(t =>
                 !t.IsFixed &&
+                !HasStoredInstallments(t) &&
                 (t.FinancialSource == null || t.FinancialSource.Type != FinancialSourceType.Card));
         }
 
-        private static IEnumerable<Transaction> ProjectCreditCardTransactions(IEnumerable<Transaction> transactions)
+        private static bool HasStoredInstallments(Transaction transaction)
         {
-            var creditCardTransactions = transactions.Where(t =>
+            return transaction.CardInstallments != null && transaction.CardInstallments.Any();
+        }
+
+        private static IEnumerable<Transaction> ProjectInstallmentTransactions(IEnumerable<Transaction> transactions)
+        {
+            var installmentTransactions = transactions.Where(t =>
                 !t.IsFixed &&
-                t.FinancialSource != null &&
-                t.FinancialSource.Type == FinancialSourceType.Card);
+                HasStoredInstallments(t));
 
             var projected = new List<Transaction>();
 
-            foreach (var transaction in creditCardTransactions)
+            foreach (var transaction in installmentTransactions)
             {
-                if (transaction.CardInstallments == null || !transaction.CardInstallments.Any())
-                {
-                    projected.Add(transaction);
-                    continue;
-                }
-
-                foreach (var installment in transaction.CardInstallments)
+                foreach (var installment in transaction.CardInstallments!)
                     projected.Add(ProjectInstallmentAsTransaction(transaction, installment));
             }
 
@@ -981,24 +1101,31 @@ namespace Piggino.Api.Domain.Transactions.Services
             IEnumerable<Transaction> transactions,
             HashSet<(int transactionId, int year, int month)> paidFixedBillKeys)
         {
-            var fixedTransactions = transactions
+            List<Transaction> fixedTransactions = transactions
                 .Where(t => t.IsFixed && t.DayOfMonth.HasValue)
                 .ToList();
 
             if (!fixedTransactions.Any()) return Enumerable.Empty<Transaction>();
 
-            var projected = new List<Transaction>();
-            DateTime windowStart = DateTime.UtcNow.AddMonths(-FixedTransactionProjectionMonthsBefore);
+            DateTime windowStart = fixedTransactions.Min(t => t.PurchaseDate);
+            DateTime windowEnd = DateTime.UtcNow.AddMonths(FixedTransactionProjectionMonthsForward);
 
-            for (int monthOffset = 0; monthOffset < FixedTransactionProjectionTotalMonths; monthOffset++)
+            int totalMonths = MonthsBetween(windowStart, windowEnd) + 1;
+
+            List<Transaction> projected = new List<Transaction>();
+
+            for (int monthOffset = 0; monthOffset < totalMonths; monthOffset++)
             {
-                DateTime month = windowStart.AddMonths(monthOffset);
+                DateTime month = new DateTime(windowStart.Year, windowStart.Month, 1, 0, 0, 0, DateTimeKind.Utc)
+                    .AddMonths(monthOffset);
 
-                foreach (var fixedTransaction in fixedTransactions)
+                foreach (Transaction fixedTransaction in fixedTransactions)
                 {
                     DateTime projectedDate = GetSafeDayInMonth(month.Year, month.Month, fixedTransaction.DayOfMonth!.Value);
 
                     if (projectedDate.Date < fixedTransaction.PurchaseDate.Date) continue;
+
+                    if (IsAfterEndDate(fixedTransaction, month.Year, month.Month)) continue;
 
                     bool isPaid = paidFixedBillKeys.Contains((fixedTransaction.Id, month.Year, month.Month));
                     projected.Add(ProjectFixedTransactionToMonth(fixedTransaction, projectedDate, isPaid));
@@ -1006,6 +1133,29 @@ namespace Piggino.Api.Domain.Transactions.Services
             }
 
             return projected;
+        }
+
+        private static bool IsFixedBillActiveForMonth(Transaction fixedTransaction, int year, int month)
+        {
+            bool startsAfterMonth = fixedTransaction.PurchaseDate.Year > year
+                || (fixedTransaction.PurchaseDate.Year == year && fixedTransaction.PurchaseDate.Month > month);
+
+            if (startsAfterMonth) return false;
+
+            return !IsAfterEndDate(fixedTransaction, year, month);
+        }
+
+        private static bool IsAfterEndDate(Transaction fixedTransaction, int year, int month)
+        {
+            if (!fixedTransaction.EndDate.HasValue) return false;
+
+            return year > fixedTransaction.EndDate.Value.Year
+                || (year == fixedTransaction.EndDate.Value.Year && month > fixedTransaction.EndDate.Value.Month);
+        }
+
+        private static int MonthsBetween(DateTime from, DateTime to)
+        {
+            return (to.Year - from.Year) * 12 + (to.Month - from.Month);
         }
 
         private static Transaction ProjectFixedTransactionToMonth(Transaction source, DateTime projectedDate, bool isPaid)

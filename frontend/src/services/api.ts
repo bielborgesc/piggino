@@ -8,6 +8,8 @@ import {
   UserLoginData,
   CategoryType,
   CategoryData,
+  FixedBillScope,
+  FixedBillUpdateData,
   FinancialSourceData,
   RecurrenceScope,
   Invoice,
@@ -267,8 +269,25 @@ export const unpayFixedBill = async (transactionId: number, month: string): Prom
   });
 };
 
-export const getDashboardSummary = async (months = 6): Promise<DashboardSummary> => {
-  const response = await apiClient.get<DashboardSummary>('/Transactions/summary', { params: { months } });
+export const deleteFixedBillScoped = async (
+  transactionId: number,
+  scope: FixedBillScope,
+  anchorMonth: string
+): Promise<void> => {
+  await apiClient.delete(`/Transactions/fixed-bills/${transactionId}/scoped`, {
+    params: { scope, anchorMonth },
+  });
+};
+
+export const updateFixedBillScoped = async (
+  transactionId: number,
+  data: FixedBillUpdateData
+): Promise<void> => {
+  await apiClient.put(`/Transactions/fixed-bills/${transactionId}/scoped`, data);
+};
+
+export const getDashboardSummary = async (months = 6, year?: number, month?: number): Promise<DashboardSummary> => {
+  const response = await apiClient.get<DashboardSummary>('/Transactions/summary', { params: { months, year, month } });
   return response.data;
 };
 
