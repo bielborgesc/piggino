@@ -23,16 +23,9 @@ function isCardTransaction(item: Transaction): boolean {
   return item.financialSourceType === 'Card';
 }
 
-function resolveInstallmentAmount(item: Transaction): number {
-  if (item.isInstallment && item.installmentCount && item.installmentCount > 0) {
-    return item.totalAmount / item.installmentCount;
-  }
-  return item.totalAmount;
-}
-
 function renderAmountCell(item: Transaction & { displayAmount: number }): React.ReactNode {
   const sign = item.transactionType.toLowerCase() === 'income' ? '+' : '-';
-  const amount = resolveInstallmentAmount(item);
+  const amount = item.totalAmount;
   const formattedAmount = formatBRL(Math.abs(amount));
 
   if (item.isInstallment && item.currentInstallmentNumber !== undefined && item.installmentCount) {
