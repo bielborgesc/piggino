@@ -7,6 +7,7 @@ import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { SpendingBudget, SpendingBudgetCreateData, SpendingBudgetExpense, SpendingBudgetExpenseCreateData } from '../types';
 import { formatBRL } from '../utils/formatters';
 import { extractErrorMessage } from '../utils/errors';
+import { addSpendingBudgetExpense } from '../services/api';
 
 const PROGRESS_BAR_MAX_PERCENT = 100;
 
@@ -202,15 +203,82 @@ function AddExpenseModal({ budgetName, onClose, onSave }: AddExpenseModalProps) 
   );
 }
 
+// --- Quick Add Expense Form (inline in card) ---
+
+interface QuickAddExpenseFormProps {
+  budgetId: number;
+  onSuccess: () => void;
+}
+
+function QuickAddExpenseForm({ budgetId, onSuccess }: QuickAddExpenseFormProps) {
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!description.trim() || !amount) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    setIsSubmitting(true);
+    try {
+      await addSpendingBudgetExpense(budgetId, {
+        description: description.trim(),
+        amount: Number(amount),
+        date: today,
+      });
+      setDescription('');
+      setAmount('');
+      onSuccess();
+    } catch (submitError) {
+      toast.error(extractErrorMessage(submitError, 'Erro ao registrar gasto.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex items-center gap-2 pt-1">
+      <input
+        type="text"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="Descrição"
+        required
+        className="flex-1 min-w-0 bg-slate-700 border border-slate-600 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+      />
+      <input
+        type="number"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        placeholder="Valor"
+        min={0.01}
+        step="0.01"
+        required
+        className="w-24 bg-slate-700 border border-slate-600 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+      />
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="shrink-0 flex items-center justify-center bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white rounded-lg p-1.5 transition-colors"
+        aria-label="Adicionar gasto"
+      >
+        <Plus size={14} />
+      </button>
+    </form>
+  );
+}
+
 // --- Budget Card (list view) ---
 
 interface BudgetCardProps {
   budget: SpendingBudget;
   onOpen: (budget: SpendingBudget) => void;
   onDelete: (budget: SpendingBudget) => void;
+  onExpenseAdded: () => void;
 }
 
-function BudgetCard({ budget, onOpen, onDelete }: BudgetCardProps) {
+function BudgetCard({ budget, onOpen, onDelete, onExpenseAdded }: BudgetCardProps) {
   const percent = calculateProgressPercent(budget.spentAmount, budget.totalAmount);
   const isOverBudget = budget.spentAmount > budget.totalAmount;
 
@@ -254,6 +322,8 @@ function BudgetCard({ budget, onOpen, onDelete }: BudgetCardProps) {
         </p>
       </div>
 
+      <QuickAddExpenseForm budgetId={budget.id} onSuccess={onExpenseAdded} />
+
       <button
         onClick={() => onOpen(budget)}
         className="flex items-center justify-between w-full text-sm text-slate-300 hover:text-white bg-slate-700/50 hover:bg-slate-700 rounded-lg px-3 py-2 transition-colors"
@@ -267,13 +337,22 @@ function BudgetCard({ budget, onOpen, onDelete }: BudgetCardProps) {
 
 // --- Expense Row ---
 
+const PERCENTAGE_DECIMAL_PLACES = 1;
+
+function calculateExpensePercent(expenseAmount: number, budgetTotalAmount: number): string {
+  if (budgetTotalAmount <= 0) return '0.0';
+  return ((expenseAmount / budgetTotalAmount) * 100).toFixed(PERCENTAGE_DECIMAL_PLACES);
+}
+
 interface ExpenseRowProps {
   expense: SpendingBudgetExpense;
+  budgetTotalAmount: number;
   onDelete: (expense: SpendingBudgetExpense) => void;
 }
 
-function ExpenseRow({ expense, onDelete }: ExpenseRowProps) {
+function ExpenseRow({ expense, budgetTotalAmount, onDelete }: ExpenseRowProps) {
   const formattedDate = new Date(expense.date).toLocaleDateString('pt-BR');
+  const expensePercent = calculateExpensePercent(expense.amount, budgetTotalAmount);
 
   return (
     <div className="flex items-center justify-between py-3 border-b border-slate-700 last:border-b-0">
@@ -282,7 +361,10 @@ function ExpenseRow({ expense, onDelete }: ExpenseRowProps) {
         <span className="text-slate-500 text-xs">{formattedDate}</span>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-slate-200 text-sm font-semibold">{formatBRL(expense.amount)}</span>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-slate-200 text-sm font-semibold">{formatBRL(expense.amount)}</span>
+          <span className="text-slate-500 text-xs">{expensePercent}%</span>
+        </div>
         <button
           onClick={() => onDelete(expense)}
           className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors"
@@ -300,9 +382,10 @@ function ExpenseRow({ expense, onDelete }: ExpenseRowProps) {
 interface BudgetDetailProps {
   budgetId: number;
   onBack: () => void;
+  onExpenseMutated: () => void;
 }
 
-function BudgetDetail({ budgetId, onBack }: BudgetDetailProps) {
+function BudgetDetail({ budgetId, onBack, onExpenseMutated }: BudgetDetailProps) {
   const { budget, isLoading, error, addExpense, removeExpense } = useSpendingBudget(budgetId);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [deleteExpenseTarget, setDeleteExpenseTarget] = useState<SpendingBudgetExpense | null>(null);
@@ -310,6 +393,7 @@ function BudgetDetail({ budgetId, onBack }: BudgetDetailProps) {
   const handleAddExpense = async (data: SpendingBudgetExpenseCreateData) => {
     try {
       await addExpense(data);
+      onExpenseMutated();
       toast.success('Gasto registrado!');
       setIsAddExpenseOpen(false);
     } catch (addError) {
@@ -324,6 +408,7 @@ function BudgetDetail({ budgetId, onBack }: BudgetDetailProps) {
 
     try {
       await removeExpense(target.id);
+      onExpenseMutated();
       toast.success('Gasto removido.');
     } catch (deleteError) {
       toast.error(extractErrorMessage(deleteError, 'Erro ao remover gasto.'));
@@ -421,6 +506,7 @@ function BudgetDetail({ budgetId, onBack }: BudgetDetailProps) {
                   <ExpenseRow
                     key={expense.id}
                     expense={expense}
+                    budgetTotalAmount={budget.totalAmount}
                     onDelete={setDeleteExpenseTarget}
                   />
                 ))}
@@ -453,7 +539,7 @@ function BudgetDetail({ budgetId, onBack }: BudgetDetailProps) {
 // --- Main BudgetsPage ---
 
 export function BudgetsPage() {
-  const { budgets, isLoading, error, create, remove } = useSpendingBudgets();
+  const { budgets, isLoading, error, create, remove, refetch } = useSpendingBudgets();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedBudgetId, setSelectedBudgetId] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SpendingBudget | null>(null);
@@ -490,6 +576,7 @@ export function BudgetsPage() {
       <BudgetDetail
         budgetId={selectedBudgetId}
         onBack={() => setSelectedBudgetId(null)}
+        onExpenseMutated={refetch}
       />
     );
   }
@@ -550,6 +637,7 @@ export function BudgetsPage() {
                 budget={budget}
                 onOpen={(b) => setSelectedBudgetId(b.id)}
                 onDelete={setDeleteTarget}
+                onExpenseAdded={refetch}
               />
             ))}
           </div>
