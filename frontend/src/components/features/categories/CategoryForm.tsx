@@ -48,6 +48,12 @@ export function CategoryForm({ onSave, onCancel, initialData, isSaving, is503020
     }
   }, [initialData]);
 
+  useEffect(() => {
+    if (type === 'Income') {
+      setBudgetBucket(DEFAULT_BUDGET_BUCKET);
+    }
+  }, [type]);
+
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     const resolvedBudgetBucket: BudgetBucket = is503020Enabled ? budgetBucket : DEFAULT_BUDGET_BUCKET;
@@ -121,7 +127,7 @@ export function CategoryForm({ onSave, onCancel, initialData, isSaving, is503020
         </div>
       )}
 
-      {is503020Enabled && (
+      {is503020Enabled && type === 'Expense' && (
         <div>
           <div className="flex items-center gap-2 mb-2">
             <label className="block text-sm font-medium text-slate-300">

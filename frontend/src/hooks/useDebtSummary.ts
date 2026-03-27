@@ -3,6 +3,8 @@ import { getDebtSummary } from '../services/api';
 import { DebtSummary } from '../types';
 import { extractErrorMessage } from '../utils/errors';
 
+export type DebtStrategy = 'Snowball' | 'Avalanche';
+
 interface UseDebtSummaryResult {
   debtSummary: DebtSummary | null;
   isLoading: boolean;
@@ -10,7 +12,7 @@ interface UseDebtSummaryResult {
   refetch: () => void;
 }
 
-export function useDebtSummary(): UseDebtSummaryResult {
+export function useDebtSummary(strategy: DebtStrategy): UseDebtSummaryResult {
   const [debtSummary, setDebtSummary] = useState<DebtSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export function useDebtSummary(): UseDebtSummaryResult {
     setError(null);
 
     try {
-      const data = await getDebtSummary();
+      const data = await getDebtSummary(strategy);
       setDebtSummary(data);
     } catch (err) {
       setError(extractErrorMessage(err, 'Não foi possível carregar o resumo de dívidas.'));
@@ -28,7 +30,7 @@ export function useDebtSummary(): UseDebtSummaryResult {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [strategy]);
 
   useEffect(() => {
     fetchDebtSummary();

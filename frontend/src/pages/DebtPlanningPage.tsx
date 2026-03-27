@@ -1,16 +1,15 @@
 import { useState } from 'react';
-import { CreditCard, LoaderCircle, CheckCircle, PartyPopper } from 'lucide-react';
+import { CreditCard, LoaderCircle, CheckCircle, PartyPopper, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useDebtSummary } from '../hooks/useDebtSummary';
+import { useDebtSummary, DebtStrategy } from '../hooks/useDebtSummary';
+import { useDebtSimulation } from '../hooks/useDebtSimulation';
 import { settleInstallments } from '../services/api';
 import { DebtItem } from '../types';
 import { formatBRL } from '../utils/formatters';
 
-type DebtStrategy = 'avalanche' | 'snowball';
-
 const STRATEGY_LABELS: Record<DebtStrategy, string> = {
-  avalanche: 'Avalanche',
-  snowball: 'Bola de Neve',
+  Avalanche: 'Avalanche',
+  Snowball: 'Bola de Neve',
 };
 
 function formatDate(isoDate: string | null): string {
@@ -47,7 +46,7 @@ function InstallmentProgressBar({
 }
 
 function StrategyExplanationCard({ strategy }: { strategy: DebtStrategy }) {
-  if (strategy === 'avalanche') {
+  if (strategy === 'Avalanche') {
     return (
       <div className="bg-blue-900/30 border border-blue-700/50 rounded-lg p-4">
         <h4 className="text-blue-300 font-semibold mb-1">Estratégia Avalanche</h4>
@@ -68,6 +67,104 @@ function StrategyExplanationCard({ strategy }: { strategy: DebtStrategy }) {
         vitórias rápidas e aumenta a motivação. Indicada para quem precisa de impulso psicológico
         para manter o foco.
       </p>
+    </div>
+  );
+}
+
+function DebtSimulationPanel({
+  debts,
+  selectedIds,
+  onToggle,
+  onSelectAll,
+  onClearAll,
+  freedMonthlyAmount,
+  totalSavings,
+}: {
+  debts: DebtItem[];
+  selectedIds: Set<number>;
+  onToggle: (id: number) => void;
+  onSelectAll: () => void;
+  onClearAll: () => void;
+  freedMonthlyAmount: number;
+  totalSavings: number;
+}) {
+  const hasSelection = selectedIds.size > 0;
+
+  return (
+    <div className="bg-slate-800 border border-slate-700 rounded-lg p-5 mb-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Zap size={18} className="text-yellow-400" />
+        <h3 className="text-white font-semibold">Simulação: Quitar Agora</h3>
+      </div>
+      <p className="text-slate-400 text-sm mb-4">
+        Selecione as dívidas que você quer simular quitar hoje e veja o impacto no seu orçamento mensal.
+      </p>
+
+      <div className="flex gap-3 mb-4">
+        <button
+          onClick={onSelectAll}
+          className="text-xs px-3 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors"
+        >
+          Selecionar todas
+        </button>
+        <button
+          onClick={onClearAll}
+          className="text-xs px-3 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors"
+        >
+          Limpar seleção
+        </button>
+      </div>
+
+      <div className="space-y-2 mb-5">
+        {debts.map((debt) => (
+          <label
+            key={debt.transactionId}
+            className="flex items-center justify-between gap-3 p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 cursor-pointer transition-colors"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <input
+                type="checkbox"
+                checked={selectedIds.has(debt.transactionId)}
+                onChange={() => onToggle(debt.transactionId)}
+                className="w-4 h-4 accent-green-500 flex-shrink-0"
+              />
+              <span className="text-sm text-slate-200 truncate">{debt.description}</span>
+            </div>
+            <span className="text-sm font-semibold text-slate-300 flex-shrink-0">
+              {formatBRL(debt.monthlyPayment)}/mês
+            </span>
+          </label>
+        ))}
+      </div>
+
+      <div
+        className={`rounded-lg p-4 border transition-colors ${
+          hasSelection
+            ? 'bg-green-900/30 border-green-700/50'
+            : 'bg-slate-700/30 border-slate-600/50'
+        }`}
+      >
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-slate-400 mb-1">Pagamento mensal liberado</p>
+            <p className={`text-xl font-bold ${hasSelection ? 'text-green-400' : 'text-slate-500'}`}>
+              {formatBRL(freedMonthlyAmount)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-400 mb-1">Economia total ao quitar</p>
+            <p className={`text-xl font-bold ${hasSelection ? 'text-yellow-400' : 'text-slate-500'}`}>
+              {formatBRL(totalSavings)}
+            </p>
+          </div>
+        </div>
+        {hasSelection && (
+          <p className="text-green-300 text-xs mt-3">
+            Selecionando {selectedIds.size} {selectedIds.size === 1 ? 'dívida' : 'dívidas'}, você
+            liberaria <strong>{formatBRL(freedMonthlyAmount)}/mês</strong> no seu orçamento.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -122,7 +219,7 @@ function DebtItemCard({
           </div>
         </div>
 
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 pt-1">
           <button
             onClick={() => onSettle(debt.transactionId)}
             disabled={isSettling}
@@ -151,8 +248,17 @@ function EmptyDebtsState() {
   );
 }
 
-function SummaryCard({ label, value, accent }: { label: string; value: string; accent?: 'red' | 'blue' }) {
-  const valueColor = accent === 'red' ? 'text-red-400' : accent === 'blue' ? 'text-blue-400' : 'text-white';
+function SummaryCard({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: 'red' | 'blue';
+}) {
+  const valueColor =
+    accent === 'red' ? 'text-red-400' : accent === 'blue' ? 'text-blue-400' : 'text-white';
 
   return (
     <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
@@ -163,9 +269,20 @@ function SummaryCard({ label, value, accent }: { label: string; value: string; a
 }
 
 export function DebtPlanningPage() {
-  const { debtSummary, isLoading, error, refetch } = useDebtSummary();
-  const [strategy, setStrategy] = useState<DebtStrategy>('avalanche');
+  const [strategy, setStrategy] = useState<DebtStrategy>('Snowball');
   const [settlingId, setSettlingId] = useState<number | null>(null);
+
+  const { debtSummary, isLoading, error, refetch } = useDebtSummary(strategy);
+
+  const sortedDebts = debtSummary?.debts
+    ? [...debtSummary.debts].sort((a, b) =>
+        strategy === 'Avalanche'
+          ? a.priority_Avalanche - b.priority_Avalanche
+          : a.priority_Snowball - b.priority_Snowball
+      )
+    : [];
+
+  const simulation = useDebtSimulation(sortedDebts);
 
   const handleSettle = async (transactionId: number) => {
     setSettlingId(transactionId);
@@ -181,14 +298,6 @@ export function DebtPlanningPage() {
       setSettlingId(null);
     }
   };
-
-  const sortedDebts = debtSummary?.debts
-    ? [...debtSummary.debts].sort((a, b) =>
-        strategy === 'avalanche'
-          ? a.priority_Avalanche - b.priority_Avalanche
-          : a.priority_Snowball - b.priority_Snowball
-      )
-    : [];
 
   return (
     <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
@@ -230,6 +339,18 @@ export function DebtPlanningPage() {
               accent="blue"
             />
           </div>
+
+          {sortedDebts.length > 0 && (
+            <DebtSimulationPanel
+              debts={sortedDebts}
+              selectedIds={simulation.selectedIds}
+              onToggle={simulation.toggleDebt}
+              onSelectAll={simulation.selectAll}
+              onClearAll={simulation.clearAll}
+              freedMonthlyAmount={simulation.freedMonthlyAmount}
+              totalSavings={simulation.totalSavings}
+            />
+          )}
 
           <div className="flex flex-wrap gap-2 mb-5">
             {(Object.keys(STRATEGY_LABELS) as DebtStrategy[]).map((key) => (

@@ -14,6 +14,7 @@ import { OnboardingPage } from './pages/OnboardingPage';
 import { MainLayout } from './components/layout/MainLayout';
 import { ChangePasswordModal } from './components/features/auth/ChangePasswordModal';
 import { UserSettingsModal } from './components/features/settings/UserSettingsModal';
+import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { useAuth } from './hooks/useAuth';
 
 type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'goals' | 'projection' | 'debts' | 'onboarding';
@@ -21,10 +22,18 @@ type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 
 const TOAST_STYLES = { style: { background: '#334155', color: '#f1f5f9' } };
 
 function App() {
-  const { isAuthenticated, onLoginSuccess, onLogout } = useAuth();
+  const { isAuthenticated, isInitializing, onLoginSuccess, onLogout } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <LoadingSpinner size={48} />
+      </div>
+    );
+  }
 
   if (isAuthenticated) {
     return (

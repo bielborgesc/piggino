@@ -300,8 +300,10 @@ export const getSimulation = async (): Promise<Simulation> => {
   return response.data;
 };
 
-export const getDebtSummary = async (): Promise<DebtSummary> => {
-  const response = await apiClient.get<DebtSummary>('/Transactions/debt-summary');
+export const getDebtSummary = async (strategy: 'Snowball' | 'Avalanche'): Promise<DebtSummary> => {
+  const response = await apiClient.get<DebtSummary>('/Transactions/debt-summary', {
+    params: { strategy },
+  });
   return response.data;
 };
 

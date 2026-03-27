@@ -287,9 +287,10 @@ namespace Piggino.Api.Controllers
         }
 
         [HttpGet("debt-summary")]
-        public async Task<ActionResult<DebtSummaryDto>> GetDebtSummary()
+        public async Task<ActionResult<DebtSummaryDto>> GetDebtSummary(
+            [FromQuery] DebtStrategy strategy = DebtStrategy.Snowball)
         {
-            DebtSummaryDto summary = await _service.GetDebtSummaryAsync();
+            DebtSummaryDto summary = await _service.GetDebtSummaryAsync(strategy);
             return Ok(summary);
         }
 

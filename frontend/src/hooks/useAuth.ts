@@ -1,10 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { AuthTokens, TokenPayload } from '../types';
-import { getAccessToken, getRefreshToken, storeTokens, clearTokens, logoutUser } from '../services/api';
+import {
+  getAccessToken,
+  getRefreshToken,
+  storeTokens,
+  clearTokens,
+  logoutUser,
+  refreshAccessToken,
+} from '../services/api';
 
 interface UseAuthReturn {
   isAuthenticated: boolean;
+  isInitializing: boolean;
   onLoginSuccess: (tokens: AuthTokens) => void;
   onLogout: () => Promise<void>;
 }
@@ -19,22 +27,27 @@ function isAccessTokenExpired(token: string): boolean {
   }
 }
 
+function sessionNeedsProactiveRefresh(): boolean {
+  const accessToken = getAccessToken();
+  const refreshToken = getRefreshToken();
+
+  if (!accessToken || !refreshToken) return false;
+
+  return isAccessTokenExpired(accessToken);
+}
+
 function hasValidSession(): boolean {
   const accessToken = getAccessToken();
   const refreshToken = getRefreshToken();
 
   if (!accessToken || !refreshToken) return false;
 
-  // The interceptor will handle silent refresh on 401.
-  // On app load we only force logout if there is no refresh token
-  // or if the access token is expired and there is no refresh token to fall back on.
-  // Since we only store a refresh token when it is valid, its mere presence is
-  // enough to allow the app to load — the interceptor will do the rest.
   return !isAccessTokenExpired(accessToken) || refreshToken.length > 0;
 }
 
 export function useAuth(): UseAuthReturn {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(hasValidSession);
+  const [isInitializing, setIsInitializing] = useState<boolean>(sessionNeedsProactiveRefresh);
 
   const onLoginSuccess = useCallback((tokens: AuthTokens): void => {
     storeTokens(tokens);
@@ -63,5 +76,32 @@ export function useAuth(): UseAuthReturn {
     };
   }, []);
 
-  return { isAuthenticated, onLoginSuccess, onLogout };
+  useEffect(() => {
+    if (!isInitializing) return;
+
+    const proactivelyRefreshToken = async (): Promise<void> => {
+      const storedRefreshToken = getRefreshToken();
+
+      if (!storedRefreshToken) {
+        clearTokens();
+        setIsAuthenticated(false);
+        setIsInitializing(false);
+        return;
+      }
+
+      try {
+        const tokens = await refreshAccessToken({ refreshToken: storedRefreshToken });
+        storeTokens(tokens);
+      } catch {
+        clearTokens();
+        setIsAuthenticated(false);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    proactivelyRefreshToken();
+  }, [isInitializing]);
+
+  return { isAuthenticated, isInitializing, onLoginSuccess, onLogout };
 }

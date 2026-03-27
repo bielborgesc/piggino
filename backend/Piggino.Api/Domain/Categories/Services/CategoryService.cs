@@ -3,6 +3,7 @@ using Piggino.Api.Data;
 using Piggino.Api.Domain.Categories.Dtos;
 using Piggino.Api.Domain.Categories.Entities;
 using Piggino.Api.Domain.Categories.Interfaces;
+using Piggino.Api.Enum;
 using Piggino.Api.Infrastructure.Repositories;
 using System.Security.Claims;
 
@@ -46,6 +47,9 @@ namespace Piggino.Api.Domain.Categories.Services
                 IsTitheable = createDto.IsTitheable,
                 UserId = userId
             };
+
+            if (newCategory.Type == CategoryType.Income)
+                newCategory.BudgetBucket = BudgetBucket.None;
 
             await _repository.AddAsync(newCategory);
             await _repository.SaveChangesAsync();
@@ -139,6 +143,9 @@ namespace Piggino.Api.Domain.Categories.Services
             category.Color = updateDto.Color ?? category.Color;
             category.BudgetBucket = updateDto.BudgetBucket;
             category.IsTitheable = updateDto.IsTitheable;
+
+            if (category.Type == CategoryType.Income)
+                category.BudgetBucket = BudgetBucket.None;
 
             _repository.Update(category);
             return await _repository.SaveChangesAsync();

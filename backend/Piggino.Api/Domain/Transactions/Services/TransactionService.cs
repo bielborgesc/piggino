@@ -1452,7 +1452,7 @@ namespace Piggino.Api.Domain.Transactions.Services
 
         // --- Debt Summary ---
 
-        public async Task<DebtSummaryDto> GetDebtSummaryAsync()
+        public async Task<DebtSummaryDto> GetDebtSummaryAsync(DebtStrategy strategy)
         {
             Guid userId = GetCurrentUserId();
 
@@ -1480,9 +1480,11 @@ namespace Piggino.Api.Domain.Transactions.Services
             decimal totalDebt = unsorted.Sum(d => d.TotalRemaining);
             decimal totalMonthlyPayment = unsorted.Sum(d => d.MonthlyPayment);
 
-            int estimatedMonthsToFreedom = totalMonthlyPayment > 0
-                ? (int)Math.Ceiling(totalDebt / totalMonthlyPayment)
-                : 0;
+            List<DebtItemDto> strategyOrder = strategy == DebtStrategy.Avalanche
+                ? avalancheRanked
+                : snowballRanked;
+
+            int estimatedMonthsToFreedom = CalculateMonthsToFreedomWithAcceleration(strategyOrder);
 
             return new DebtSummaryDto
             {
@@ -1491,6 +1493,48 @@ namespace Piggino.Api.Domain.Transactions.Services
                 TotalMonthlyPayment = totalMonthlyPayment,
                 EstimatedMonthsToFreedom = estimatedMonthsToFreedom
             };
+        }
+
+        private static int CalculateMonthsToFreedomWithAcceleration(List<DebtItemDto> orderedDebts)
+        {
+            if (orderedDebts.Count == 0)
+                return 0;
+
+            var remainingBalances = orderedDebts.Select(d => d.TotalRemaining).ToList();
+            var basePayments = orderedDebts.Select(d => d.MonthlyPayment).ToList();
+
+            int months = 0;
+            const int MaxMonths = 1200;
+
+            while (remainingBalances.Any(b => b > 0) && months < MaxMonths)
+            {
+                months++;
+                decimal freed = 0m;
+
+                for (int i = 0; i < remainingBalances.Count; i++)
+                {
+                    if (remainingBalances[i] <= 0)
+                    {
+                        freed += basePayments[i];
+                        continue;
+                    }
+
+                    decimal payment = basePayments[i] + freed;
+                    freed = 0m;
+
+                    if (remainingBalances[i] <= payment)
+                    {
+                        freed += payment - remainingBalances[i];
+                        remainingBalances[i] = 0m;
+                    }
+                    else
+                    {
+                        remainingBalances[i] -= payment;
+                    }
+                }
+            }
+
+            return months;
         }
 
         private static DebtItemDto MapToDebtItemDto(Transaction transaction)
