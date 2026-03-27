@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Piggino.Api.Data;
 using Piggino.Api.Domain.Goals.Entities;
 using Piggino.Api.Domain.Goals.Interfaces;
+using Piggino.Api.Domain.Transactions.Entities;
 
 namespace Piggino.Api.Infrastructure.Repositories
 {
@@ -46,6 +47,19 @@ namespace Piggino.Api.Infrastructure.Repositories
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<decimal> GetPaidTransactionsSumAsync(int goalId)
+        {
+            decimal paidNonInstallmentSum = await _context.Transactions
+                .Where(t => t.GoalId == goalId && t.IsPaid && !t.IsInstallment)
+                .SumAsync(t => (decimal?)t.TotalAmount) ?? 0m;
+
+            decimal paidInstallmentSum = await _context.CardInstallments
+                .Where(i => i.Transaction != null && i.Transaction.GoalId == goalId && i.IsPaid)
+                .SumAsync(i => (decimal?)i.Amount) ?? 0m;
+
+            return paidNonInstallmentSum + paidInstallmentSum;
         }
     }
 }

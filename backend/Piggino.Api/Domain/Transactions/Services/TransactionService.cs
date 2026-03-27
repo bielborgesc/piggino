@@ -64,8 +64,8 @@ namespace Piggino.Api.Domain.Transactions.Services
                 await _titheService.RecalculateTitheForCategoryAsync(
                     userId, newTransaction.CategoryId, newTransaction.PurchaseDate.Year, newTransaction.PurchaseDate.Month);
 
-            if (createDto.GoalId.HasValue && newTransaction.IsPaid)
-                await ApplyGoalContributionAsync(createDto.GoalId.Value, newTransaction.TotalAmount, userId);
+            if (createDto.GoalId.HasValue)
+                await ApplyGoalContributionAsync(createDto.GoalId.Value, userId);
 
             return MapToReadDto(newTransaction);
         }
@@ -213,6 +213,9 @@ namespace Piggino.Api.Domain.Transactions.Services
 
             if (!anchor.IsRecurring || scope == RecurrenceScope.OnlyThis)
             {
+                int? oldGoalId = anchor.GoalId;
+                bool oldIsPaid = anchor.IsPaid;
+
                 ApplySingleTransactionUpdate(anchor, updateDto, financialSource);
                 _transactionRepository.Update(anchor);
                 bool saved = await _transactionRepository.SaveChangesAsync();
@@ -221,6 +224,9 @@ namespace Piggino.Api.Domain.Transactions.Services
                     await RecalculateTitheForUpdatedTransactionAsync(
                         userId, previousCategoryId, previousYear, previousMonth,
                         anchor.CategoryId, anchor.PurchaseDate.Year, anchor.PurchaseDate.Month);
+
+                if (saved)
+                    await RecalculateAffectedGoalsAsync(userId, oldGoalId, oldIsPaid, anchor.GoalId, anchor.IsPaid);
 
                 return saved;
             }
@@ -321,13 +327,7 @@ namespace Piggino.Api.Domain.Transactions.Services
             bool saved = await _transactionRepository.SaveChangesAsync();
 
             if (saved && transaction.GoalId.HasValue)
-            {
-                decimal contributionDelta = wasAlreadyPaid
-                    ? -transaction.TotalAmount
-                    : transaction.TotalAmount;
-
-                await ApplyGoalContributionAsync(transaction.GoalId.Value, contributionDelta, userId);
-            }
+                await ApplyGoalContributionAsync(transaction.GoalId.Value, userId);
 
             return saved;
         }
@@ -1093,7 +1093,9 @@ namespace Piggino.Api.Domain.Transactions.Services
                 FinancialSource = source.FinancialSource,
                 UserId = source.UserId,
                 InstallmentCount = source.InstallmentCount,
-                CurrentInstallmentNumber = installment.InstallmentNumber
+                CurrentInstallmentNumber = installment.InstallmentNumber,
+                GoalId = source.GoalId,
+                Goal = source.Goal
             };
         }
 
@@ -1232,7 +1234,10 @@ namespace Piggino.Api.Domain.Transactions.Services
 
         private static DateTime CalculateFirstDueDate(DateTime purchaseDate, FinancialSource financialSource, bool isCreditCard)
         {
-            if (!isCreditCard || !financialSource.ClosingDay.HasValue || !financialSource.DueDay.HasValue)
+            if (!isCreditCard)
+                return purchaseDate;
+
+            if (!financialSource.ClosingDay.HasValue || !financialSource.DueDay.HasValue)
                 return purchaseDate.AddMonths(1);
 
             DateTime invoiceReferenceMonth = purchaseDate;
@@ -1365,15 +1370,36 @@ namespace Piggino.Api.Domain.Transactions.Services
 
         // --- Goal contribution ---
 
-        private async Task ApplyGoalContributionAsync(int goalId, decimal amount, Guid userId)
+        private async Task RecalculateAffectedGoalsAsync(
+            Guid userId,
+            int? oldGoalId, bool oldIsPaid,
+            int? newGoalId, bool newIsPaid)
+        {
+            bool goalChanged = oldGoalId != newGoalId;
+
+            if (goalChanged)
+            {
+                if (oldGoalId.HasValue)
+                    await ApplyGoalContributionAsync(oldGoalId.Value, userId);
+
+                if (newGoalId.HasValue)
+                    await ApplyGoalContributionAsync(newGoalId.Value, userId);
+
+                return;
+            }
+
+            bool isPaidChanged = oldIsPaid != newIsPaid;
+            if (isPaidChanged && newGoalId.HasValue)
+                await ApplyGoalContributionAsync(newGoalId.Value, userId);
+        }
+
+        private async Task ApplyGoalContributionAsync(int goalId, Guid userId)
         {
             Goal? goal = await _goalRepository.GetByIdAsync(goalId, userId);
             if (goal == null) return;
 
-            goal.CurrentAmount += amount;
-
-            if (goal.CurrentAmount >= goal.TargetAmount)
-                goal.IsCompleted = true;
+            goal.CurrentAmount = await _goalRepository.GetPaidTransactionsSumAsync(goalId);
+            goal.IsCompleted = goal.CurrentAmount >= goal.TargetAmount;
 
             _goalRepository.Update(goal);
             await _goalRepository.SaveChangesAsync();

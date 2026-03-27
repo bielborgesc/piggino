@@ -10,5 +10,6 @@ namespace Piggino.Api.Domain.Goals.Interfaces
         void Update(Goal goal);
         void Delete(Goal goal);
         Task<bool> SaveChangesAsync();
+        Task<decimal> GetPaidTransactionsSumAsync(int goalId);
     }
 }
