@@ -205,6 +205,19 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
                         <p className="text-slate-500 text-xs">
                           Se não configurado, o sistema usará a categoria 'Dízimo' ou a primeira disponível.
                         </p>
+                        <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2">
+                          <p className="text-amber-300 text-xs leading-relaxed">
+                            Para que o dízimo seja calculado automaticamente, ative a opção{' '}
+                            <span className="font-semibold">Incluir no dízimo</span> em cada categoria de renda desejada.{' '}
+                            <button
+                              type="button"
+                              onClick={handleCategoriesLink}
+                              className="underline hover:text-amber-200 transition-colors"
+                            >
+                              Ir para Categorias
+                            </button>
+                          </p>
+                        </div>
                       </div>
                     </>
                   )}
