@@ -349,6 +349,37 @@ export interface DebtSummary {
   estimatedMonthsToFreedom: number;
 }
 
+export interface SpendingBudget {
+  id: number;
+  name: string;
+  description?: string;
+  totalAmount: number;
+  spentAmount: number;
+  remainingAmount: number;
+  createdAt: string;
+  expenses: SpendingBudgetExpense[];
+}
+
+export interface SpendingBudgetExpense {
+  id: number;
+  description: string;
+  amount: number;
+  date: string;
+  budgetId: number;
+}
+
+export interface SpendingBudgetCreateData {
+  name: string;
+  description?: string;
+  totalAmount: number;
+}
+
+export interface SpendingBudgetExpenseCreateData {
+  description: string;
+  amount: number;
+  date: string;
+}
+
 export interface BudgetAnalysis {
   month: string;
   monthlyIncome: number;

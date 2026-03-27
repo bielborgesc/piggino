@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { PlusCircle, Search, LoaderCircle, Edit, Trash2, CheckCircle, XCircle, RefreshCw, CreditCard, ArrowRightLeft } from 'lucide-react';
 import { EmptyState } from '../components/ui/EmptyState';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { TransactionModal } from '../components/features/transactions/TransactionModal';
 import { InstallmentBreakdown } from '../components/features/transactions/InstallmentBreakdown';
 import { RecurrenceScopeModal } from '../components/features/transactions/RecurrenceScopeModal';
@@ -67,6 +68,8 @@ export function TransactionsPage() {
   const [pendingInstallmentNumber, setPendingInstallmentNumber] = useState<number | undefined>(undefined);
 
   const [settlingId, setSettlingId] = useState<number | null>(null);
+  const [settleConfirmId, setSettleConfirmId] = useState<number | null>(null);
+  const [deleteConfirmTransaction, setDeleteConfirmTransaction] = useState<Transaction | null>(null);
 
   const [isFixedBillScopeModalOpen, setIsFixedBillScopeModalOpen] = useState(false);
   const [fixedBillScopeModalAction, setFixedBillScopeModalAction] = useState<'edit' | 'delete'>('delete');
@@ -301,7 +304,7 @@ export function TransactionsPage() {
       return;
     }
 
-    executeDelete(original.id, 'OnlyThis');
+    setDeleteConfirmTransaction(original);
   };
 
   const executeDelete = async (id: number, scope: RecurrenceScope) => {
@@ -450,7 +453,15 @@ export function TransactionsPage() {
     setExpandedInstallmentRowId(prev => (prev === rowId ? null : rowId));
   };
 
-  const handleSettle = async (transactionId: number) => {
+  const handleSettleRequest = (transactionId: number) => {
+    setSettleConfirmId(transactionId);
+  };
+
+  const handleSettleConfirm = async () => {
+    if (settleConfirmId === null) return;
+    const transactionId = settleConfirmId;
+    setSettleConfirmId(null);
+
     setSettlingId(transactionId);
     const toastId = toast.loading('Quitando parcelas...');
     try {
@@ -463,6 +474,13 @@ export function TransactionsPage() {
     } finally {
       setSettlingId(null);
     }
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteConfirmTransaction) return;
+    const transaction = deleteConfirmTransaction;
+    setDeleteConfirmTransaction(null);
+    executeDelete(transaction.id, 'OnlyThis');
   };
 
   const hasUnpaidInstallments = (item: Transaction): boolean => {
@@ -605,7 +623,7 @@ export function TransactionsPage() {
                           <div className="flex gap-2 justify-end mt-1 flex-wrap">
                             {hasUnpaidInstallments(item) && (
                               <button
-                                onClick={() => handleSettle(item.id)}
+                                onClick={() => handleSettleRequest(item.id)}
                                 disabled={settlingId === item.id}
                                 className="text-xs text-green-400 hover:text-green-300 disabled:opacity-50 disabled:cursor-not-allowed border border-green-700 px-2 py-0.5 rounded transition-colors"
                                 title="Quitar todas as parcelas"
@@ -696,7 +714,7 @@ export function TransactionsPage() {
                             <td className="p-4 text-right">
                               {hasUnpaidInstallments(item) && (
                                 <button
-                                  onClick={() => handleSettle(item.id)}
+                                  onClick={() => handleSettleRequest(item.id)}
                                   disabled={settlingId === item.id}
                                   className="text-xs text-green-400 hover:text-green-300 disabled:opacity-50 disabled:cursor-not-allowed border border-green-700 px-2 py-1 rounded mr-1 transition-colors"
                                   title="Quitar todas as parcelas"
@@ -778,6 +796,26 @@ export function TransactionsPage() {
           onCancel={handleFixedBillEditCancel}
         />
       )}
+
+      <ConfirmModal
+        isOpen={deleteConfirmTransaction !== null}
+        title="Excluir Transação"
+        message={`Tem certeza que deseja excluir "${deleteConfirmTransaction?.description}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir"
+        confirmVariant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteConfirmTransaction(null)}
+      />
+
+      <ConfirmModal
+        isOpen={settleConfirmId !== null}
+        title="Quitar Parcelas"
+        message="Quitar essa dívida marcará todas as parcelas restantes como pagas. Deseja continuar?"
+        confirmLabel="Quitar"
+        confirmVariant="warning"
+        onConfirm={handleSettleConfirm}
+        onCancel={() => setSettleConfirmId(null)}
+      />
     </>
   );
 }

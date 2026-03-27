@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck, Settings, Target, TrendingUp, CreditCard } from 'lucide-react';
+import { LayoutDashboard, ArrowRightLeft, LogOut, Menu, X, Shapes, Wallet, Receipt, CalendarCheck, Settings, Target, TrendingUp, CreditCard, BookOpen } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import { TokenPayload } from '../../types';
 import { getAccessToken } from '../../services/api';
 
-type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'goals' | 'projection' | 'debts' | 'onboarding';
+type PageType = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'goals' | 'projection' | 'debts' | 'budgets' | 'onboarding';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -39,6 +39,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Planejamento',
     items: [
       { page: 'goals', label: 'Metas', icon: <Target className="h-5 w-5" /> },
+      { page: 'budgets', label: 'Orçamentos', icon: <BookOpen className="h-5 w-5" /> },
       { page: 'debts', label: 'Dívidas', icon: <CreditCard className="h-5 w-5" /> },
       { page: 'projection', label: 'Projeção de Patrimônio', icon: <TrendingUp className="h-5 w-5" /> },
     ],

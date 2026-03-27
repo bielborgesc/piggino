@@ -3,6 +3,7 @@ import { Target, Plus, Pencil, Trash2, LoaderCircle, AlertCircle, Info } from 'l
 import toast from 'react-hot-toast';
 import { useGoals } from '../hooks/useGoals';
 import { GoalModal } from '../components/features/goals/GoalModal';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { Goal, GoalData, GoalType } from '../types';
 import { formatBRL } from '../utils/formatters';
 import { extractErrorMessage } from '../utils/errors';
@@ -28,6 +29,10 @@ const EMERGENCY_FUND_TEMPLATE: GoalData = {
 interface ContributionModalState {
   goalId: number;
   goalName: string;
+}
+
+interface DeleteConfirmState {
+  goal: Goal;
 }
 
 function ContributionModal({
@@ -188,6 +193,7 @@ export function GoalsPage() {
   const [editingGoal, setEditingGoal] = useState<Goal | undefined>(undefined);
   const [goalTemplate, setGoalTemplate] = useState<GoalData | undefined>(undefined);
   const [contributionTarget, setContributionTarget] = useState<ContributionModalState | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState | null>(null);
 
   const hasEmergencyFund = goals.some((g) => g.type === 'EmergencyFund');
 
@@ -218,7 +224,15 @@ export function GoalsPage() {
     }
   };
 
-  const handleDelete = async (goal: Goal) => {
+  const handleDeleteRequest = (goal: Goal) => {
+    setDeleteConfirm({ goal });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return;
+    const { goal } = deleteConfirm;
+    setDeleteConfirm(null);
+
     try {
       await remove(goal.id);
       toast.success('Meta excluída.');
@@ -330,7 +344,7 @@ export function GoalsPage() {
                 key={goal.id}
                 goal={goal}
                 onEdit={handleOpenEdit}
-                onDelete={handleDelete}
+                onDelete={handleDeleteRequest}
                 onContribute={handleContribute}
               />
             ))}
@@ -354,6 +368,16 @@ export function GoalsPage() {
           onConfirm={handleContributionConfirm}
         />
       )}
+
+      <ConfirmModal
+        isOpen={deleteConfirm !== null}
+        title="Excluir Meta"
+        message={`Tem certeza que deseja excluir "${deleteConfirm?.goal.name}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir"
+        confirmVariant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </>
   );
 }

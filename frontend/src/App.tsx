@@ -8,6 +8,7 @@ import { FinancialSourcesPage } from './pages/FinancialSourcesPage';
 import { InvoicePage } from './pages/InvoicePage';
 import { FixedBillsPage } from './pages/FixedBillsPage';
 import { GoalsPage } from './pages/GoalsPage';
+import { BudgetsPage } from './pages/BudgetsPage';
 import { WealthProjectionPage } from './pages/WealthProjectionPage';
 import { DebtPlanningPage } from './pages/DebtPlanningPage';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -17,7 +18,7 @@ import { UserSettingsModal } from './components/features/settings/UserSettingsMo
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { useAuth } from './hooks/useAuth';
 
-type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'goals' | 'projection' | 'debts' | 'onboarding';
+type Page = 'dashboard' | 'transactions' | 'categories' | 'financial-sources' | 'invoices' | 'fixed-bills' | 'goals' | 'projection' | 'debts' | 'budgets' | 'onboarding';
 
 const TOAST_STYLES = { style: { background: '#334155', color: '#f1f5f9' } };
 
@@ -65,6 +66,7 @@ function App() {
           {currentPage === 'invoices' && <InvoicePage />}
           {currentPage === 'fixed-bills' && <FixedBillsPage />}
           {currentPage === 'goals' && <GoalsPage />}
+          {currentPage === 'budgets' && <BudgetsPage />}
           {currentPage === 'projection' && <WealthProjectionPage />}
           {currentPage === 'debts' && <DebtPlanningPage />}
           {currentPage === 'onboarding' && <OnboardingPage onFinish={() => setCurrentPage('dashboard')} />}

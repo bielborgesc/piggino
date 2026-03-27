@@ -8,6 +8,8 @@ using Piggino.Api.Data;
 using Piggino.Api.Infrastructure.Localization;
 using Piggino.Api.Domain.Bot.Interfaces;
 using Piggino.Api.Domain.Bot.Services;
+using Piggino.Api.Domain.Budgets.Interfaces;
+using Piggino.Api.Domain.Budgets.Services;
 using Piggino.Api.Domain.Categories.Interfaces;
 using Piggino.Api.Domain.Categories.Services;
 using Piggino.Api.Domain.FinancialSources.Interfaces;
@@ -181,6 +183,8 @@ builder.Services.AddScoped<ITitheRepository, TitheRepository>();
 builder.Services.AddScoped<ITitheService, TitheService>();
 builder.Services.AddScoped<IBotRepository, BotRepository>();
 builder.Services.AddScoped<IBotService, BotService>();
+builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
+builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddHostedService<TitheMonthlyBackgroundService>();
 builder.Services.AddHttpContextAccessor();
 

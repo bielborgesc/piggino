@@ -6,6 +6,7 @@ import { useDebtSimulation } from '../hooks/useDebtSimulation';
 import { settleInstallments } from '../services/api';
 import { DebtItem } from '../types';
 import { formatBRL } from '../utils/formatters';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 const STRATEGY_LABELS: Record<DebtStrategy, string> = {
   Avalanche: 'Avalanche',
@@ -271,6 +272,7 @@ function SummaryCard({
 export function DebtPlanningPage() {
   const [strategy, setStrategy] = useState<DebtStrategy>('Snowball');
   const [settlingId, setSettlingId] = useState<number | null>(null);
+  const [settleConfirmId, setSettleConfirmId] = useState<number | null>(null);
 
   const { debtSummary, isLoading, error, refetch } = useDebtSummary(strategy);
 
@@ -284,7 +286,15 @@ export function DebtPlanningPage() {
 
   const simulation = useDebtSimulation(sortedDebts);
 
-  const handleSettle = async (transactionId: number) => {
+  const handleSettleRequest = (transactionId: number) => {
+    setSettleConfirmId(transactionId);
+  };
+
+  const handleSettleConfirm = async () => {
+    if (settleConfirmId === null) return;
+    const transactionId = settleConfirmId;
+    setSettleConfirmId(null);
+
     setSettlingId(transactionId);
     const toastId = toast.loading('Quitando parcelas...');
 
@@ -381,7 +391,7 @@ export function DebtPlanningPage() {
                   key={debt.transactionId}
                   debt={debt}
                   rank={index + 1}
-                  onSettle={handleSettle}
+                  onSettle={handleSettleRequest}
                   isSettling={settlingId === debt.transactionId}
                 />
               ))}
@@ -403,6 +413,16 @@ export function DebtPlanningPage() {
           )}
         </>
       )}
+
+      <ConfirmModal
+        isOpen={settleConfirmId !== null}
+        title="Quitar Dívida"
+        message="Quitar essa dívida marcará todas as parcelas restantes como pagas. Deseja continuar?"
+        confirmLabel="Quitar"
+        confirmVariant="warning"
+        onConfirm={handleSettleConfirm}
+        onCancel={() => setSettleConfirmId(null)}
+      />
     </div>
   );
 }

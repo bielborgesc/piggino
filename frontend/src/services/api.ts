@@ -33,6 +33,10 @@ import {
   TitheStatus,
   BotLinkTokenResponse,
   TelegramConnection,
+  SpendingBudget,
+  SpendingBudgetExpense,
+  SpendingBudgetCreateData,
+  SpendingBudgetExpenseCreateData,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -442,6 +446,39 @@ export const getTelegramConnections = async (): Promise<TelegramConnection[]> =>
 
 export const disconnectSpecificTelegram = async (id: number): Promise<void> => {
   await apiClient.delete(`/Bot/connections/${id}`);
+};
+
+// --- Spending Budgets API ---
+
+export const getSpendingBudgets = async (): Promise<SpendingBudget[]> => {
+  const response = await apiClient.get<SpendingBudget[]>('/Budgets');
+  return response.data;
+};
+
+export const getSpendingBudget = async (id: number): Promise<SpendingBudget> => {
+  const response = await apiClient.get<SpendingBudget>(`/Budgets/${id}`);
+  return response.data;
+};
+
+export const createSpendingBudget = async (data: SpendingBudgetCreateData): Promise<SpendingBudget> => {
+  const response = await apiClient.post<SpendingBudget>('/Budgets', data);
+  return response.data;
+};
+
+export const deleteSpendingBudget = async (id: number): Promise<void> => {
+  await apiClient.delete(`/Budgets/${id}`);
+};
+
+export const addSpendingBudgetExpense = async (
+  budgetId: number,
+  data: SpendingBudgetExpenseCreateData
+): Promise<SpendingBudgetExpense> => {
+  const response = await apiClient.post<SpendingBudgetExpense>(`/Budgets/${budgetId}/expenses`, data);
+  return response.data;
+};
+
+export const deleteSpendingBudgetExpense = async (budgetId: number, expenseId: number): Promise<void> => {
+  await apiClient.delete(`/Budgets/${budgetId}/expenses/${expenseId}`);
 };
 
 // Unused export kept for CategoryType import consumers
