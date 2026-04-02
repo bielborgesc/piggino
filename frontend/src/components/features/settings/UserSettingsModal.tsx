@@ -4,7 +4,6 @@ import { getUserSettings, updateUserSettings, getCategories, getFinancialSources
 import { UserSettings, Category, FinancialSource } from '../../../types';
 import toast from 'react-hot-toast';
 import { extractErrorMessage } from '../../../utils/errors';
-import { TelegramConnectCard } from './TelegramConnectCard';
 
 interface UserSettingsModalProps {
   onClose: () => void;
@@ -238,12 +237,6 @@ export function UserSettingsModal({ onClose, onNavigateToCategories, onChangePas
                 </button>
               </div>
 
-              <div className="border-t border-slate-700 pt-4">
-                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3">
-                  Integração Telegram
-                </p>
-                <TelegramConnectCard />
-              </div>
 
               <div className="border-t border-slate-700 pt-4">
                 <button

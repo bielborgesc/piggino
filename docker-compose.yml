@@ -63,24 +63,24 @@ services:
         limits:
           memory: 64M
 
-  piggino-bot:
-    image: bielborgesc/piggino-bot:latest
-    container_name: piggino-bot
-    restart: unless-stopped
-    environment:
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - PIGGINO_API_URL=http://piggino-api:8080
-      - BOT_SECRET=${BOT_SECRET}
-    depends_on:
-      piggino-api:
-        condition: service_healthy
-    networks:
-      - piggino-net
-    deploy:
-      resources:
-        limits:
-          memory: 192M
+  # piggino-bot:
+  #   image: bielborgesc/piggino-bot:latest
+  #   container_name: piggino-bot
+  #   restart: unless-stopped
+  #   environment:
+  #     - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+  #     - GEMINI_API_KEY=${GEMINI_API_KEY}
+  #     - PIGGINO_API_URL=http://piggino-api:8080
+  #     - BOT_SECRET=${BOT_SECRET}
+  #   depends_on:
+  #     piggino-api:
+  #       condition: service_healthy
+  #   networks:
+  #     - piggino-net
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 192M
 
   caddy:
     image: caddy:latest
