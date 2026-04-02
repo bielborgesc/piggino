@@ -99,7 +99,7 @@ jobs:
             export GEMINI_API_KEY="${GEMINI_API_KEY}"
             export BOT_SECRET="${BOT_SECRET}"
             mkdir -p ~/piggino-backups
-            docker exec piggino-postgres pg_dump -U piggino piggino > ~/piggino-backups/backup_$(date +%Y%m%d_%H%M%S).sql
+            docker exec piggino-postgres pg_dump -U postgres piggino > ~/piggino-backups/backup_$(date +%Y%m%d_%H%M%S).sql
             echo "Backup concluído: ~/piggino-backups/backup_$(date +%Y%m%d_%H%M%S).sql"
             docker compose pull
             docker compose up -d --build
