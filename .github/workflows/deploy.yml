@@ -101,6 +101,7 @@ jobs:
             mkdir -p ~/piggino-backups
             docker exec -e PGPASSWORD="${POSTGRES_PASSWORD}" piggino-postgres pg_dump -U piggino piggino > ~/piggino-backups/backup_$(date +%Y%m%d_%H%M%S).sql
             echo "Backup concluído: ~/piggino-backups/backup_$(date +%Y%m%d_%H%M%S).sql"
+            ls -t ~/piggino-backups/backup_*.sql | tail -n +6 | xargs -r rm --
             docker compose pull
             docker compose up -d --build
         env:
