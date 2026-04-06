@@ -89,12 +89,6 @@ frontend/
 | Wealth Projection | CDI vs Poupanca simulator with IR/IOF breakdown, auto-fetches rate from BACEN |
 | 50/30/20 | Budget analysis by needs, wants, and savings buckets |
 
-<img width="1097" height="580" alt="image" src="https://github.com/user-attachments/assets/d0dfef31-08ef-4321-acf1-5466bfe82d91" />
-
-
-<img width="1138" height="613" alt="image" src="https://github.com/user-attachments/assets/6d07393c-72f7-4f49-911d-14e4c184a893" />
-
-
 ---
 
 ## Branching Strategy
