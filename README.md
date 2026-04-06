@@ -1,5 +1,5 @@
 <div align="center">
-  [INSERT: Piggino logo image]
+  <img width="81" height="59" alt="image" src="https://github.com/user-attachments/assets/db6e3457-68c6-4506-8295-61f29ce35d34" />
   <h1>Piggino</h1>
   <p><strong>Your smart, intuitive, and personal financial assistant.</strong></p>
   <p>A full-stack web application designed to simplify the management of expenses, income, credit cards, and financial goals.</p>
@@ -11,7 +11,7 @@
 
 Piggino was born from the need for a financial tracking tool that combines a simple user experience with powerful features. More than just a spreadsheet, Piggino is a complete web application built on a modern, scalable, and production-ready architecture.
 
-[INSERT: Screenshot of the main dashboard showing balance overview, monthly income, and expense summary]
+<img width="1365" height="694" alt="image" src="https://github.com/user-attachments/assets/c84cb398-f8ee-46cc-b215-e4399e4c18e7" />
 
 ### Core Features
 
@@ -28,7 +28,7 @@ Piggino was born from the need for a financial tracking tool that combines a sim
 - **Wealth Projection:** CDI vs. Poupanca simulator with IR/IOF breakdown, automatically fetching the current CDI rate from the BACEN API.
 - **50/30/20 Budget Analysis:** Budget breakdown by needs, wants, and savings buckets.
 
-[INSERT: Screenshot of the transactions list page with filters and installment entries visible]
+<img width="1085" height="594" alt="image" src="https://github.com/user-attachments/assets/ffd96684-e9b2-4723-a158-15135a6105cd" />
 
 ---
 
@@ -89,9 +89,11 @@ frontend/
 | Wealth Projection | CDI vs Poupanca simulator with IR/IOF breakdown, auto-fetches rate from BACEN |
 | 50/30/20 | Budget analysis by needs, wants, and savings buckets |
 
-[INSERT: Screenshot of the Goals page showing active goals with progress bars]
+<img width="1097" height="580" alt="image" src="https://github.com/user-attachments/assets/d0dfef31-08ef-4321-acf1-5466bfe82d91" />
 
-[INSERT: Screenshot of the Wealth Projection simulator with CDI comparison chart]
+
+<img width="1138" height="613" alt="image" src="https://github.com/user-attachments/assets/6d07393c-72f7-4f49-911d-14e4c184a893" />
+
 
 ---
 
