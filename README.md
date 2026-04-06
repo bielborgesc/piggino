@@ -53,7 +53,28 @@ frontend/
     types/         → TypeScript interfaces and types
 ```
 
-[INSERT: Architecture diagram showing the flow from frontend to backend to database, with Caddy as reverse proxy and GitHub Actions CI/CD]
+```mermaid
+graph TD
+    User["User / Browser (PWA)"]
+    TG["Telegram Bot"]
+    Caddy["Caddy (Reverse Proxy + TLS)"]
+    API["ASP.NET 9 API"]
+    DB[("PostgreSQL")]
+    BACEN["BACEN API (CDI Rate)"]
+    GH["GitHub Actions (CI/CD)"]
+    DH["Docker Hub"]
+    DO["Digital Ocean (VPS)"]
+
+    User -->|HTTPS| Caddy
+    TG -->|HTTPS| Caddy
+    Caddy -->|HTTP| API
+    API -->|EF Core| DB
+    API -->|HTTP| BACEN
+
+    GH -->|Push image| DH
+    DH -->|Pull & deploy| DO
+    DO --> Caddy
+```
 
 ### Technology Stack
 
